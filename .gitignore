@@ -70,3 +70,6 @@ Thumbs.db
 .idea/
 .vscode/
 scratchpad/
+
+# EVREN preference-data intermediate outputs (review before committing)
+data/dpo/out/
