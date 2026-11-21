@@ -22,6 +22,7 @@ def _target(params: dict) -> str:
 
 class MockExecutor:
     """Alan-bazli gercekci sahte cikti (egitim verisi tarzinda). Gercekten calistirmaz."""
+    is_mock = True
 
     def run(self, tool: str, params: dict) -> str:
         spec = get_spec(tool)

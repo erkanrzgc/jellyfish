@@ -4,187 +4,151 @@
 
 # Octópus
 
-### An agentic LLM for cybersecurity
+### A Turkish-first cybersecurity model and agent runtime
 
-##### _Red · blue · network · Linux — agentic tool use behind an authorization gate._
-
-<br/>
-
-[![Version](https://img.shields.io/badge/version-v0.8.1-orange?style=for-the-badge)](https://github.com/erkanrzgc/octopus)
-[![Weights](https://img.shields.io/badge/🤗%20weights-on%20Hugging%20Face-FFD21E?style=for-the-badge)](https://huggingface.co/erkanrzgcc/octopus-v0.8.1)
-[![Runtime](https://img.shields.io/badge/runtime-agentic%20tool--use-8B5CF6?style=for-the-badge)](#-agent-harness)
-[![License](https://img.shields.io/badge/license-MIT%20%2B%20model%20terms-3DA639?style=for-the-badge)](#-license)
-
-![Python](https://img.shields.io/badge/Python-3.14-3776AB?style=flat-square&logo=python&logoColor=white)
-![PyTorch](https://img.shields.io/badge/PyTorch-2.4-EE4C2C?style=flat-square&logo=pytorch&logoColor=white)
-![Transformers](https://img.shields.io/badge/🤗%20Transformers-4.49-FFD21E?style=flat-square)
-![PEFT](https://img.shields.io/badge/PEFT-LoRA%20bf16-00A98F?style=flat-square)
-![Tests](https://img.shields.io/badge/tests-213%20passing-3DA639?style=flat-square)
-![Use](https://img.shields.io/badge/use-authorized%2Flab--only-critical?style=flat-square)
+[![CI](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml/badge.svg)](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml)
+![Evaluated default](https://img.shields.io/badge/evaluated_default-v1.0-orange)
+![Method](https://img.shields.io/badge/training-bf16_LoRA-blue)
+![License](https://img.shields.io/badge/code-MIT-green)
 
 </div>
 
----
+Octópus combines a fine-tuned 9B language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
 
-## 📖 About
+The product and training examples prioritize Turkish. Repository documentation is in English. This is a research prototype for authorized testing, labs, and defensive work.
 
-**Octópus** is an agentic language model for **cybersecurity**. Instead of only answering questions, it emits
-structured tool calls that a runtime carries out against real security tools — always behind an
-**authorization gate**. It spans **red team** (recon, exploitation) and **blue team** (detection, hardening,
-incident response) across **network and Linux**, and it is **authorization-aware** by design.
+## Current status
 
-It is fine-tuned with **bf16 LoRA** on a strong open 9B base. It introduces itself as **"Ben Octópus"** — the
-dotted `ó` lives only in the brand and the model's speech; file paths stay plain ASCII `octopus`.
+**The evaluated default is v1.0 (`octopus-v10`).** v1.1 and v1.2 remain experiments: their recorded tool-selection regressions prevented promotion. The v1.2 findings and trade-offs are recorded in the [experiment report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md).
 
----
+Runtime defaults live in [`agent/config.py`](agent/config.py):
 
-## ✨ Features
+| Setting | Default |
+|---|---|
+| Ollama model | `octopus-v10` |
+| Training chat template | `models/octopus-v8-tokenizer` |
+| Ollama import recipe | `models/Modelfile.v10` |
 
-- 🛠️ **Agentic tool use** — a **117-tool** catalog (`nmap`, `sqlmap`, `metasploit`, `bloodhound`, …) with a
-  structured call format and a runtime that runs them behind a policy gate.
-- 🔴🔵 **Red + blue** — offense and defense in one model, from pentesting to incident response.
-- 🛡️ **Authorization-aware** — lab / CTF / owned systems only; unauthorized requests are refused with an
-  ethical alternative.
-- 🧩 **Structured & inspectable** — every tool call is a parseable block, gated and logged before anything runs.
+The v0.8 tokenizer directory is intentional: it is the template used in the recorded v1.0 evaluations. The backend renders it itself and calls Ollama in raw mode. Explicit model and tokenizer overrides are supported.
 
----
+For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 
-## 🏗️ Architecture
+The first reliability increment hardens parsing, scope checks, execution accounting, and per-call approval without changing model weights. The [approved roadmap](docs/superpowers/plans/2026-10-23-cybersecurity-reliability.md) tracks the remaining work. The first [60 development cases](eval/suites/README.md) are source-backed drafts awaiting human and lab review, not a locked acceptance set.
 
-Two halves: the **model** (the brain — emits text and structured tool calls) and the **agent harness**
-(the hands — parses those calls and runs real tools behind a policy gate).
+## Quick start: offline runtime checks
+
+Run from the repository root with Python 3.10+ and [uv](https://docs.astral.sh/uv/):
+
+```powershell
+uv sync --group dev
+uv run python -m agent.smoke
+uv run pytest -q
+```
+
+The smoke runner uses a scripted model, simulated security tools, and real temporary files. It requires no model downloads, GPU, Ollama, or Docker. Expected output:
 
 ```text
-   security SFT data
-   (distilled Q&A + 117-tool use)
-              │  build_sft.py  (normalize · persona · dedup · split)
-              ▼
-   open 9B base ──(bf16 LoRA, r=32)──▶  Octópus
-              │
-              ▼
-   ┌──────────────────────── agent harness ─────────────────────────┐
-   │  model text ──▶ parse ```arac``` block ──▶ policy gate (lab-only) │
-   │       ▲                                          │                │
-   │       │       feed result back  ◀── executor (mock | Kali | docker)
-   └──────────────────────────────────────────────────────────────────┘
+[PASS] mock-scan: scripted call -> policy -> simulated port output
+[PASS] scope-denial: out-of-scope target rejected; executor not called
+[PASS] workspace-files: real file write/read; path escape rejected
+3/3 offline checks passed (no live model or security tools).
 ```
 
----
+A failed check returns a nonzero exit code. Temporary files and audit logs are cleaned up after the run. These checks verify runtime plumbing and selected policy behavior; model quality and real-tool integration require separate validation.
 
-## 🤖 Agent Harness
+To inspect the existing interactive-style transcripts:
 
-The model does not run tools — it emits a structured call, and the harness executes it:
-
-```
-model emits ```arac {"arac":"nmap","parametreler":{…}} ```  →  parse
-   →  policy gate (authorized scope? risk level?)  →  executor runs the real tool
-   →  result fed back as a tool message  →  model interprets and continues.
+```powershell
+uv run python -m agent.cli
+uv run python -m agent.cli --assistant
 ```
 
-Executors are pluggable behind one interface, and every call passes a **fail-closed** authorization gate
-(lab-only scope, per-tool risk level) written to an audit log:
+See the [demo guide](docs/DEMO_GUIDE.md) for prerequisites, expected behavior, and live lab commands.
 
-- **Mock** — realistic simulated output; runs anywhere, zero risk (default).
-- **Real** — real tools inside Kali (WSL2), `shell=False` argv, timeout.
-- **Docker** — tools as containers on an isolated lab network.
+## Run the evaluated model locally
 
-```bash
-uv run python -m agent.cli                 # mock end-to-end demo (runs anywhere)
-uv run python -m agent.cli --gguf          # real Octópus via Ollama
-uv run python -m agent.cli --gguf --docker # real model + real tool in an isolated lab
+Prepare the existing v1.0 Q4 GGUF and the evaluated tokenizer files as described in [`models/README.md`](models/README.md). These large artifacts are excluded from Git; cloning the repository does not install them.
+
+With Ollama running and the artifacts present:
+
+```powershell
+ollama create octopus-v10 -f models/Modelfile.v10
+uv run python -m agent.cli --gguf
 ```
 
----
+This runs the real model with **mock security-tool output**. It does not scan a network. To choose another compatible model/template pair (already imported into Ollama; see [models/README.md](models/README.md)):
 
-## 🧠 Model & Training
-
-| | |
-|---|---|
-| **Base** | a strong open 9B instruction-tuned base |
-| **Method** | bf16 LoRA (`r=32`, `α=32`, 7 target modules) — **no 4-bit** (it corrupts the merged base) |
-| **Engine** | plain `transformers` + `peft` + TRL |
-| **Hardware** | RunPod · single 24–48 GB GPU · pinned `transformers/trl/peft` |
-| **Data** | security Q&A + 117-tool agentic use + reasoning/persona seeds |
-
-**Why bf16 LoRA, not QLoRA?** The base carries a continual-pretrain + SFT + DPO + **merge** history; common
-4-bit (NF4) quantization corrupts those merged weights and produces multilingual garbage. In plain `bf16` the
-same model stays flawless — so we load the base in bf16 and train a LoRA on top.
-
----
-
-## 📦 Model Weights
-
-Each release ships the **LoRA adapter** plus a ready-to-run **GGUF** quantization for local inference.
-
-| Release | Hugging Face | Notes |
-|---|---|---|
-| **v0.8.1** _(current)_ | 🤗 [`octopus-v0.8.1`](https://huggingface.co/erkanrzgcc/octopus-v0.8.1) | adapter + GGUF Q4 |
-| **v0.9** _(in evaluation)_ | 🤗 [`octopus-v0.9`](https://huggingface.co/erkanrzgcc/octopus-v0.9) | adapter + GGUF Q4 & Q8 |
-
-```bash
-# Pull the GGUF and run locally via Ollama
-hf download erkanrzgcc/octopus-v0.8.1 octopus-v81-Q4_K_M.gguf --local-dir models
-ollama create octopus-v81 -f models/Modelfile.v81
-ollama run octopus-v81 "Merhaba, kendini tanıt."
+```powershell
+uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/octopus-v8-tokenizer
 ```
 
----
+The normal CLI is a single lab-scan demo, not a general chat interface. `--target` selects the demo target and `--scope` supplies the allowlist. Real execution uses `--real` or `--docker`; follow the demo guide before selecting those modes.
 
-## 📊 Stats
+## Local conversation and auditable evaluation
 
-| | |
-|---|---|
-| 🛠️ Tool catalog | **117** tools |
-| 📚 SFT examples | **3,500+** |
-| ✅ Test suite | **213** passing |
-| 🎯 Tool-call output | **100%** valid · **96%** in-catalog |
-| 📉 Final training loss | **≈ 0.29** |
-| 🐙 Persona verification | **6 / 6** |
+The separate conversation entry point supports advisory answers and approved tool work:
 
----
+```powershell
+uv run python -m agent.chat --mode advise --profile octopus-v10
+uv run python -m agent.chat --mode assist --executor mock --scope 10.10.10.0/24 --session lab/logs/chat.json
+```
 
-## 📂 Repository Layout
+Advisory mode executes no tools. In assist mode, mock security results are labelled as simulated; real operations display their parameters and command and require an explicit terminal response. Approval is single-use, expires after five minutes, and is bound to the exact call, command, and execution context. Session files preserve conversation history without approval tokens. Denial, backend failure, and step limits leave the task unfinished.
+
+The model-only baseline runner records raw responses, every emitted call, settings, timings, errors, truncation, and artifact hashes without executing security tools:
+
+```powershell
+uv run python -m eval.reliability_eval --profile octopus-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/my-v10-dev60.json --host http://127.0.0.1:11434
+```
+
+Use a new report path for each run. Automatic checks cover output structure and selected tool/parameter expectations; semantic scores remain pending human review. The alternate `qwen3-4b-instruct-2507` profile has its own template configuration but its artifacts have not been provisioned or evaluated. An installed `qwen3:4b` alias is not evidence of that exact model.
+
+## Architecture and execution coverage
+
+```text
+Turkish security SFT data -> bf16 LoRA -> model / GGUF
+                                           |
+                                    structured arac call
+                                           |
+parser -> tool registry -> policy -> executor -> result -> model
+               |                       |
+             audit               mock / Kali WSL / Docker
+```
+
+- **Catalog:** 117 security tools, 10 assistant tools, and 3 runtime extensions are described in the catalog. Catalog membership describes available names and parameters; it does not certify a working CLI adapter for every tool.
+- **Mock executor:** simulated domain-specific output for demos and unit tests.
+- **Kali WSL executor:** offers only validated nmap calls for approval, using argv with `shell=False` and a timeout. Other security tools need dedicated adapters and lab validation before execution is enabled.
+- **Docker executor:** the built-in image map currently supports **nmap only**, on a preconfigured lab network.
+- **Assistant executor:** workspace file operations are real; command execution requires the separate opt-in Docker sandbox. Web search needs a configured backend.
+- **Policy and roles:** normalized target allowlists, validated options, workspace guards, role-scoped registries, per-call approval, and actual execution outcomes sit outside the model. Unit checks and live tool validation remain separate evidence.
+
+## Training and recorded evaluation
+
+The current approach fine-tunes `ytu-ce-cosmos/Turkish-Gemma-9b-v0.1` with bf16 LoRA (`r=32`, alpha 32) using Transformers, PEFT, and TRL. The [training decision](docs/decisions/0003-pivot-to-turkish-gemma-bf16.md) records why this project moved away from its earlier QLoRA setup.
+
+Historical measurements are retained in [`eval/reports/`](eval/reports/). For example, the [v1.0 comparison](eval/reports/v1.0_rca_depth_2026-08-11.md) recorded 79% expected-tool selection on 24 prompts. Subsequent repeated measurements vary with generation settings. The [quality/safety report](eval/reports/v1.0_quality_safety_2026-08-26.md) records both strengths and remaining failures, including a refusal followed by a tool call in one probe.
+
+These are small internal evaluation sets. The historical tool-call scorer checks the first parsed call's name and JSON/catalog validity; it does not establish parameter correctness, successful execution, or completion of a multi-step task. The new reliability runner additionally records all calls and required parameter subsets, with semantic review still pending. Training loss and unit-test counts are not model-quality scores.
+
+The retained v1.0 artifact is Q4 GGUF. Its bf16 adapter was not archived, which limits reproducibility and re-quantization; future training runs must preserve adapters, tokenizer, environment, data manifest, and evaluation outputs together.
+
+## Repository map
 
 | Path | Responsibility |
 |---|---|
-| `agent/` | Harness: tool-call parser, 117-tool catalog, policy gate, executors, run loop. |
-| `data/sft/` | SFT data pipeline: normalize to `messages`, inject persona, dedup, split. |
-| `train/` | Canonical bf16 LoRA training. |
-| `eval/` | Tool-call and technical-correctness evaluation. |
-| `rag/` | Cybersecurity knowledge base for retrieval grounding. |
-| `cloud/` | RunPod runbook and GGUF conversion recipe. |
-| `docs/` | Architecture Decision Records and design specs. |
-| `tests/` | Unit + data-format tests (213 passing). |
+| `agent/` | Parser, catalog, policy, executors, skills, runtime loop, smoke checks |
+| `data/sft/` | Turkish SFT normalization, persona, deduplication, splitting |
+| `train/` | bf16 LoRA training |
+| `eval/` | Evaluation runners and historical reports |
+| `models/` | Import recipes; local ignored weights and tokenizer artifacts |
+| `cloud/` | Historical RunPod and conversion recipes |
+| `rag/` | Knowledge base and retrieval tooling |
+| `tests/` | Runtime, data, and evaluator regression tests |
+| `docs/` | Decisions, designs, implementation plans, demo guide |
+| `archive/`, `serve/` | Earlier experiments; `serve/octopus_chat.py` is the legacy Qwen/Unsloth path |
 
----
+## License and author
 
-## 🔒 Responsible Use
+Code is licensed under [MIT](LICENSE). Model weights and adapters remain subject to the base model's [Gemma terms](https://ai.google.dev/gemma/terms). Use real security tools only against systems within your authorized scope.
 
-> **⚠️ Authorized, legal, lab / CTF / educational use only.**
-
-Octópus teaches offensive technique to **strengthen defense** and support **authorized** testing. It assists
-only on systems the operator is explicitly authorized to test, and **refuses** attack steps against
-unauthorized real targets — declining clearly and offering a defensive alternative. It **must not** be used
-for unauthorized access or harm; responsibility rests entirely with the user.
-
----
-
-## 👤 Author
-
-**Erkan** ([@erkanrzgc](https://github.com/erkanrzgc)) — ethical security enthusiast building local-first AI.
-Octópus is a transparent, end-to-end record of designing, fine-tuning, and evaluating a cybersecurity
-assistant from the ground up.
-
-> Issues and discussions are open for questions, ideas, or collaboration. 🐙
-
----
-
-## 📜 License
-  
-- **Code** — MIT (scripts, pipeline, and docs in this repository).
-- **Weights & adapters** — governed by the base model's
-  [Terms of Use](https://ai.google.dev/gemma/terms); authorized / ethical use only.
-
-<div align="center">
-<sub>Octópus — an agentic cybersecurity assistant. Authorized use only. 🐙</sub>
-</div>
+Created by [Erkan](https://github.com/erkanrzgc).

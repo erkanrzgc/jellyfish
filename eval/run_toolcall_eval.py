@@ -1,8 +1,7 @@
 """Araç-çağrı eval koşucusu (CLI). Tutulmuş istemleri gerçek modele verir, rapor yazar.
 
 Kullanım:
-  uv run python -m eval.run_toolcall_eval --model octopus-v7 --label v0.7-baseline
-  uv run python -m eval.run_toolcall_eval --model octopus-v8 --label v0.8-pilot
+  uv run python -m eval.run_toolcall_eval --label v1.0-local
 
 Model, Ollama üzerinden GgufModel ile çağrılır (eğitim-birebir template). Rapor:
   eval/reports/toolcall_<label>_<tarih>.md  +  .json (ham skorlar, kıyas için).
@@ -15,6 +14,7 @@ from datetime import date
 from pathlib import Path
 
 from agent.backends.gguf_model import GgufModel
+from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
 from agent.messages import Message
 from eval.toolcall_eval import evaluate, format_report, load_cases
 
@@ -34,9 +34,9 @@ def _make_generate(model: str, tokenizer_dir: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v7", help="Ollama model adı")
-    ap.add_argument("--label", default="v0.7-baseline", help="rapor etiketi")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v7-tokenizer")
+    ap.add_argument("--model", default=DEFAULT_MODEL, help="Ollama model adı")
+    ap.add_argument("--label", default=DEFAULT_MODEL, help="rapor etiketi")
+    ap.add_argument("--tokenizer-dir", default=DEFAULT_TOKENIZER_DIR)
     ap.add_argument("--cases", default=CASES)
     args = ap.parse_args()
 

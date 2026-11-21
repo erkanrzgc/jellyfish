@@ -26,7 +26,7 @@ def test_general_task_is_unscoped():
     assert SubAgent("general").registry.allowed is None
 
 
-def test_scoped_subagent_self_corrects_after_scope_deny():
+def test_scoped_subagent_stops_after_scope_deny():
     # recon rolunde model ONCE yanlis (web=sqlmap) arac dener -> scope-deny -> SONRA dogru (nmap).
     # Garanti: executor rol-disi araci ASLA calistirmaz; rol-ici + kapsam-ici arac calisir.
     rec = _RecExec()
@@ -42,6 +42,8 @@ def test_scoped_subagent_self_corrects_after_scope_deny():
             return '```arac\n{"arac":"nmap","parametreler":{"hedef":"10.0.0.1"}}\n```'
         return "tarama tamam."
 
-    sub.run("portlari tara", gen, max_steps=5)
-    assert "nmap" in rec.ran          # rol-ici + kapsam-ici -> executor CALISTIRDI
+    result = sub.run("portlari tara", gen, max_steps=5)
+    assert result.status == "denied" and result.calls == []
+    assert calls["n"] == 1
+    assert "nmap" not in rec.ran
     assert "sqlmap" not in rec.ran    # rol-disi -> executor'a ulasmadan scope-deny

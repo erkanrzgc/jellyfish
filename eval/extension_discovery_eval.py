@@ -14,6 +14,7 @@ from dataclasses import dataclass, field
 from agent.loop import run_tool_loop
 from agent.messages import Message
 from agent.registry import ToolRegistry
+from agent.toolcall import parse_arac_calls
 
 
 @dataclass(frozen=True)
@@ -51,7 +52,7 @@ DISCOVERY_CASES: list[DiscoveryCase] = [
 
 
 def _called(res_calls, tool: str) -> bool:
-    """Model bu araci emit etti mi (policy reddetse bile executed'e islenir; emisyon metrigi)."""
+    """Emission metric; never infer execution from a model's attempted call."""
     return any(c.name == tool for c in res_calls)
 
 
@@ -66,12 +67,14 @@ def evaluate_discovery(
     called_off = called_on = 0
     outcomes: list[DiscoveryOutcome] = []
     for case in cases:
-        off_res = run_tool_loop([Message("user", case.prompt)], gen_off_factory(),
-                                registry_factory(), skills=None)
-        on_res = run_tool_loop([Message("user", case.prompt)], gen_on_factory(),
-                               registry_factory(), skills=None)
-        off = _called(off_res.calls, case.tool)
-        on = _called(on_res.calls, case.tool)
+        off_messages = [Message("user", case.prompt)]
+        on_messages = [Message("user", case.prompt)]
+        run_tool_loop(off_messages, gen_off_factory(), registry_factory(), skills=None)
+        run_tool_loop(on_messages, gen_on_factory(), registry_factory(), skills=None)
+        off = _called([c for m in off_messages if m.role == "assistant"
+                       for c in parse_arac_calls(m.content)], case.tool)
+        on = _called([c for m in on_messages if m.role == "assistant"
+                      for c in parse_arac_calls(m.content)], case.tool)
         called_off += int(off)
         called_on += int(on)
         outcomes.append(DiscoveryOutcome(case.prompt, case.tool, off, on))

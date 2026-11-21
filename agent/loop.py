@@ -8,7 +8,8 @@ from dataclasses import dataclass, field
 from agent.messages import Message
 from agent.registry import ToolRegistry
 from agent.skills import SkillLibrary
-from agent.toolcall import ToolCall, parse_arac_calls, strip_dusunce
+from agent.toolcall import ToolCall, parse_tool_reply, strip_dusunce
+from agent.execution import ExecutionResult
 
 Generate = Callable[[list[Message]], str]
 
@@ -18,6 +19,9 @@ class ToolLoopResult:
     final: str
     steps: int
     calls: list[ToolCall] = field(default_factory=list)
+    attempts: list[ExecutionResult] = field(default_factory=list)
+    status: str = "completed"
+    pending: list[ToolCall] = field(default_factory=list)
 
 
 def _inject_tool_skills(
@@ -40,15 +44,6 @@ def _inject_tool_skills(
     return injected
 
 
-def _execute(calls: list[ToolCall], registry: ToolRegistry,
-             executed: list[ToolCall], messages: list[Message]) -> None:
-    """Cagrilari calistir, sonucu tool mesaji olarak ekle, executed'e biriktir."""
-    for call in calls:
-        result = registry.invoke(call)
-        executed.append(call)
-        messages.append(Message("tool", result))
-
-
 def run_tool_loop(
     messages: list[Message],
     generate: Generate,
@@ -56,25 +51,52 @@ def run_tool_loop(
     *,
     max_steps: int = 10,
     skills: SkillLibrary | None = None,
+    approval_handler: Callable[[ExecutionResult], str | None] | None = None,
 ) -> ToolLoopResult:
+    if max_steps < 1:
+        raise ValueError("max_steps en az 1 olmali")
     executed: list[ToolCall] = []
+    attempts: list[ExecutionResult] = []
     shown: set[str] = set()
-    pending: list[ToolCall] = []   # enjeksiyon yuzunden ERTELENMIS, henuz calismamis cagrilar
+    repairs = 0
+
+    def stopped(status, detail, step, pending=None):
+        return ToolLoopResult("Gorev tamamlanmadi: " + detail, step, executed,
+                              attempts, status, pending or [])
+
     for step in range(max_steps):
-        reply = generate(messages)
+        try:
+            reply = generate(messages)
+        except Exception as error:
+            return stopped("failed", f"model hatasi ({type(error).__name__})", step + 1)
         messages.append(Message("assistant", reply))
-        calls = parse_arac_calls(reply)
+        if not isinstance(reply, str) or reply.startswith("HATA"):
+            return stopped("failed", str(reply), step + 1)
+        parsed = parse_tool_reply(reply, validate_catalog=True)
+        if parsed.errors:
+            if repairs:
+                return stopped("failed", "; ".join(parsed.errors), step + 1)
+            repairs += 1
+            messages.append(Message("tool", "GECERSIZ CAGRI: " + "; ".join(parsed.errors)
+                                    + ". Bir kez gecerli arac/parametreler JSON'u ile duzelt; hicbir arac calismadi."))
+            continue
+        calls = parsed.calls
         if not calls:
-            # Model arac uretmedi. Enjeksiyon sonrasi ertelenen cagri varsa FALLBACK: orijinali
-            # calistir (skill katmani OFF'tan KOTU OLAMAZ — monoton) ki gecerli cagri kaybolmasin.
-            if pending:
-                _execute(pending, registry, executed, messages)
-            return ToolLoopResult(final=strip_dusunce(reply), steps=step + 1, calls=executed)
+            return ToolLoopResult(final=strip_dusunce(reply), steps=step + 1,
+                                  calls=executed, attempts=attempts)
         if skills is not None and _inject_tool_skills(messages, calls, skills, shown):
-            pending = calls   # ertele: model duzeltsin; duzeltemezse fallback bunlari calistirir
             continue          # skill eklendi -> model cagriyi duzeltsin diye yeniden uret
-        _execute(calls, registry, executed, messages)
-        pending = []          # gercek calisma oldu -> ertelenen cagri kalmadi
-    final = generate(messages)
-    messages.append(Message("assistant", final))
-    return ToolLoopResult(final=strip_dusunce(final), steps=max_steps, calls=executed)
+        for index, call in enumerate(calls):
+            result = registry.invoke_result(call)
+            attempts.append(result)
+            if result.status == "awaiting_approval" and approval_handler is not None:
+                token = approval_handler(result)
+                if token:
+                    result = registry.invoke_result(call, approval_token=token)
+                    attempts.append(result)
+            messages.append(Message("tool", result.output))
+            if result.status != "executed":
+                return stopped(result.status, result.output, step + 1,
+                               calls[index:] if result.status == "awaiting_approval" else [])
+            executed.append(result.call)
+    return stopped("incomplete", "adim sinirina ulasildi", max_steps)

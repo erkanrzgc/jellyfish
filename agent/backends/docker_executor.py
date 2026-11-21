@@ -48,6 +48,12 @@ class DockerExecutor:
     timeout: int = _DEFAULT_TIMEOUT
     images: dict[str, str] = field(default_factory=lambda: dict(TOOL_IMAGES))
 
+    def preview(self, tool: str, params: dict) -> list[str]:
+        argv = build_argv(tool, params, self.network, self.distro, self.images)
+        if argv is None:
+            raise ValueError(f"'{tool}' icin docker imaji yok")
+        return argv
+
     def run(self, tool: str, params: dict) -> str:
         if get_spec(tool) is None:
             return f"HATA: bilinmeyen arac '{tool}'"
@@ -61,4 +67,6 @@ class DockerExecutor:
         except FileNotFoundError:
             return "HATA: wsl.exe bulunamadi (WSL kurulu mu?)"
         out = (proc.stdout or "") + (proc.stderr or "")
+        if proc.returncode:
+            return f"HATA: '{tool}' exit={proc.returncode}: {out.strip()}"
         return out.strip() or f"({tool} cikti uretmedi, exit={proc.returncode})"

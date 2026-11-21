@@ -1,7 +1,7 @@
 [project]
 name = "octopus"
 version = "0.0.1"
-description = "Türkçe-önce, siber güvenlik odaklı, sıfırdan eğitilen dil modeli"
+description = "Türkçe-önce, siber güvenlik odaklı ince ayarlı dil modeli ve ajan çalışma ortamı"
 requires-python = ">=3.10"
 dependencies = [
     "sentencepiece>=0.2.0",

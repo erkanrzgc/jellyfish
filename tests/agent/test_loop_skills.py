@@ -63,18 +63,26 @@ def test_injection_is_user_role_and_once_per_tool(tmp_path):
     assert len(res.calls) == 2                  # iki gercek nmap turu calisti
 
 
-def test_fallback_runs_original_when_model_drops_call_after_injection(tmp_path):
-    # v81 davranisi: model GECERLI cagriyi verir; skill enjekte edilince cagriyi YENIDEN
-    # yazmaz, duzyaziya duser -> ertelenen orijinal cagri KAYBOLMAMALI (FALLBACK calistirir).
-    # Mekanizma monoton: skill ACIK, OFF'tan kotu OLAMAZ.
+def test_dropped_call_after_skill_injection_is_never_executed(tmp_path):
+    # A call is a proposal, not a durable execution order. No re-emission means cancel.
     replies = iter([
         '```arac\n{"arac":"nmap","parametreler":{"hedef":"10.10.10.5","secenekler":"-sV -Pn"}}\n```',
         "Tamam, kilavuzu okudum; komut zaten dogru.",   # arac YOK -> re-emit basarisiz
     ])
     res = run_tool_loop([Message("user", "tara")], lambda m: next(replies), _reg(tmp_path),
                         skills=_lib_with_nmap())
-    assert len(res.calls) == 1                                   # orijinal cagri fallback ile calisti
-    assert res.calls[0].params.get("secenekler") == "-sV -Pn"
+    assert res.calls == []
+
+
+def test_refusal_after_skill_injection_never_executes_old_call(tmp_path):
+    replies = iter([
+        '```arac\n{"arac":"nmap","parametreler":{"hedef":"10.10.10.5"}}\n```',
+        "Bu işlemi yapmayacağım, isteği reddediyorum.",
+    ])
+    res = run_tool_loop([Message("user", "tara")], lambda messages: next(replies),
+                        _reg(tmp_path), skills=_lib_with_nmap())
+    assert res.calls == []
+    assert "reddediyorum" in res.final
 
 
 def test_fallback_not_triggered_when_correction_succeeds(tmp_path):

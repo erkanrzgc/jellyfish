@@ -52,7 +52,8 @@ def test_skills_on_fixes_fabricated_flag(tmp_path):
     assert off.valid_flags_after == 0      # skill yok -> uydurma flag kaldi
     assert on.valid_flags_after == 1       # skill var -> duzeldi
     # per-case detay dogru dolduruluyor: OFF cagirdi ama gecersiz, ON gecerli
-    assert off.outcomes[0].called is True and off.outcomes[0].valid is False
+    # Unvalidated flags are now rejected by policy rather than counted as executed.
+    assert off.outcomes[0].called is False and off.outcomes[0].valid is False
     assert on.outcomes[0].valid is True and on.outcomes[0].secenekler == "-sV"
 
 
