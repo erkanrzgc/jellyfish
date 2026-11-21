@@ -28,6 +28,7 @@ def test_invoke_unknown_tool(tmp_path):
     assert "bilinmeyen" in out.lower()
 
 
-def test_high_risk_blocked_without_approval(tmp_path):
-    out = _reg(tmp_path).invoke(ToolCall("msfvenom", {"secenekler": "-p x"}))
-    assert "onay" in out.lower()
+def test_unvalidated_high_risk_options_are_denied_before_approval(tmp_path):
+    result = _reg(tmp_path).invoke_result(ToolCall("msfvenom", {"secenekler": "-p x"}))
+    assert result.status == "denied" and result.proposal_id is None
+    assert "REDDEDILDI" in result.output

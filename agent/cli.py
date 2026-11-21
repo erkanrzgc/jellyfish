@@ -8,16 +8,27 @@ import argparse
 import re
 import sys
 from agent.backends.mock_model import ScriptedModel
+from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
 from agent.display import render_transcript
 from agent.loop import run_tool_loop
 from agent.messages import Message
 from agent.registry import ToolRegistry
 
 
+class DemoTranscript(str):
+    """Preserve the public string API while carrying the real completion status."""
+    def __new__(cls, text: str, status: str = "completed"):
+        instance = super().__new__(cls, text)
+        instance.status = status
+        return instance
+
+
 def _format_run(msgs: list[Message], result, label: str) -> str:
     """Döngü transcript'ini Claude Code tarzı render et + kısa özet altbilgisi (DRY: tüm demolar)."""
-    footer = f"(adim={result.steps}, cagri={len(result.calls)}) ({label})"
-    return f"{render_transcript(msgs, color=sys.stdout.isatty())}\n{footer}"
+    status = result.status
+    footer = f"(durum={status}, adim={result.steps}, cagri={len(result.calls)}) ({label if status == 'completed' else 'gorev tamamlanmadi'})"
+    final = "" if msgs and msgs[-1].role == "assistant" and msgs[-1].content == result.final else "\n" + result.final
+    return DemoTranscript(f"{render_transcript(msgs, color=sys.stdout.isatty())}{final}\n{footer}", status)
 
 # Docker container-adi grameri: harf/rakam ile baslar, ardindan [A-Za-z0-9_.-]. Enjeksiyon
 # kapisi — _docker_container_ip'te WSL komutuna yalniz bu deseni gecen ad girer.
@@ -32,6 +43,7 @@ def _scan_demo(executor, target: str, scope: list[str], secenekler: str, label: 
     """Tek scripted nmap turu: model arac blogu -> policy -> executor -> geri-besleme -> cevap."""
     from agent.policy import LabPolicy
     from agent.audit import AuditLog
+    from agent.chat import approval_prompt
     registry = ToolRegistry(LabPolicy(scope=scope), executor, AuditLog.default())
     model = ScriptedModel([
         f'Yetkili lab hedefini tararim.\n```arac\n'
@@ -39,7 +51,7 @@ def _scan_demo(executor, target: str, scope: list[str], secenekler: str, label: 
         "Tarama tamamlandi, sonucu yukarida yorumladim.",
     ])
     msgs = [Message("user", f"{target} yetkili lab hedefini tara")]
-    result = run_tool_loop(msgs, model, registry)
+    result = run_tool_loop(msgs, model, registry, approval_handler=approval_prompt(registry))
     return _format_run(msgs, result, label)
 
 
@@ -77,15 +89,17 @@ def _demo_registry(scope: list[str], executor, role: str | None = None) -> ToolR
     return ToolRegistry(pol, executor, AuditLog.default())
 
 
-def run_gguf_demo(scope: list[str] | None = None, model: str = "octopus-v7",
+def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
                   executor=None, target: str = "10.10.10.5", label: str = "gguf demo bitti",
-                  skills=_LOAD_SKILLS, role: str | None = None) -> str:
-    """GERCEK BEYIN: GgufModel (Ollama'da v0.7) dongüyü sürer. executor=None -> MockExecutor eller.
+                  skills=_LOAD_SKILLS, role: str | None = None,
+                  tokenizer_dir: str = DEFAULT_TOKENIZER_DIR) -> str:
+    """GERCEK BEYIN: GgufModel (Ollama) dongüyü sürer. executor=None -> MockExecutor eller.
     executor verilirse (ör. DockerExecutor) gercek beyin + gercek eller uctan-uca calisir.
     Ollama yoksa GgufModel net HATA stringi döner -> döngü çökmez, onu nihai cevap alir.
     skills: HIC gecilmezse SkillLibrary.load() ile skill katmani AKTIF (post-call correction);
     None -> kapali (geriye-uyum/test); <SkillLibrary> -> belirli kutuphane enjekte et."""
     from agent.backends.gguf_model import GgufModel
+    from agent.chat import approval_prompt
     if executor is None:
         from agent.executor import MockExecutor
         executor = MockExecutor()
@@ -107,10 +121,11 @@ def run_gguf_demo(scope: list[str] | None = None, model: str = "octopus-v7",
         from agent.catalog import extension_augmented_system_prompt
         base = extension_augmented_system_prompt(base)
     system_prompt = assemble_incident_aware_prompt(base, task)
-    gguf_kwargs: dict = {"model": model}
+    gguf_kwargs: dict = {"model": model, "tokenizer_dir": tokenizer_dir}
     if system_prompt != OCTOPUS_TOOL_SYSTEM_PROMPT:   # taban degistiyse (manifest veya RCA kurali)
         gguf_kwargs["system_prompt"] = system_prompt
-    result = run_tool_loop(msgs, GgufModel(**gguf_kwargs), registry, skills=skills)
+    result = run_tool_loop(msgs, GgufModel(**gguf_kwargs), registry, skills=skills,
+                           approval_handler=approval_prompt(registry))
     return _format_run(msgs, result, label)
 
 
@@ -134,9 +149,10 @@ def _docker_container_ip(container: str, distro: str = "kali-linux") -> str | No
     return m.group(1) if m else None
 
 
-def run_gguf_docker_demo(scope: list[str] | None = None, model: str = "octopus-v7",
-                         target: str = "octopus-target", network: str = "octopus-lab") -> str:
-    """UCTAN UCA (Model B): GERCEK v0.7 beyni + GERCEK docker-lab eli (container nmap).
+def run_gguf_docker_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
+                         target: str = "octopus-target", network: str = "octopus-lab",
+                         tokenizer_dir: str = DEFAULT_TOKENIZER_DIR) -> str:
+    """UCTAN UCA (Model B): GERCEK model + GERCEK docker-lab eli (container nmap).
     Model arac blogu uretir -> policy -> DockerExecutor lab aginda gercek nmap -> hedef.
     Hedefi IP'ye cevir (DNS-siz): model acik IP'yi onurlandirir, container adini kacirir."""
     from agent.backends.docker_executor import DockerExecutor
@@ -144,7 +160,8 @@ def run_gguf_docker_demo(scope: list[str] | None = None, model: str = "octopus-v
     real_target = ip or target                      # IP alinamazsa isme dus (DNS calisiyorsa olur)
     scope = scope or [real_target, "172.16.0.0/12", "172.30.0.0/24"]
     return run_gguf_demo(scope, model, executor=DockerExecutor(network=network),
-                         target=real_target, label="gguf+docker uctan uca bitti")
+                         target=real_target, label="gguf+docker uctan uca bitti",
+                         tokenizer_dir=tokenizer_dir)
 
 
 def run_assistant_demo(workspace: str | None = None, real_cmd: bool = False) -> str:
@@ -177,13 +194,20 @@ def run_assistant_demo(workspace: str | None = None, real_cmd: bool = False) -> 
     if real_cmd:  # gercek sandbox turunda run_cmd'yi de goster (docker yoksa zarifce HATA doner)
         steps.append(ToolCall(name="run_cmd", params={"komut": "echo octopus-sandbox && id && pwd"}))
     lines = [f"[workspace] {ws}"]
+    succeeded = True
     for c in steps:
-        lines.append(f"[{c.name}] -> {registry.invoke(c)}")
-    lines.append("(asistan demo bitti)")
-    return "\n".join(lines)
+        result = registry.invoke_result(c)
+        if result.status == "awaiting_approval" and result.proposal_id:
+            # CLI opt-in authorizes this fixed demo fixture, never arbitrary model calls.
+            result = registry.invoke_result(c, approval_token=registry.approve(result.proposal_id))
+        lines.append(f"[{c.name}] -> {result.output}")
+        expected_status = "denied" if c.params.get("yol") == "../kacis.txt" else "executed"
+        succeeded = succeeded and result.status == expected_status
+    lines.append("(asistan demo bitti)" if succeeded else "(gorev tamamlanmadi)")
+    return DemoTranscript("\n".join(lines), "completed" if succeeded else "failed")
 
 
-def main() -> None:
+def main() -> int:
     # Windows konsolu (cp1254) ó/Ç basamaz -> UTF-8.
     try:
         sys.stdout.reconfigure(encoding="utf-8")
@@ -193,30 +217,35 @@ def main() -> None:
     ap.add_argument("--scope", nargs="*", default=None, help="izinli IP/CIDR (mod varsayilanini ezer)")
     ap.add_argument("--real", action="store_true", help="RealExecutor: Kali WSL'de gercek nmap")
     ap.add_argument("--docker", action="store_true", help="DockerExecutor: lab docker aginda gercek nmap")
-    ap.add_argument("--gguf", action="store_true", help="GgufModel: Ollama'da gercek v0.7")
+    ap.add_argument("--gguf", action="store_true", help=f"GgufModel: Ollama'da {DEFAULT_MODEL}")
     ap.add_argument("--assistant", action="store_true", help="Asistan araclari demo (jailed file + policy)")
     ap.add_argument("--real-cmd", action="store_true", help="run_cmd'yi GERCEK docker sandbox'ta "
                     "calistir (alpine, --network none, --rm; Docker gerekir). --assistant ile.")
-    ap.add_argument("--model", default=None, help="Ollama model adi (varsayilan octopus-v7)")
+    ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model adi (varsayilan {DEFAULT_MODEL})")
+    ap.add_argument("--tokenizer-dir", default=DEFAULT_TOKENIZER_DIR,
+                    help=f"egitim chat-template dizini (varsayilan {DEFAULT_TOKENIZER_DIR})")
     ap.add_argument("--rol", default=None, help="rol-scoped subagent (containment): sadece o "
                     "domain'in araclari calisir (or. recon-scan/web/blue-server). Bos=tam katalog")
     ap.add_argument("--target", default=None, help="hedef (mod varsayilanini ezer)")
     ap.add_argument("--port", type=int, default=None, help="taranacak port (mod varsayilani)")
     args = ap.parse_args()
     if args.assistant:
-        print(run_assistant_demo(real_cmd=args.real_cmd))
+        output = run_assistant_demo(real_cmd=args.real_cmd)
     elif args.gguf and args.docker:
-        print(run_gguf_docker_demo(args.scope, args.model or "octopus-v7",
-                                   args.target or "octopus-target"))
+        output = run_gguf_docker_demo(args.scope, args.model,
+                                   args.target or "octopus-target", tokenizer_dir=args.tokenizer_dir)
     elif args.gguf:
-        print(run_gguf_demo(args.scope, args.model or "octopus-v7", role=args.rol))
+        output = run_gguf_demo(args.scope, args.model, role=args.rol,
+                            target=args.target or "10.10.10.5", tokenizer_dir=args.tokenizer_dir)
     elif args.docker:
-        print(run_docker_demo(args.target or "octopus-target", args.scope, port=args.port or 80))
+        output = run_docker_demo(args.target or "octopus-target", args.scope, port=args.port or 80)
     elif args.real:
-        print(run_real_demo(args.target or "127.0.0.1", args.scope, port=args.port or 8000))
+        output = run_real_demo(args.target or "127.0.0.1", args.scope, port=args.port or 8000)
     else:
-        print(run_demo(args.scope or ["10.10.10.0/24"]))
+        output = run_demo(args.scope or ["10.10.10.0/24"])
+    print(output)
+    return 0 if getattr(output, "status", "completed") == "completed" else 2
 
 
 if __name__ == "__main__":
-    main()
+    raise SystemExit(main())

@@ -46,7 +46,9 @@ _HARDENING: tuple[str, ...] = (
 def _wrap(komut: str) -> str:
     """Komutu alt-kabukta sarmala + çıktıyı (stdout+stderr) konteyner içinde kırp.
     Alt-kabuk `( ... )` metakarakterlere `{ ...; }`'den toleranslı (';;' hatası yok)."""
-    return f"( {komut} ) 2>&1 | head -c {_MAX_OUTPUT}"
+    return (f'octopus_output="${{TMPDIR:-/work}}/.octopus-output"; '
+            f'( {komut} ) > "$octopus_output" 2>&1; octopus_status=$?; '
+            f'head -c {_MAX_OUTPUT} "$octopus_output"; exit "$octopus_status"')
 
 
 def build_argv(komut: str, image: str = _DEFAULT_IMAGE,
@@ -68,6 +70,11 @@ class DockerSandboxExecutor:
     docker_prefix: list[str] = field(default_factory=lambda: ["docker"])
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run
 
+    def preview(self, tool: str, params: dict) -> list[str]:
+        if tool != "run_cmd":
+            raise ValueError("sandbox yalniz run_cmd destekler")
+        return build_argv(str(params["komut"]), self.image, self.docker_prefix)
+
     def run(self, tool: str, params: dict) -> str:
         if tool != "run_cmd":
             return f"HATA: sandbox yalnizca run_cmd calistirir ('{tool}' desteklenmiyor)"
@@ -85,6 +92,8 @@ class DockerSandboxExecutor:
         except FileNotFoundError:
             return "HATA: docker bulunamadi (Docker Desktop calisiyor mu?)"
         out = (proc.stdout or "") + (proc.stderr or "")
+        if proc.returncode:
+            return f"HATA: sandbox exit={proc.returncode}: {out.strip()}"
         return out.strip() or f"(cikti yok, exit={proc.returncode})"
 
     def _kill(self, name: str) -> None:

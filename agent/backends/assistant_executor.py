@@ -38,7 +38,7 @@ def _default_http_get(url: str) -> str:
 
 
 def _default_search(sorgu: str) -> str:
-    return f"[web_search backend tanimsiz] sorgu: {sorgu}"
+    return "HATA: web_search backend tanimsiz"
 
 
 class AssistantExecutor:
@@ -53,6 +53,15 @@ class AssistantExecutor:
     def _path(self, yol: str) -> Path:
         p = Path(yol)
         return p.resolve() if p.is_absolute() else (self.root / p).resolve()
+
+    def execution_backend(self, tool: str):
+        return self.sandbox if tool == "run_cmd" else self
+
+    def preview(self, tool: str, params: dict) -> list[str]:
+        if tool in {"read_file", "write_file", "edit_file", "list_dir", "grep"}:
+            return [tool, str(self._path(params.get("yol", "."))),
+                    __import__("json").dumps(params, sort_keys=True, ensure_ascii=False)]
+        return [tool, __import__("json").dumps(params, sort_keys=True, ensure_ascii=False)]
 
     def run(self, tool: str, params: dict) -> str:
         try:

@@ -19,3 +19,7 @@ class CompositeExecutor:
         if spec.domain == "asistan":
             return self.assistant.run(tool, params)
         return self.security.run(tool, params)
+
+    def executor_for(self, tool: str):
+        spec = get_spec(tool)
+        return self.assistant if spec and spec.domain == "asistan" else self.security

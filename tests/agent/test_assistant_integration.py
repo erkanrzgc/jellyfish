@@ -15,7 +15,11 @@ def _registry(tmp_path):
 
 def test_write_file_end_to_end(tmp_path):
     reg = _registry(tmp_path)
-    out = reg.invoke(ToolCall(name="write_file", params={"yol": "a.txt", "icerik": "veri"}))
+    call = ToolCall(name="write_file", params={"yol": "a.txt", "icerik": "veri"})
+    proposal = reg.invoke_result(call)
+    assert proposal.status == "awaiting_approval"
+    assert not (tmp_path / "a.txt").exists()
+    out = reg.invoke_result(call, approval_token=reg.approve(proposal.proposal_id)).output
     assert "yazildi" in out
     assert (tmp_path / "a.txt").read_text(encoding="utf-8") == "veri"
 

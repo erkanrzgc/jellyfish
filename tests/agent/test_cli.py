@@ -14,7 +14,7 @@ def test_demo_runs_end_to_end():
 def test_main_routes_gguf(monkeypatch, capsys):
     called: dict = {}
 
-    def _fake(scope, model="octopus-v7", role=None):
+    def _fake(scope, model, role=None, **kwargs):
         called["args"] = (scope, model)
         called["role"] = role
         return "GGUF_DEMO_OUT"
@@ -24,7 +24,7 @@ def test_main_routes_gguf(monkeypatch, capsys):
     cli.main()
     out = capsys.readouterr().out
     assert "GGUF_DEMO_OUT" in out
-    assert called["args"][1] == "octopus-v7"
+    assert called["args"][1] == "octopus-v10"
     assert called["role"] is None                    # --rol verilmedi -> tam katalog
 
 
@@ -32,7 +32,7 @@ def test_main_gguf_passes_rol(monkeypatch, capsys):
     """--rol recon-scan -> run_gguf_demo'ya role gecer (rol-scoped containment)."""
     called: dict = {}
 
-    def _fake(scope, model="octopus-v7", role=None):
+    def _fake(scope, model, role=None, **kwargs):
         called["role"] = role
         return "OUT"
 
@@ -67,7 +67,7 @@ def test_gguf_demo_activates_skills_by_default(monkeypatch):
 
     monkeypatch.setattr(gm, "GgufModel", lambda **k: (lambda msgs: "cevap"))
 
-    def _fake_loop(msgs, gen, registry, *, max_steps=10, skills=None):
+    def _fake_loop(msgs, gen, registry, *, max_steps=10, skills=None, approval_handler=None):
         captured["skills"] = skills
         return ToolLoopResult(final="ok", steps=1, calls=[])
 
@@ -85,7 +85,7 @@ def test_gguf_demo_skills_can_be_disabled(monkeypatch):
 
     monkeypatch.setattr(gm, "GgufModel", lambda **k: (lambda msgs: "cevap"))
 
-    def _fake_loop(msgs, gen, registry, *, max_steps=10, skills=None):
+    def _fake_loop(msgs, gen, registry, *, max_steps=10, skills=None, approval_handler=None):
         captured["skills"] = skills
         return ToolLoopResult(final="ok", steps=1, calls=[])
 
@@ -154,7 +154,7 @@ def test_main_routes_gguf_docker_combo(monkeypatch, capsys):
     """--gguf --docker birlikte -> gercek beyin + gercek docker eli uctan uca."""
     called: dict = {}
 
-    def _fake(scope, model="octopus-v7", target="octopus-target"):
+    def _fake(scope, model, target="octopus-target", **kwargs):
         called["args"] = (scope, model, target)
         return "GGUF_DOCKER_OUT"
 
@@ -163,4 +163,61 @@ def test_main_routes_gguf_docker_combo(monkeypatch, capsys):
     cli.main()
     out = capsys.readouterr().out
     assert "GGUF_DOCKER_OUT" in out
-    assert called["args"][1] == "octopus-v7"
+    assert called["args"][1] == "octopus-v10"
+
+
+def test_main_passes_explicit_model_tokenizer_and_target(monkeypatch):
+    captured = {}
+
+    def fake(scope, model, **kwargs):
+        captured.update(model=model, **kwargs)
+        return "ok"
+
+    monkeypatch.setattr(cli, "run_gguf_demo", fake)
+    monkeypatch.setattr(sys, "argv", [
+        "prog", "--gguf", "--model", "custom-model",
+        "--tokenizer-dir", "models/custom-tokenizer", "--target", "10.10.10.8",
+    ])
+    cli.main()
+    assert captured["model"] == "custom-model"
+    assert captured["tokenizer_dir"] == "models/custom-tokenizer"
+    assert captured["target"] == "10.10.10.8"
+
+
+def test_main_docker_passes_explicit_tokenizer(monkeypatch):
+    captured = {}
+
+    def fake(scope, model, target, **kwargs):
+        captured.update(model=model, target=target, **kwargs)
+        return "ok"
+
+    monkeypatch.setattr(cli, "run_gguf_docker_demo", fake)
+    monkeypatch.setattr(sys, "argv", [
+        "prog", "--gguf", "--docker", "--model", "custom-model",
+        "--tokenizer-dir", "models/custom-tokenizer", "--target", "my-lab",
+    ])
+    cli.main()
+    assert captured["model"] == "custom-model"
+    assert captured["tokenizer_dir"] == "models/custom-tokenizer"
+    assert captured["target"] == "my-lab"
+
+
+def test_gguf_demo_uses_evaluated_model_and_tokenizer(monkeypatch):
+    captured = _capture_gguf_kwargs(monkeypatch)
+    cli.run_gguf_demo(skills=None)
+    assert captured["model"] == "octopus-v10"
+    assert captured["tokenizer_dir"] == "models/octopus-v8-tokenizer"
+
+
+def test_gguf_docker_demo_preserves_tokenizer_override(monkeypatch):
+    captured = {}
+    monkeypatch.setattr(cli, "_docker_container_ip", lambda name: "172.30.0.2")
+
+    def fake(scope, model, **kwargs):
+        captured.update(model=model, **kwargs)
+        return "ok"
+
+    monkeypatch.setattr(cli, "run_gguf_demo", fake)
+    cli.run_gguf_docker_demo(tokenizer_dir="models/custom-tokenizer")
+    assert captured["model"] == "octopus-v10"
+    assert captured["tokenizer_dir"] == "models/custom-tokenizer"

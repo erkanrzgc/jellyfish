@@ -7,7 +7,8 @@ import re
 from agent.messages import Message
 from data.sft.normalize import flatten_tool_messages
 
-_ARAC_RE = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)
+_ARAC_RE = re.compile(r"```arac\b\s*(.*?)```", re.S | re.I)
+_ARAC_START = re.compile(r"```arac\b", re.I)
 _DUSUNCE_RE = re.compile(r"```dusunce\s*.*?```", re.S)
 
 
@@ -25,18 +26,61 @@ class ToolCall:
     params: dict
 
 
-def parse_arac_calls(text: str) -> list[ToolCall]:
-    """Metindeki her ```arac``` blogunu ToolCall'a cevir; bozuk/eksik blogu atla (asla cokme)."""
-    calls: list[ToolCall] = []
-    for m in _ARAC_RE.finditer(text or ""):
+@dataclass(frozen=True)
+class ParsedReply:
+    calls: list[ToolCall]
+    errors: list[str]
+
+
+def _unique_keys(pairs):
+    result = {}
+    for key, value in pairs:
+        if key in result:
+            raise ValueError(f"tekrarlanan alan: {key}")
+        result[key] = value
+    return result
+
+
+def parse_tool_reply(text: str, *, validate_catalog: bool = False) -> ParsedReply:
+    """Return valid calls AND errors; the runtime never executes a partly invalid reply."""
+    from agent.catalog import get_spec, parameter_error
+    calls, errors = [], []
+    matches = list(_ARAC_RE.finditer(text or ""))
+    if len(_ARAC_START.findall(text or "")) != len(matches):
+        errors.append("kapanmamis arac blogu")
+    for m in matches:
         try:
-            d = json.loads(m.group(1))
-        except json.JSONDecodeError:
+            d = json.loads(m.group(1), object_pairs_hook=_unique_keys,
+                           parse_constant=lambda value: (_ for _ in ()).throw(ValueError(value)))
+        except (ValueError, RecursionError):
+            errors.append("gecersiz arac JSON'u")
             continue
-        if not isinstance(d, dict) or "arac" not in d:
+        if not isinstance(d, dict) or set(d) - {"arac", "parametreler"}:
+            errors.append("arac blogu yalniz arac/parametreler alanlarini tasimali")
             continue
-        calls.append(ToolCall(name=str(d["arac"]), params=dict(d.get("parametreler") or {})))
-    return calls
+        name, params = d.get("arac"), d.get("parametreler", {})
+        if not isinstance(name, str) or not name.strip() or name != name.strip():
+            errors.append("arac adi bos olmayan bir metin olmali")
+            continue
+        if not isinstance(params, dict):
+            errors.append("parametreler bir JSON nesnesi olmali")
+            continue
+        if validate_catalog:
+            spec = get_spec(name)
+            if spec is None:
+                errors.append(f"bilinmeyen arac: {name}")
+                continue
+            issue = parameter_error(spec, params)
+            if issue:
+                errors.append(issue)
+                continue
+        calls.append(ToolCall(name=name, params=params))
+    return ParsedReply(calls, errors)
+
+
+def parse_arac_calls(text: str) -> list[ToolCall]:
+    """Compatibility scorer/parser: skip malformed blocks without coercing their values."""
+    return parse_tool_reply(text).calls
 
 
 def render_for_model(messages: list[Message]) -> list[dict]:

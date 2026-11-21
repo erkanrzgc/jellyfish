@@ -17,6 +17,7 @@ from datetime import date
 from pathlib import Path
 
 from agent.backends.gguf_model import GgufModel
+from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
 from agent.messages import Message
 from agent.subagent import run_task
 from agent.toolcall import parse_arac_calls
@@ -33,10 +34,10 @@ def _first_tool(reply: str) -> str | None:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v10")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--model", default=DEFAULT_MODEL)
+    ap.add_argument("--tokenizer-dir", default=DEFAULT_TOKENIZER_DIR)
     ap.add_argument("--cases", default=CASES)
-    ap.add_argument("--label", default="octopus-v10")
+    ap.add_argument("--label", default=DEFAULT_MODEL)
     args = ap.parse_args()
 
     cases = load_cases(args.cases)

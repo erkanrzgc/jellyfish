@@ -1,4 +1,4 @@
-"""GgufModel: gercek Octópus v0.7'yi Ollama uzerinden harness'e baglar (mock yerine).
+"""GgufModel: gercek Octópus'u Ollama uzerinden harness'e baglar (mock yerine).
 
 Prompt EGITIMLE BIREBIR: kaydedilmis tokenizer'in kendi chat template'i (system rolu +
 enable_thinking'i destekler) uygulanir, bastaki cift <bos> siyrilir (ADR 0003 tuzagi),
@@ -6,12 +6,15 @@ Ollama'ya RAW modda gonderilir. Ollama'nin kendi gemma2 template'ine GUVENILMEZ.
 from __future__ import annotations
 
 import json
+import hashlib
 import urllib.error
 import urllib.request
+import time
 from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from agent.messages import Message
+from agent.config import DEFAULT_MODEL, DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR
 from agent.toolcall import render_for_model
 from data.sft.normalize import ensure_system
 from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
@@ -22,10 +25,10 @@ _EOT = "<end_of_turn>"
 def load_tokenizer(tokenizer_dir: str):
     """transformers'i LAZY import et (yalniz --gguf yolu; torch weights yuklenmez)."""
     from transformers import AutoTokenizer
-    return AutoTokenizer.from_pretrained(tokenizer_dir)
+    return AutoTokenizer.from_pretrained(tokenizer_dir, local_files_only=True)
 
 
-def render_prompt(dicts: list[dict], tokenizer, *, bos_token: str = "<bos>") -> str:
+def render_prompt(dicts: list[dict], tokenizer, *, bos_token: str | None = "<bos>") -> str:
     """dict listesi -> egitim-birebir prompt metni (tokenize=False, add_generation_prompt=True)."""
     try:
         t = tokenizer.apply_chat_template(
@@ -38,45 +41,87 @@ def render_prompt(dicts: list[dict], tokenizer, *, bos_token: str = "<bos>") -> 
     return t
 
 
+@dataclass(frozen=True)
+class GenerationResult:
+    text: str = ""
+    error: str | None = None
+    done_reason: str | None = None
+    truncated: bool = False
+    metadata: dict = field(default_factory=dict)
+
+    def display_text(self) -> str:
+        if self.error:
+            return self.error
+        if self.truncated:
+            return "HATA: model yaniti kesildi; gorev tamamlanmadi. Kismi yanit:\n" + self.text.strip()
+        return self.text.strip()
+
+
 @dataclass
 class GgufModel:
-    """Ollama uzerinden gercek v0.7. __call__ mock ScriptedModel ile ayni arayuz."""
-    model: str = "octopus-v7"
+    """Ollama uzerinden model. __call__ mock ScriptedModel ile ayni arayuz."""
+    model: str = DEFAULT_MODEL
     host: str = "http://localhost:11434"
-    tokenizer_dir: str = "models/octopus-v7-tokenizer"
+    tokenizer_dir: str = DEFAULT_TOKENIZER_DIR
     system_prompt: str = OCTOPUS_TOOL_SYSTEM_PROMPT  # araç-farkında: model ```arac``` bloğu basar
     temperature: float = 0.6
     top_p: float = 0.95
     top_k: int = 20
     repeat_penalty: float = 1.15
     num_predict: int = 512
+    seed: int = 3407
+    num_ctx: int = 4096
+    stop_tokens: tuple[str, ...] = (_EOT,)
+    bos_token: str | None = "<bos>"
+    native_tool_roles: bool = False
+    modelfile: str = DEFAULT_MODELFILE
     timeout: int = 180
     renderer: Callable[[list[dict]], str] | None = None  # test enjeksiyonu (transformers'i atlar)
     _tokenizer: object = field(default=None, init=False, repr=False)
 
     def __call__(self, messages: list[Message]) -> str:
-        dicts = ensure_system(render_for_model(messages), self.system_prompt)
+        result = self.generate_result(messages)
+        return result.display_text()
+
+    def generation_settings(self) -> dict:
+        return {"temperature": self.temperature, "top_p": self.top_p, "top_k": self.top_k,
+                "repeat_penalty": self.repeat_penalty, "num_predict": self.num_predict,
+                "seed": self.seed, "num_ctx": self.num_ctx, "stop": list(self.stop_tokens)}
+
+    def generate_result(self, messages: list[Message]) -> GenerationResult:
+        started = time.perf_counter()
+        dicts = [m.to_dict() for m in messages] if self.native_tool_roles else render_for_model(messages)
+        dicts = ensure_system(dicts, self.system_prompt)
         try:
             prompt = self._render(dicts)
         except Exception as e:  # noqa: BLE001 -- dongu asla cokmemeli
-            return f"HATA: prompt/tokenizer hazirlanamadi ({type(e).__name__}: {e})"
-        return self._generate(prompt)
+            return GenerationResult(error=f"HATA: prompt/tokenizer hazirlanamadi ({type(e).__name__}: {e})",
+                                    metadata={"settings": self.generation_settings(),
+                                              "elapsed_seconds": time.perf_counter() - started})
+        return self._generate_result(prompt, started)
 
     def _render(self, dicts: list[dict]) -> str:
         if self.renderer is not None:
             return self.renderer(dicts)
         if self._tokenizer is None:
             self._tokenizer = load_tokenizer(self.tokenizer_dir)
-        return render_prompt(dicts, self._tokenizer)
+        return render_prompt(dicts, self._tokenizer, bos_token=self.bos_token)
 
     def _generate(self, prompt: str) -> str:
+        result = self._generate_result(prompt, time.perf_counter())
+        return result.display_text()
+
+    def _generate_result(self, prompt: str, started: float) -> GenerationResult:
+        settings = self.generation_settings()
+        fingerprint_text = prompt if isinstance(prompt, str) else json.dumps(prompt, ensure_ascii=False)
+        metadata = {"settings": settings, "model": self.model, "host": self.host,
+                    "prompt_sha256": hashlib.sha256(fingerprint_text.encode("utf-8")).hexdigest()}
+        def failure(error, text=""):
+            metadata["elapsed_seconds"] = time.perf_counter() - started
+            return GenerationResult(text=text, error=error, metadata=metadata)
         body = json.dumps({
             "model": self.model, "prompt": prompt, "raw": True, "stream": False,
-            "options": {
-                "temperature": self.temperature, "top_p": self.top_p, "top_k": self.top_k,
-                "repeat_penalty": self.repeat_penalty, "num_predict": self.num_predict,
-                "stop": [_EOT],
-            },
+            "options": settings,
         }).encode("utf-8")
         req = urllib.request.Request(
             f"{self.host}/api/generate", data=body,
@@ -86,12 +131,25 @@ class GgufModel:
                 data = json.loads(resp.read().decode("utf-8"))
         except urllib.error.HTTPError as e:  # URLError alt-sinifi -> ONCE yakala
             if e.code == 404:
-                return (f"HATA: '{self.model}' Ollama'da yok "
-                        f"(once: ollama create {self.model} -f models/Modelfile)")
-            return f"HATA: Ollama HTTP {e.code}"
+                modelfile = self.modelfile if self.model == DEFAULT_MODEL or self.modelfile != DEFAULT_MODELFILE else "<Modelfile>"
+                return failure(f"HATA: '{self.model}' Ollama'da yok "
+                               f"(once: ollama create {self.model} -f {modelfile})")
+            return failure(f"HATA: Ollama HTTP {e.code}")
         except TimeoutError:
-            return f"HATA: Ollama zaman asimi ({self.timeout}s)"
+            return failure(f"HATA: Ollama zaman asimi ({self.timeout}s)")
         except (urllib.error.URLError, OSError) as e:
-            return (f"HATA: Ollama'ya baglanilamadi ({e}); "
-                    f"'ollama serve' calisiyor mu?")
-        return (data.get("response") or "").strip()
+            return failure(f"HATA: Ollama'ya baglanilamadi ({e}); 'ollama serve' calisiyor mu?")
+        except (ValueError, UnicodeError) as e:
+            return failure(f"HATA: gecersiz Ollama yaniti ({e})")
+        if not isinstance(data, dict):
+            return failure("HATA: Ollama yaniti bir nesne olmali")
+        metadata["response"] = {key: value for key, value in data.items() if key != "response"}
+        metadata["elapsed_seconds"] = time.perf_counter() - started
+        if data.get("error"):
+            return failure(f"HATA: Ollama: {data['error']}",
+                           data.get("response") if isinstance(data.get("response"), str) else "")
+        if not isinstance(data.get("response"), str):
+            return failure("HATA: Ollama yanit metni eksik/gecersiz")
+        truncated = data.get("done_reason") == "length" or data.get("done") is False
+        return GenerationResult(text=data["response"], done_reason=data.get("done_reason"),
+                                truncated=truncated, metadata=metadata)

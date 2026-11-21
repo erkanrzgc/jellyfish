@@ -35,6 +35,11 @@ class RealExecutor:
     distro: str = "kali-linux"
     timeout: int = _DEFAULT_TIMEOUT
 
+    def preview(self, tool: str, params: dict) -> list[str]:
+        if tool != "nmap":
+            raise ValueError(f"'{tool}' icin dogrulanmis gercek adapter yok")
+        return build_argv(tool, params, self.distro)
+
     def run(self, tool: str, params: dict) -> str:
         if get_spec(tool) is None:
             return f"HATA: bilinmeyen arac '{tool}'"
@@ -46,4 +51,6 @@ class RealExecutor:
         except FileNotFoundError:
             return "HATA: wsl.exe bulunamadi (WSL kurulu mu?)"
         out = (proc.stdout or "") + (proc.stderr or "")
+        if proc.returncode:
+            return f"HATA: '{tool}' exit={proc.returncode}: {out.strip()}"
         return out.strip() or f"({tool} cikti uretmedi, exit={proc.returncode})"

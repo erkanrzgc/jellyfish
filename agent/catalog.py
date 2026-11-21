@@ -29,6 +29,26 @@ def get_spec(name: str) -> ToolSpec | None:
     return CATALOG.get(name)
 
 
+def parameter_error(spec: ToolSpec, params) -> str | None:
+    """The current catalog wire format uses named textual parameter values."""
+    if not isinstance(params, dict) or set(params) - set(spec.params):
+        return f"'{spec.name}' icin bilinmeyen/gecersiz parametre"
+    if any(not isinstance(value, str) for value in params.values()):
+        return f"'{spec.name}' parametre degerleri metin olmali"
+    required = {
+        "read_file": ("yol",), "write_file": ("yol", "icerik"),
+        "edit_file": ("yol", "eski", "yeni"), "grep": ("desen",),
+        "run_cmd": ("komut",), "web_fetch": ("url",), "web_search": ("sorgu",),
+    }.get(spec.name, ())
+    for key in required:
+        if key not in params or (key not in {"icerik", "yeni"} and not params[key].strip()):
+            return f"'{spec.name}' icin zorunlu parametre eksik: {key}"
+    target_keys = {"hedef", "url", "hedef_url", "domain"}.intersection(spec.params)
+    if target_keys and not any(params.get(key) for key in target_keys):
+        return f"'{spec.name}' icin hedef parametresi eksik"
+    return None
+
+
 def target_value(params: dict) -> str | None:
     """Cagri parametrelerinden AG hedefini (scope-degerlendirilebilir) cikar; yoksa None.
     TEK KAYNAK: policy (scope kilidi) + executor'lar (gercek komut) buradan okur."""
