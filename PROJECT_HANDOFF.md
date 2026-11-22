@@ -7,6 +7,16 @@
 **2026-11-21 status (Claude):** re-verified before commit: `uv run pytest -q` → 436 passed; `uv run python -m agent.smoke` → 3/3. The count rose from 340 because the cybersecurity-reliability work packages (runtime failures, execution approval, 60-case eval + runner, conversation interface; see `docs/superpowers/plans/2026-10-23-cybersecurity-reliability.md`) landed after the section below was written. On 2026-11-07 a user-approved disk cleanup removed every local GGUF except `octopus-v10` (from `models/` and Ollama); v0.8.1/v0.9/v1.1 GGUFs remain on Hugging Face, v0.7/v0.8/v1.2 only as local adapters in `checkpoints_sft/`. Separate track: the EVREN (SSB) LLM API is free until 2026-12-01 and is the candidate teacher for preference data; its training GPUs are image-only, so any LLM training still needs another provider.
 
 **2026-11-21 preference-data sprint (Claude, branch `feat/evren-preference-data`, commit `9c2b18c`, not yet pushed):** plan `docs/superpowers/plans/2026-11-21-evren-preference-data.md`; code `data/dpo/` (57 tests; suite 493 passed). Stages: `python -m data.dpo.prompts` (EVREN teacher, running) → `python -m data.dpo.rejected` (local Ollama `octopus-v10`, ~18 s/prompt, needs the PC on for hours) → `python -m data.dpo.chosen` (EVREN deepseek) → `python -m data.dpo.build`. All stages resume; outputs are in gitignored `data/dpo/out/`. The key is read from `EVREN_API_KEY`/`HKCU\Environment` and must never be printed. Deadline 2026-11-30 (free EVREN inference ends 2026-12-01). No training or spending is authorized in this sprint.
+**2026-11-22 harness + base bake-off (Claude, autonomous, same branch, not pushed):** master plan and live
+progress log: `docs/superpowers/plans/2026-11-22-harness-and-base-bakeoff.md` (read it first). Commits
+`5a8ae6b` constrained call repair (`agent/constrained.py`, `GgufModel.constrain_calls`, default repairs only
+catalog-named calls; invented-name repair behind `repair_unknown_names`), `65e43bf` router Turkish-letter fold,
+`239cd32`/`44d1024` stock-model native-tool bake-off on the 212 DPO val cases (`eval/native_tool_bakeoff.py`),
+`e891f48` DPO trainer (`train/dpo_bf16.py`, BOS pre-flight), `bda1047` pod recipe `cloud/pod_dpo_v13.sh`
+(v1.0 SFT repro + DPO + Q4, watchdog, no HF token on pod). v1.0 SFT data reproduced exactly at `fb2e0c9`
+(train=3231, sha e633b060…). Suite 532 passed. Key correction: v10 `catalog` failures are mostly invalid
+parameter keys (118) rather than invented names (99). Results land in `data/dpo/out/repair_replay.log` and
+`data/dpo/out/bakeoff_summary.json`. Spending rule: a RunPod run only on a clear winner, cap $3 total.
 **Workspace:** `C:\Users\erkanrzgc\Desktop\Octopus`.
 **User request:** improve runtime/demo reliability after the project review and maintain one Markdown handoff so either agent can continue without losing context.
 

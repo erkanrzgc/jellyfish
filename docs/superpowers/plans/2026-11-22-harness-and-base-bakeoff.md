@@ -53,25 +53,32 @@ autonomously on everything that costs $0 and stops at the money gate.
   320-case stratified sample, same labels). qwen3:8b smoke: correct `dig` call, prompt 6.7k tokens.
 - Task 6 DONE: `build_sft --source distill seed_tr tools --seed-repeat 3` at `fb2e0c9` -> train=3231, sha
   e633b060..., deterministic across two runs. v1.0 SFT is reproducible for a pod run.
+- Task 3 decision (measured, $0): no top-k tool subset for v10. Keyword router recall 78% would hide the right
+  tool in 22% of routed cases, and a prompt-side tool list is the same distribution-shift risk as the global RCA
+  rule. Catalog has no tool descriptions for a better retriever. Stock models get the full catalog (6.7k tokens
+  fits num_ctx 16k).
+- Task 7: `e891f48` DPO trainer (render identical to SFT, single-BOS pre-flight, tested on the real tokenizer);
+  `bda1047` `cloud/pod_dpo_v13.sh`. Estimate ~3.2 h A40 (SFT 1570 steps ~2.2 h + DPO ~0.4 h + GGUF ~0.5 h)
+  ~= $1.4 at ~$0.44/h; watchdog stops the pod at 5 h (<= ~$2.2). Pairs need `chosen` (~9 h, EVREN) first.
 - Background chain: `refs/after_rejected_v2.sh` (rejected end -> repair replay on 0.30.0 -> Ollama upgrade ->
   gemma4 pulls) then `refs/after_pulls_bakeoff.sh` (format re-probe -> bake-off qwen3:8b, gemma4:e4b,
   gemma4:12b -> `data/dpo/out/bakeoff_summary.json`). Logs: pulls.log, repair_replay.log, bakeoff.log.
 
 ## Tasks
 
-1. [ ] **Mingbird review** (clone into a separate dir outside the repo): read tool-subset routing, completion
+1. [x] **Mingbird review** (clone into a separate dir outside the repo): read tool-subset routing, completion
    checks, call rescue/repair. Write a short pattern note; adapt patterns, do not copy wholesale.
-2. [ ] **Constrained tool names** in the harness: Ollama `format` JSON schema with an enum of catalog names
+2. [x] **Constrained tool names** in the harness: Ollama `format` JSON schema with an enum of catalog names
    for the `arac` call (or grammar), behind a flag. TDD.
-3. [ ] **Tool-subset retrieval**: per request show the model only the top-k relevant tools (+ assistant tools),
+3. [x] **Tool-subset retrieval** (measured, not adopted; see log): per request show the model only the top-k relevant tools (+ assistant tools),
    deterministic (keyword/embedding). Measure router accuracy separately. TDD.
-4. [ ] **Call rescue/repair**: parse plain-text or near-JSON calls, map near-miss names to catalog names only
+4. [x] **Call rescue/repair** (constrained repair; ```bash advice rescue rejected as unsafe): parse plain-text or near-JSON calls, map near-miss names to catalog names only
    when unambiguous. TDD.
 5. [ ] **Bake-off** (after `rejected` finishes, $0, local): same held-out cases, temperature 0:
    - v10 baseline vs v10 + tasks 2-4
    - stock Qwen3-8B and stock Gemma-4 (E4B or 12B) with native tool calling + the same harness
    Report structural metrics + a Turkish quality spot-check. Large models optionally on free Colab T4.
-6. [ ] **v1.0 data reproducibility check** (only matters if v10 stays the base): rebuild data at `fb2e0c9`,
+6. [x] **v1.0 data reproducibility check** (only matters if v10 stays the base): rebuild data at `fb2e0c9`,
    confirm train=3231.
 7. [ ] **Training prep**: DPO trainer (TRL, bf16 LoRA, beta ~0.1, 1 epoch) smoke-tested on a tiny model; data
    converter from ```arac``` to the winner's native tool-call format if a new base wins; one pod script with a
