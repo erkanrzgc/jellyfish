@@ -1,0 +1,166 @@
+"""Base-model bake-off: stock models with native tool calling vs v1.0, scored with the SAME labels.
+
+Stock models get every catalog tool as an Ollama native tool (/api/chat `tools`). Their tool_calls are
+converted to ```arac``` text, so `data.dpo.common.classify_failures` scores every arm identically.
+v1.0 arms are read from stored replies (rejected.jsonl, repair_replay.jsonl) on the same sample ids.
+
+    uv run python -m eval.native_tool_bakeoff --model qwen3:8b       # resumable
+    uv run python -m eval.native_tool_bakeoff --summary
+"""
+from __future__ import annotations
+
+import argparse
+import collections
+import json
+import logging
+import random
+import time
+import urllib.request
+from pathlib import Path
+
+from agent.catalog import CATALOG
+from agent.constrained import required_keys, repair_prefix
+from data.dpo.common import OUT_DIR, append_jsonl, classify_failures, read_jsonl
+from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+
+log = logging.getLogger(__name__)
+BAKEOFF_DIR = OUT_DIR / "bakeoff"
+SAMPLE_SIZE = 320
+SAMPLE_SEED = 7
+NATIVE_SYSTEM_PROMPT = OCTOPUS_SYSTEM_PROMPT + (
+    "\n\nBir işi yapmak için araç gerekiyorsa verilen araçlardan uygun olanı çağır; araç gerekmiyorsa "
+    "(kavram sorusu, yapıştırılan çıktının yorumu, reddedilmesi gereken istek) araç çağırmadan Türkçe yanıt ver.")
+
+
+def native_tools() -> list[dict]:
+    tools = []
+    for name, spec in CATALOG.items():
+        parameters = {"type": "object", "properties": {key: {"type": "string"} for key in spec.params},
+                      "required": required_keys(name, spec.params)}
+        tools.append({"type": "function", "function": {
+            "name": name, "description": f"{name} ({spec.domain}, risk: {spec.risk})", "parameters": parameters}})
+    return tools
+
+
+def _text(value: object) -> object:
+    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False) \
+        if isinstance(value, (dict, list)) else str(value)
+
+
+def to_arac_reply(message: dict) -> str:
+    """Native tool_calls -> ```arac``` blocks; unparseable arguments stay visibly invalid."""
+    parts = [(message.get("content") or "").strip()]
+    for call in message.get("tool_calls") or []:
+        function = call.get("function", {})
+        arguments = function.get("arguments", {})
+        if isinstance(arguments, str):
+            try:
+                arguments = json.loads(arguments)
+            except ValueError:
+                parts.append(f"```arac\n{{\"arac\": {json.dumps(function.get('name'))}, {arguments}\n```")
+                continue
+        if isinstance(arguments, dict):
+            arguments = {key: _text(value) for key, value in arguments.items()}
+        body = json.dumps({"arac": function.get("name"), "parametreler": arguments}, ensure_ascii=False)
+        parts.append(f"```arac\n{body}\n```")
+    return "\n".join(part for part in parts if part)
+
+
+def select_sample(cases: list[dict], size: int = SAMPLE_SIZE, seed: int = SAMPLE_SEED) -> list[str]:
+    """Proportional stratified sample over (category, allow_tools); deterministic for a given seed."""
+    strata = collections.defaultdict(list)
+    for case in cases:
+        strata[(case["category"], bool(case.get("allow_tools")))].append(case["id"])
+    rng = random.Random(seed)
+    chosen = []
+    for key in sorted(strata):
+        ids = sorted(strata[key])
+        rng.shuffle(ids)
+        chosen.extend(ids[:max(1, round(size * len(ids) / len(cases)))])
+    return sorted(chosen)[:size] if len(chosen) > size else sorted(chosen)
+
+
+def chat(host: str, model: str, prompt: str, *, num_ctx: int, timeout: int = 600) -> dict:
+    body = {"model": model, "stream": False, "think": False, "tools": native_tools(),
+            "messages": [{"role": "system", "content": NATIVE_SYSTEM_PROMPT}, {"role": "user", "content": prompt}],
+            "options": {"temperature": 0, "seed": 3407, "num_ctx": num_ctx, "num_predict": 1024}}
+    request = urllib.request.Request(host.rstrip("/") + "/api/chat", data=json.dumps(body).encode("utf-8"),
+                                     headers={"Content-Type": "application/json"})
+    with urllib.request.urlopen(request, timeout=timeout) as response:
+        return json.loads(response.read().decode("utf-8"))
+
+
+def run_model(model: str, cases: dict, ids: list[str], host: str, num_ctx: int) -> dict:
+    out = BAKEOFF_DIR / f"{model.replace(':', '_').replace('/', '_')}.jsonl"
+    done = {row["id"] for row in read_jsonl(out)}
+    stats = collections.Counter()
+    for case_id in ids:
+        if case_id in done:
+            continue
+        started = time.perf_counter()
+        try:
+            data = chat(host, model, cases[case_id]["prompt"], num_ctx=num_ctx)
+        except Exception as error:  # noqa: BLE001 -- one bad case must not stop the run
+            log.warning("%s: %s", case_id, error)
+            stats["error"] += 1
+            continue
+        message = data.get("message", {})
+        append_jsonl(out, {"id": case_id, "model": model, "reply": to_arac_reply(message), "message": message,
+                           "prompt_eval_count": data.get("prompt_eval_count"), "done_reason": data.get("done_reason"),
+                           "elapsed_seconds": time.perf_counter() - started})
+        stats["done"] += 1
+        if stats["done"] % 25 == 0:
+            log.info("%s %s", model, dict(stats))
+    return dict(stats)
+
+
+def _score(cases: dict, replies: dict[str, str], ids: list[str]) -> dict:
+    labels, failed = collections.Counter(), 0
+    scored = [case_id for case_id in ids if case_id in replies]
+    for case_id in scored:
+        found = classify_failures(cases[case_id], replies[case_id])
+        labels.update(found)
+        failed += bool(found)
+    tool_ids = [i for i in scored if cases[i].get("allow_tools")]
+    no_tool_ids = [i for i in scored if not cases[i].get("allow_tools")]
+    def passed(group):
+        return sum(not classify_failures(cases[i], replies[i]) for i in group)
+    return {"scored": len(scored), "passed": len(scored) - failed, "tool_cases_passed": f"{passed(tool_ids)}/{len(tool_ids)}",
+            "no_tool_cases_passed": f"{passed(no_tool_ids)}/{len(no_tool_ids)}", "labels": dict(labels.most_common())}
+
+
+def summary(cases: dict, ids: list[str]) -> dict:
+    baseline = {row["id"]: row["raw_reply"] for row in read_jsonl(OUT_DIR / "rejected.jsonl")}
+    fixes = {row["id"]: row for row in read_jsonl(OUT_DIR / "repair_replay.jsonl")}
+    repaired = {}
+    for case_id, reply in baseline.items():
+        fix = fixes.get(case_id)
+        use = fix and fix["applied"] and repair_prefix(reply) is not None
+        repaired[case_id] = fix["repaired_reply"] if use else reply
+    report = {"sample_ids": len(ids), "v10": _score(cases, baseline, ids),
+              "v10+repair": _score(cases, repaired, ids)}
+    for path in sorted(BAKEOFF_DIR.glob("*.jsonl")):
+        rows = read_jsonl(path)
+        report[rows[0]["model"] if rows else path.stem] = _score(cases, {r["id"]: r["reply"] for r in rows}, ids)
+    return report
+
+
+def main(argv: list[str] | None = None) -> int:
+    parser = argparse.ArgumentParser(description=__doc__)
+    parser.add_argument("--model", action="append", default=[])
+    parser.add_argument("--host", default="http://127.0.0.1:11434")
+    parser.add_argument("--num-ctx", type=int, default=16384)
+    parser.add_argument("--summary", action="store_true")
+    args = parser.parse_args(argv)
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
+    ids = select_sample(list(cases.values()))
+    if not args.summary:
+        for model in args.model:
+            print(json.dumps(run_model(model, cases, ids, args.host, args.num_ctx), ensure_ascii=False))
+    print(json.dumps(summary(cases, ids), ensure_ascii=False, indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

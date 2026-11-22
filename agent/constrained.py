@@ -23,7 +23,7 @@ _BLOCK_END = "```"
 _NAME = re.compile(r'"arac"\s*:\s*"([^"]*)"')
 
 
-def _required_keys(name: str, params: tuple[str, ...]) -> list[str]:
+def required_keys(name: str, params: tuple[str, ...]) -> list[str]:
     if name in REQUIRED_PARAMS:
         return list(REQUIRED_PARAMS[name])
     targets = [key for key in params if key in TARGET_KEYS]
@@ -39,7 +39,7 @@ def call_schema(names: Iterable[str] | None = None) -> dict:
         params = CATALOG[name].params
         body: dict = {"type": "object", "properties": {key: {"type": "string"} for key in params},
                       "additionalProperties": False}
-        required = _required_keys(name, params)
+        required = required_keys(name, params)
         if required:
             body["required"] = required
         branches.append({"type": "object", "properties": {"arac": {"const": name}, "parametreler": body},
