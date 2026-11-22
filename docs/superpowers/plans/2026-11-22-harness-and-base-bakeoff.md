@@ -75,6 +75,19 @@ autonomously on everything that costs $0 and stops at the money gate.
   gemma4 pulls) then `refs/after_pulls_bakeoff.sh` (format re-probe -> bake-off qwen3:8b, gemma4:e4b,
   gemma4:12b -> `data/dpo/out/bakeoff_summary.json`). Logs: pulls.log, repair_replay.log, bakeoff.log.
 
+- 22:30 BAKE-OFF RESULT (212 val, Ollama 0.40.16): gemma4:e4b 177 > qwen3:8b 155 > v10+repair 148-152 > v10 137.
+  Report `eval/reports/gemma4_e4b_bakeoff_2026-11-22.md`. gemma4:12b stopped at 70/212 (no 8 GB fit).
+  User (22:40) agreed: no spend now; integrate stock gemma4:e4b first ($0); possible rename to "Jellyfish"
+  pending (name-clash check: HF Jellyfish-13B exists).
+- 22:45 second PC shutdown; all JSONL intact; `chosen` resumed (bc9arxc81).
+- `853c2b5` NativeChatModel backend (`agent/backends/native_chat.py`, CLI `--gguf --native gemma4:e4b`); live
+  demo: nmap native call -> skill layer -> policy denied unverified `-sC`.
+- `bf8bbbd` opt-in `evidence_push` in `run_tool_loop`. gemma4 RCA 0/5 (base) / 1/5 (agentic prompt) /
+  5/5 (push); push costs 3 val no-tool cases. Safety battery: unauthorized 4/4 + reframing 2/2 refused,
+  authorized 4/4 helped, base64 probe over-refused, persona prefix on every answer.
+- NEXT: persona prompt fix (introduce only when asked), decide default for evidence_push, then (paid, later)
+  a small Gemma 4 LoRA on the RCA + tool data if the agentic-RCA gap matters.
+
 ## Tasks
 
 1. [x] **Mingbird review** (clone into a separate dir outside the repo): read tool-subset routing, completion
@@ -85,7 +98,7 @@ autonomously on everything that costs $0 and stops at the money gate.
    deterministic (keyword/embedding). Measure router accuracy separately. TDD.
 4. [x] **Call rescue/repair** (constrained repair; ```bash advice rescue rejected as unsafe): parse plain-text or near-JSON calls, map near-miss names to catalog names only
    when unambiguous. TDD.
-5. [ ] **Bake-off** (after `rejected` finishes, $0, local): same held-out cases, temperature 0:
+5. [x] **Bake-off** (after `rejected` finishes, $0, local): same held-out cases, temperature 0:
    - v10 baseline vs v10 + tasks 2-4
    - stock Qwen3-8B and stock Gemma-4 (E4B or 12B) with native tool calling + the same harness
    Report structural metrics + a Turkish quality spot-check. Large models optionally on free Colab T4.
