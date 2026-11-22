@@ -92,7 +92,7 @@ def _demo_registry(scope: list[str], executor, role: str | None = None) -> ToolR
 def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
                   executor=None, target: str = "10.10.10.5", label: str = "gguf demo bitti",
                   skills=_LOAD_SKILLS, role: str | None = None,
-                  tokenizer_dir: str = DEFAULT_TOKENIZER_DIR) -> str:
+                  tokenizer_dir: str = DEFAULT_TOKENIZER_DIR, native_model: str | None = None) -> str:
     """GERCEK BEYIN: GgufModel (Ollama) dongüyü sürer. executor=None -> MockExecutor eller.
     executor verilirse (ör. DockerExecutor) gercek beyin + gercek eller uctan-uca calisir.
     Ollama yoksa GgufModel net HATA stringi döner -> döngü çökmez, onu nihai cevap alir.
@@ -120,6 +120,14 @@ def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
     if skills is not None:
         from agent.catalog import extension_augmented_system_prompt
         base = extension_augmented_system_prompt(base)
+    if native_model:
+        # Hazir talimat modeli (or. gemma4:e4b) yerel arac-cagirma ile: tum katalog (eklentiler dahil)
+        # native tool olarak gider -> manifest gereksiz; RCA olay kurali ayni sekilde kosullu eklenir.
+        from agent.backends import native_chat
+        brain = native_chat.NativeChatModel(
+            model=native_model, system_prompt=assemble_incident_aware_prompt(native_chat.NATIVE_SYSTEM_PROMPT, task))
+        result = run_tool_loop(msgs, brain, registry, skills=skills, approval_handler=approval_prompt(registry))
+        return _format_run(msgs, result, label)
     system_prompt = assemble_incident_aware_prompt(base, task)
     gguf_kwargs: dict = {"model": model, "tokenizer_dir": tokenizer_dir}
     if system_prompt != OCTOPUS_TOOL_SYSTEM_PROMPT:   # taban degistiyse (manifest veya RCA kurali)
@@ -221,6 +229,8 @@ def main() -> int:
     ap.add_argument("--assistant", action="store_true", help="Asistan araclari demo (jailed file + policy)")
     ap.add_argument("--real-cmd", action="store_true", help="run_cmd'yi GERCEK docker sandbox'ta "
                     "calistir (alpine, --network none, --rm; Docker gerekir). --assistant ile.")
+    ap.add_argument("--native", default=None, metavar="MODEL",
+                    help="--gguf ile: hazir modeli yerel arac-cagirmayla kullan (or. gemma4:e4b)")
     ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model adi (varsayilan {DEFAULT_MODEL})")
     ap.add_argument("--tokenizer-dir", default=DEFAULT_TOKENIZER_DIR,
                     help=f"egitim chat-template dizini (varsayilan {DEFAULT_TOKENIZER_DIR})")
@@ -236,7 +246,8 @@ def main() -> int:
                                    args.target or "octopus-target", tokenizer_dir=args.tokenizer_dir)
     elif args.gguf:
         output = run_gguf_demo(args.scope, args.model, role=args.rol,
-                            target=args.target or "10.10.10.5", tokenizer_dir=args.tokenizer_dir)
+                            target=args.target or "10.10.10.5", tokenizer_dir=args.tokenizer_dir,
+                            native_model=args.native)
     elif args.docker:
         output = run_docker_demo(args.target or "octopus-target", args.scope, port=args.port or 80)
     elif args.real:

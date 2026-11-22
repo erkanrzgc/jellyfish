@@ -17,53 +17,13 @@ import time
 import urllib.request
 from pathlib import Path
 
-from agent.catalog import CATALOG
-from agent.constrained import required_keys, repair_prefix
+from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT, native_tools, to_arac_reply
+from agent.constrained import repair_prefix
 from data.dpo.build import split_of
 from data.dpo.common import OUT_DIR, append_jsonl, classify_failures, read_jsonl
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
 
 log = logging.getLogger(__name__)
 BAKEOFF_DIR = OUT_DIR / "bakeoff"
-NATIVE_SYSTEM_PROMPT = OCTOPUS_SYSTEM_PROMPT + (
-    "\n\nBir işi yapmak için araç gerekiyorsa verilen araçlardan uygun olanı çağır; araç gerekmiyorsa "
-    "(kavram sorusu, yapıştırılan çıktının yorumu, reddedilmesi gereken istek) araç çağırmadan Türkçe yanıt ver.")
-
-
-def native_tools() -> list[dict]:
-    tools = []
-    for name, spec in CATALOG.items():
-        parameters = {"type": "object", "properties": {key: {"type": "string"} for key in spec.params},
-                      "required": required_keys(name, spec.params)}
-        tools.append({"type": "function", "function": {
-            "name": name, "description": f"{name} ({spec.domain}, risk: {spec.risk})", "parameters": parameters}})
-    return tools
-
-
-def _text(value: object) -> object:
-    return value if isinstance(value, str) else json.dumps(value, ensure_ascii=False) \
-        if isinstance(value, (dict, list)) else str(value)
-
-
-def to_arac_reply(message: dict) -> str:
-    """Native tool_calls -> ```arac``` blocks; unparseable arguments stay visibly invalid."""
-    parts = [(message.get("content") or "").strip()]
-    for call in message.get("tool_calls") or []:
-        function = call.get("function", {})
-        arguments = function.get("arguments", {})
-        if isinstance(arguments, str):
-            try:
-                arguments = json.loads(arguments)
-            except ValueError:
-                parts.append(f"```arac\n{{\"arac\": {json.dumps(function.get('name'))}, {arguments}\n```")
-                continue
-        if isinstance(arguments, dict):
-            arguments = {key: _text(value) for key, value in arguments.items()}
-        body = json.dumps({"arac": function.get("name"), "parametreler": arguments}, ensure_ascii=False)
-        parts.append(f"```arac\n{body}\n```")
-    return "\n".join(part for part in parts if part)
-
-
 def bakeoff_ids(cases: list[dict]) -> list[str]:
     """The DPO val families (held out from preference training), so this table is also the pre-DPO baseline."""
     return sorted(case["id"] for case in cases if split_of(case["family_id"]) == "val")

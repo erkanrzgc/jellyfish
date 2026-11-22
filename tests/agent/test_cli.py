@@ -221,3 +221,33 @@ def test_gguf_docker_demo_preserves_tokenizer_override(monkeypatch):
     cli.run_gguf_docker_demo(tokenizer_dir="models/custom-tokenizer")
     assert captured["model"] == "octopus-v10"
     assert captured["tokenizer_dir"] == "models/custom-tokenizer"
+
+
+def test_main_native_flag_selects_the_native_backend(monkeypatch, capsys):
+    called: dict = {}
+
+    def _fake(scope, model, native_model=None, **kwargs):
+        called["native"] = native_model
+        return "OUT"
+
+    monkeypatch.setattr(cli, "run_gguf_demo", _fake)
+    monkeypatch.setattr(sys, "argv", ["prog", "--gguf", "--native", "gemma4:e4b"])
+    cli.main()
+    assert called["native"] == "gemma4:e4b"
+
+
+def test_gguf_demo_native_model_uses_native_chat_with_incident_rule(monkeypatch):
+    import agent.backends.native_chat as native_chat
+    seen: dict = {}
+
+    class _Fake:
+        def __init__(self, **kwargs):
+            seen.update(kwargs)
+
+        def __call__(self, messages):
+            return "Tamam."
+
+    monkeypatch.setattr(native_chat, "NativeChatModel", _Fake)
+    cli.run_gguf_demo(skills=None, native_model="gemma4:e4b")
+    assert seen["model"] == "gemma4:e4b"
+    assert seen["system_prompt"].startswith(native_chat.NATIVE_SYSTEM_PROMPT)
