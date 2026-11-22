@@ -58,3 +58,11 @@ def test_build_writes_preference_records_sft_view_and_manifest(tmp_path):
     assert manifest["pairs"] == 28 and manifest["dropped_chosen"] == 1 and manifest["model_passed"] == 1
     assert manifest["by_failure"]["missing_call"] == 28 and manifest["gguf_sha256"] == "abc"
     assert manifest["relabelled"] == 1 and manifest["in_catalog_wrong_tool"] == 0
+
+
+def test_empty_dusunce_fence_is_repaired_into_a_real_block():
+    from data.dpo.build import repair_dusunce
+    broken = "```dusunce``` Kullanici kendi lab'inda. ```  Once yedek aliyorum.\n```arac\n{}\n```"
+    assert repair_dusunce(broken) == "```dusunce\nKullanici kendi lab'inda.\n```\nOnce yedek aliyorum.\n```arac\n{}\n```"
+    good = "```dusunce\nTamam.\n```\nCevap."
+    assert repair_dusunce(good) == good

@@ -7,6 +7,7 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import re
 from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
@@ -15,6 +16,14 @@ from data.dpo.common import OUT_DIR, ROOT, classify_failures, read_jsonl
 from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
 
 VAL_PERCENT = 10
+
+
+_EMPTY_DUSUNCE = re.compile(r"```dusunce```\s*(.*?)\s*```\s*", re.S)
+
+
+def repair_dusunce(text: str) -> str:
+    """Teachers sometimes emit ```dusunce``` <reasoning> ``` ; rebuild it as a proper fenced block."""
+    return _EMPTY_DUSUNCE.sub(lambda m: f"```dusunce\n{m.group(1)}\n```\n", text, count=1)
 
 
 def split_of(family_id: str) -> str:
@@ -52,7 +61,7 @@ def build(cases_path: Path, rejected_path: Path, chosen_path: Path, out_dir: Pat
         if not failures:
             model_passed += 1
             continue
-        answer = (chosen.get(rejected["id"]) or {}).get("chosen")
+        answer = repair_dusunce((chosen.get(rejected["id"]) or {}).get("chosen") or "")
         if not answer:
             dropped += 1
             continue
