@@ -1,7 +1,9 @@
 """Shared DPO helpers: Turkish-aware normalization, failure labels, catalog text."""
 from __future__ import annotations
 
-from data.dpo.common import catalog_excerpt, classify_failures, fold, jaccard, prose_outside_blocks
+from agent.catalog import CATALOG
+from data.dpo.common import (SUBSTITUTE_GROUPS, acceptable_first_tools, catalog_excerpt, classify_failures,
+                             fold, jaccard, prose_outside_blocks)
 
 NMAP_CASE = {"expected_tools": ["nmap", "rustscan"], "expected_params": {"hedef": "10.0.0.5"},
              "allow_tools": True}
@@ -32,7 +34,7 @@ def test_invented_tool_is_catalog_and_wrong_tool():
 
 
 def test_wrong_tool_and_missing_call_are_distinguished():
-    assert classify_failures(NMAP_CASE, _call("masscan", {"hedef": "10.0.0.5"})) == ["wrong_first_tool"]
+    assert classify_failures(NMAP_CASE, _call("nikto", {"hedef": "10.0.0.5"})) == ["wrong_first_tool"]
     assert classify_failures(NMAP_CASE, "Sadece açıklama yazdım.") == ["missing_call"]
 
 
@@ -74,3 +76,36 @@ def test_catalog_excerpt_lists_names_with_params():
     text = catalog_excerpt(["nmap"])
     assert "nmap(hedef, secenekler)" in text and "sqlmap" not in text
     assert "nmap(" in catalog_excerpt()
+
+
+def test_substitute_groups_use_catalog_names_only():
+    assert all(name in CATALOG for group in SUBSTITUTE_GROUPS for name in group)
+    assert acceptable_first_tools(["rustscan"]) >= {"nmap", "rustscan", "masscan"}
+    assert "fping" not in acceptable_first_tools(["rustscan"])  # groups do not chain through nmap
+
+
+def test_functionally_equivalent_first_tool_is_not_a_failure():
+    """A pair that prefers rustscan over nmap would teach a spurious tool preference."""
+    rustscan = {"expected_tools": ["rustscan"], "expected_params": {"hedef": "10.0.1.5"}, "allow_tools": True}
+    assert classify_failures(rustscan, _call("nmap", {"hedef": "10.0.1.5", "secenekler": "-p-"})) == []
+    assert classify_failures(rustscan, _call("nmap", {"hedef": "10.0.1.9"})) == ["param_mismatch"]
+    ffuf = {"expected_tools": ["ffuf"], "expected_params": {"url": "http://example.com"}, "allow_tools": True}
+    assert classify_failures(ffuf, _call("gobuster", {"hedef": "http://example.com"})) == []
+    assert classify_failures(ffuf, _call("sqlmap", {"url": "http://example.com"})) == ["wrong_first_tool"]
+
+
+def test_substitute_without_a_target_parameter_is_checked_on_its_option_text():
+    case = {"expected_tools": ["dig"], "expected_params": {"domain": "app.local"}, "allow_tools": True}
+    assert classify_failures(case, _call("host", {"secenekler": "-t A app.local"})) == []
+    assert classify_failures(case, _call("host", {"secenekler": "-t A other.local"})) == ["param_mismatch"]
+
+
+def test_free_form_options_only_need_the_same_targets():
+    """'secenekler' is free text: flags may differ, the target or file it names may not."""
+    fping = {"expected_tools": ["fping"], "expected_params": {"secenekler": "-g 192.168.1.0/24"}, "allow_tools": True}
+    assert classify_failures(fping, _call("nmap", {"hedef": "192.168.1.0/24", "secenekler": "-sn"})) == []
+    assert classify_failures(fping, _call("fping", {"secenekler": "-a -g 192.168.1.0/24"})) == []
+    assert classify_failures(fping, _call("fping", {"secenekler": "-g 10.0.0.0/24"})) == ["param_mismatch"]
+    flags = {"expected_tools": ["nmap"], "expected_params": {"hedef": "10.10.2.2", "secenekler": "-sV -p 22"},
+             "allow_tools": True}
+    assert classify_failures(flags, _call("nmap", {"hedef": "10.10.2.2", "secenekler": "-p22 -sV"})) == []

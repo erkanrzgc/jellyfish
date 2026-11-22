@@ -27,12 +27,12 @@ Shared: `data/dpo/evren_client.py`, a minimal stdlib client (no new dependency) 
 
 ## Tasks (TDD: test first, then implementation)
 
-- [ ] `evren_client`: key loading (env, then registry; never in repr/logs), 429/503 retry with `Retry-After`, timeout, reasoning-field handling. Tests use a fake HTTP opener.
-- [ ] `prompts`: schema and catalog validation, contamination filter, dedupe. Tests with fixed teacher output, including invented tool names, overlapping prompts and malformed JSON.
-- [ ] `rejected`: failure classification and resume. Tests with a scripted model.
-- [ ] `chosen`: validation gate and retry/drop policy. Tests with scripted teacher replies (valid, wrong tool, extra call, prose only).
-- [ ] `build`: record format, grouped split, manifest counts. Tests on a small fixture.
-- [ ] Smoke run: 20 prompts end to end, then a human spot-check before scaling.
+- [x] `evren_client`: key loading (env, then registry; never in repr/logs), 429/503 retry with `Retry-After`, timeout, reasoning-field handling. Tests use a fake HTTP opener.
+- [x] `prompts`: schema and catalog validation, contamination filter, dedupe. Tests with fixed teacher output, including invented tool names, overlapping prompts and malformed JSON.
+- [x] `rejected`: failure classification and resume. Tests with a scripted model.
+- [x] `chosen`: validation gate and retry/drop policy. Tests with scripted teacher replies (valid, wrong tool, extra call, prose only).
+- [x] `build`: record format, grouped split, manifest counts. Tests on a small fixture.
+- [x] Smoke run: 20 prompts end to end, then a human spot-check before scaling.
 - [ ] Full run: prompts, then the overnight rejected pass, then chosen, then build.
 - [ ] Human spot-check of 20 random pairs; update `PROJECT_HANDOFF.md`; PR.
 
@@ -49,3 +49,12 @@ Shared: `data/dpo/evren_client.py`, a minimal stdlib client (no new dependency) 
 - **Too few failures** (v1.0 failed 10/60 structurally on dev60, about 17%): if 1500 prompts yield fewer than 500 failures, add one temperature-0.6 sample per prompt or generate more weak-spot prompts.
 - **Content-guard refusals** of offensive prompts: log and skip; never rephrase to get around them.
 - **Structural checks are not semantic quality:** a teacher reply can pass and still be wrong. The spot-check and the reliability-plan human review remain required.
+
+## Smoke findings (2026-11-21)
+
+- **Gateway limits:** when a model is busy EVREN allows only 2 concurrent requests per model per account (429 `fair_share_limit_exceeded`), not the 8 reported by `/v1/quota`. The client caps 2 per model; prompt generation alternates `deepseek-v4.1-flash` and `qwen3.8-flash-next` (Apache-2.0) to get 4 in flight. Chosen replies stay on deepseek.
+- **Prompt quality:** the first teacher prompts named the expected tool, gave away no-tool answers, used real brands/IPs/handles and listed the privesc `shell` tool as a diagnostic alternative. The validator now rejects all of these, and fundamentals cases must be tool-free.
+- **Labels:** v1.0 putting a URL in `hedef` instead of `url` is not a failure (the runtime treats target keys as one); `--relabel` fixed two false labels without a new model run.
+- **Teacher artifact:** chosen replies justified authorization from address ranges ("RFC1918", "documentation range", "reserved domain") and wrapped `run_cmd` in `ssh`. Both are now teacher rules and automatic gate rejections; regenerated replies were clean on the first attempt.
+- **Yield:** 35 prompts, 8 genuine v1.0 failures (about 23%), 8/8 accepted fixes. v1.0 takes about 18 s per prompt locally; deepseek about 85 s per chosen reply. The full run uses 300 prompt requests (`--total 2400`) with category weights shifted toward forensics and tooling, the highest-yield categories.
+- **Label noise in the full run (2026-11-22):** early rows showed v1.0 marked wrong for picking an equivalent tool (nmap for a fast port scan where the case listed only rustscan; gobuster for ffuf) and for different flags in free-form `secenekler`. Such pairs would teach the near-miss tool preference that regressed v1.1/v1.2. `classify_failures` now accepts one-hop substitutes from tight functional groups (`SUBSTITUTE_GROUPS`) and compares only the targets/paths inside `secenekler`. `chosen` and `build` recompute labels from the raw reply, so the running `rejected` pass needs no restart. After the run: review the expected-vs-actual confusion table for `wrong_first_tool` (open question: `netexec` for SMB enumeration), extend groups, rebuild; weight the spot-check toward `in_catalog_wrong_tool`.

@@ -11,7 +11,7 @@ from collections import Counter
 from datetime import datetime, timezone
 from pathlib import Path
 
-from data.dpo.common import OUT_DIR, ROOT, read_jsonl
+from data.dpo.common import OUT_DIR, ROOT, classify_failures, read_jsonl
 from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
 
 VAL_PERCENT = 10
@@ -41,12 +41,15 @@ def build(cases_path: Path, rejected_path: Path, chosen_path: Path, out_dir: Pat
     chosen = {row["id"]: row for row in read_jsonl(chosen_path)}
     pairs: dict[str, list[dict]] = {"train": [], "val": []}
     sft, by_failure, by_category = [], Counter(), Counter()
-    model_passed = dropped = 0
+    model_passed = dropped = relabelled = in_catalog_wrong_tool = 0
     for rejected in read_jsonl(rejected_path):
         case = cases.get(rejected["id"])
         if case is None:
             continue
-        if not rejected["failures"]:
+        # Stored labels may predate a classifier fix; the raw reply is the source of truth.
+        failures = classify_failures(case, rejected["raw_reply"])
+        relabelled += failures != rejected["failures"]
+        if not failures:
             model_passed += 1
             continue
         answer = (chosen.get(rejected["id"]) or {}).get("chosen")
@@ -55,12 +58,13 @@ def build(cases_path: Path, rejected_path: Path, chosen_path: Path, out_dir: Pat
             continue
         prompt = [{"role": "system", "content": system_prompt}, {"role": "user", "content": case["prompt"]}]
         meta = {"id": case["id"], "family_id": case["family_id"], "category": case["category"],
-                "failures": rejected["failures"], "teacher_model": chosen[rejected["id"]].get("teacher_model")}
+                "failures": failures, "teacher_model": chosen[rejected["id"]].get("teacher_model")}
         record = {"prompt": prompt, "chosen": [{"role": "assistant", "content": answer}],
                   "rejected": [{"role": "assistant", "content": rejected["raw_reply"]}], "meta": meta}
         pairs[split_of(case["family_id"])].append(record)
         sft.append({"messages": prompt + record["chosen"], "meta": meta})
-        by_failure.update(rejected["failures"])
+        by_failure.update(failures)
+        in_catalog_wrong_tool += "wrong_first_tool" in failures and "catalog" not in failures
         by_category[case["category"]] += 1
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
@@ -70,7 +74,8 @@ def build(cases_path: Path, rejected_path: Path, chosen_path: Path, out_dir: Pat
     manifest = {
         "created_at": datetime.now(timezone.utc).isoformat(),
         "pairs": len(sft), "train": len(pairs["train"]), "val": len(pairs["val"]),
-        "model_passed": model_passed, "dropped_chosen": dropped,
+        "model_passed": model_passed, "dropped_chosen": dropped, "relabelled": relabelled,
+        "in_catalog_wrong_tool": in_catalog_wrong_tool,
         "by_failure": dict(sorted(by_failure.items())), "by_category": dict(sorted(by_category.items())),
         "gguf_sha256": gguf_sha256,
         "inputs": {Path(p).name: _sha256(p) for p in (cases_path, rejected_path, chosen_path)},

@@ -113,3 +113,17 @@ def test_gateway_errors_leave_case_for_a_later_run(tmp_path):
         {"id": "DPO-TOOL-0001", "raw_reply": "x", "failures": ["missing_call"]}])
     stats = run(_Down(), cases, rejected, out, workers=1, retries=1)
     assert stats["teacher_errors"] == 1 and not out.exists()
+
+
+def test_stale_labels_are_recomputed_so_equivalent_tools_skip_the_teacher(tmp_path):
+    rustscan = {**TOOL_CASE, "id": "DPO-TOOL-0002", "expected_tools": ["rustscan"]}
+    cases, rejected, out = _setup(tmp_path, [
+        {"id": "DPO-TOOL-0001", "raw_reply": "anlattım", "failures": []},  # stale: really missing_call
+        {"id": "DPO-TOOL-0002", "raw_reply": GOOD_TOOL, "failures": ["wrong_first_tool"]},  # stale: nmap is fine
+    ])
+    with cases.open("a", encoding="utf-8") as handle:
+        handle.write(json.dumps(rustscan, ensure_ascii=False) + "\n")
+    teacher = _Teacher([GOOD_TOOL])
+    stats = run(teacher, cases, rejected, out, workers=1)
+    assert teacher.calls == 1 and stats["accepted"] == 1
+    assert [json.loads(line)["id"] for line in out.read_text(encoding="utf-8").splitlines()] == ["DPO-TOOL-0001"]

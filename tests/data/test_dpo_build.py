@@ -21,7 +21,8 @@ def _fixture(tmp_path, n=30):
         rejected.append({"id": cid, "raw_reply": f"kötü {i}", "failures": ["missing_call"]})
         chosen.append({"id": cid, "chosen": f"iyi {i}" if i != 0 else None, "attempts": 1,
                        "teacher_model": "deepseek-v4.1-flash", "problems": [] if i else ["missing_call"]})
-    rejected[1]["failures"] = []  # model was right: no pair
+    rejected[1]["raw_reply"] = 'Tarıyorum.\n```arac\n{"arac": "nmap", "parametreler": {"hedef": "10.0.0.1"}}\n```'
+    rejected[1]["failures"] = ["missing_call"]  # stale label: build recomputes, the model was right
     paths = tmp_path / "c.jsonl", tmp_path / "r.jsonl", tmp_path / "ch.jsonl"
     for path, rows in zip(paths, (cases, rejected, chosen)):
         _jsonl(path, rows)
@@ -56,3 +57,4 @@ def test_build_writes_preference_records_sft_view_and_manifest(tmp_path):
     assert saved == manifest
     assert manifest["pairs"] == 28 and manifest["dropped_chosen"] == 1 and manifest["model_passed"] == 1
     assert manifest["by_failure"]["missing_call"] == 28 and manifest["gguf_sha256"] == "abc"
+    assert manifest["relabelled"] == 1 and manifest["in_catalog_wrong_tool"] == 0

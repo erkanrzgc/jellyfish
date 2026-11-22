@@ -105,7 +105,9 @@ def run(teacher, cases_path: Path, rejected_path: Path, out_path: Path, *, worke
         retries: int = 2, model: str = DEFAULT_MODEL) -> dict:
     cases = {case["id"]: case for case in read_jsonl(cases_path)}
     done = {row["id"] for row in read_jsonl(out_path)}
-    failed = [row["id"] for row in read_jsonl(rejected_path) if row["failures"] and row["id"] in cases]
+    # Recompute instead of trusting stored labels, so a classifier fix reaches a rejected file written earlier.
+    failed = [row["id"] for row in read_jsonl(rejected_path)
+              if row["id"] in cases and classify_failures(cases[row["id"]], row["raw_reply"])]
     todo = [cases[cid] for cid in failed if cid not in done]
     stats = {"accepted": 0, "dropped": 0, "skipped": len(failed) - len(todo), "teacher_errors": 0}
     with ThreadPoolExecutor(max_workers=workers) as pool:

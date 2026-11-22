@@ -55,13 +55,59 @@ def _param_matches(params: dict, key: str, value: object) -> bool:
     return any(_loose(params[k]) == _loose(value) for k in keys if k in params)
 
 
+# Tools that do the same job: picking one over another is a preference, not an error. Groups are tight
+# (one job each) and never chain, so a pair can only teach "right job", not "nmap is wrong".
+SUBSTITUTE_GROUPS: tuple[frozenset[str], ...] = tuple(frozenset(group) for group in (
+    ("nmap", "rustscan", "masscan"),                                   # port scan
+    ("nmap", "netdiscover", "arp-scan", "fping"),                      # live-host discovery
+    ("gobuster", "ffuf", "feroxbuster", "dirsearch", "dirb", "wfuzz"),  # content discovery
+    ("tcpdump", "tshark"),                                             # packet capture
+    ("amass", "subfinder"),                                            # subdomain enumeration
+    ("dig", "host"),                                                   # DNS lookup
+    ("hydra", "medusa"),                                               # online brute force
+    ("john", "hashcat"),                                               # offline cracking
+    ("iptables", "nftables", "ufw"),                                   # host firewall
+    ("suricata", "snort"),                                             # network IDS
+    ("rkhunter", "chkrootkit"),                                        # rootkit scan
+    ("ghidra", "radare2"),                                             # reverse engineering
+    ("dalfox", "xsstrike"),                                            # XSS scanning
+    ("bettercap", "ettercap"),                                         # MITM
+    ("apktool", "jadx"),                                               # APK decompiling
+))
+
+
+def acceptable_first_tools(expected: Iterable[str]) -> frozenset[str]:
+    """Expected tools plus their direct substitutes (one hop, no chaining)."""
+    expected = frozenset(expected)
+    return expected.union(*(group for group in SUBSTITUTE_GROUPS if group & expected))
+
+
+def _option_targets(value: object) -> list[str]:
+    """Targets, paths and URLs inside free-form options; flags are left to the model's choice."""
+    return [_loose(token) for token in str(value).split() if any(mark in token for mark in "./:")]
+
+
 def _params_match_loosely(case: dict, text: str) -> bool:
-    """Ignore case, spaces, a trailing slash and target-key choice, so formatting is not a failure."""
+    """Ignore case, spaces, a trailing slash and target-key choice, so formatting is not a failure.
+    A substitute tool without the expected key must carry the value in its other (option) text."""
     calls = parse_tool_reply(text).calls
     if not calls:
         return False
     params = calls[0].params
-    return all(_param_matches(params, key, value) for key, value in case["expected_params"].items())
+    spec = CATALOG.get(calls[0].name)
+    spec_keys = set(spec.params) if spec else set(params)
+    option_text = " ".join(str(value).lower() for value in params.values())
+    for key, value in case["expected_params"].items():
+        keys = TARGET_KEYS if key in TARGET_KEYS else (key,)
+        if key == "secenekler":
+            if not all(token in option_text for token in _option_targets(value)):
+                return False
+        elif spec_keys.intersection(keys):
+            if not _param_matches(params, key, value):
+                return False
+        elif _loose(value) not in option_text:
+            return False
+    return True
 
 
 def classify_failures(case: dict, text: str) -> list[str]:
@@ -75,7 +121,13 @@ def classify_failures(case: dict, text: str) -> list[str]:
     if checks["no_unnecessary_tools"] is False:
         labels.append("unnecessary_call")
     if checks["expected_first_tool_match"] is False:
-        labels.append("missing_call" if checks["call_count"] == 0 else "wrong_first_tool")
+        calls = parse_tool_reply(text).calls
+        if checks["call_count"] == 0:
+            labels.append("missing_call")
+        elif not calls or calls[0].name not in acceptable_first_tools(case["expected_tools"]):
+            labels.append("wrong_first_tool")
+        elif not _params_match_loosely(case, text):
+            labels.append("param_mismatch")
     elif checks["expected_parameter_subset_match"] is False and not _params_match_loosely(case, text):
         labels.append("param_mismatch")
     return labels
