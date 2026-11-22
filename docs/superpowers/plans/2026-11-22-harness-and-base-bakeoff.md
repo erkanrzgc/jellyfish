@@ -88,6 +88,10 @@ autonomously on everything that costs $0 and stops at the money gate.
 - NEXT: persona prompt fix (introduce only when asked), decide default for evidence_push, then (paid, later)
   a small Gemma 4 LoRA on the RCA + tool data if the agentic-RCA gap matters.
 
+- 2026-11-23 02:45 DPO data DONE: 758 pairs (train 678 / val 80), dropped 8, teacher 429s retried. Spot-check
+  OK (tool use, real catalog tools, calls instead of user commands); 19 empty `dusunce` fences fixed in build
+  (`fix(data)` commit). Rename done: GitHub repo is now erkanrzgc/jellyfish (user-approved); nothing pushed.
+
 ## Tasks
 
 1. [x] **Mingbird review** (clone into a separate dir outside the repo): read tool-subset routing, completion
@@ -107,7 +111,7 @@ autonomously on everything that costs $0 and stops at the money gate.
 7. [ ] **Training prep**: DPO trainer (TRL, bf16 LoRA, beta ~0.1, 1 epoch) smoke-tested on a tiny model; data
    converter from ```arac``` to the winner's native tool-call format if a new base wins; one pod script with a
    self-stop watchdog and a cost estimate. Launch only on a clear bake-off winner (cap $3), otherwise stop.
-8. [ ] DPO chain finishes -> confusion table, manifest, 20-pair spot-check; update `PROJECT_HANDOFF.md`.
+8. [x] DPO chain finishes -> confusion table, manifest, 20-pair spot-check; update `PROJECT_HANDOFF.md`.
 
 ## Decision rule
 
