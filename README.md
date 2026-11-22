@@ -6,7 +6,7 @@
 
 ### A Turkish-first cybersecurity model and agent runtime
 
-[![CI](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml/badge.svg)](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml)
+[![CI](https://github.com/erkanrzgc/jellyfish/actions/workflows/ci.yml/badge.svg)](https://github.com/erkanrzgc/jellyfish/actions/workflows/ci.yml)
 ![Evaluated default](https://img.shields.io/badge/evaluated_default-v1.0-orange)
 ![Method](https://img.shields.io/badge/training-bf16_LoRA-blue)
 ![License](https://img.shields.io/badge/code-MIT-green)
