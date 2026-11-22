@@ -1,4 +1,4 @@
-# 🐙 Octópus — North Star
+# 🪼 Jellyfish (formerly Octópus) — North Star
 
 > The project's **vision, story, and goal** — so a new session can understand what this project is for.
 > Current strategy: fine-tuning ([ADR 0002](docs/decisions/0002-pivot-to-finetuning.md)), base
@@ -42,7 +42,8 @@ Owner = authorization. Someone else's / unauthorized target → refuse clearly, 
 system prompt is baked into the SFT data.
 
 ## Brand & paths
-In conversation the model says **“Ben Octópus”** (dotted ó). Code/paths/repo are plain ASCII `octopus`
+**Renamed 2026-11-22: the product is now Jellyfish** (stock-model path: “Ben siber güvenlik yapay zeka modeli Jellyfish”).
+Historical note: the v1.0 model says **“Ben Octópus”** (dotted ó). Code/paths/repo are plain ASCII `octopus`
 (Windows-native libraries break on non-ASCII paths). Folder: `Desktop\Octopus`.
 
 ## Roadmap (fine-tuning)

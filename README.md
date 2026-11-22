@@ -1,8 +1,8 @@
 <div align="center">
 
-<img src="assets/octopus.png" alt="Octópus logo" width="160" />
+<img src="assets/octopus.png" alt="Jellyfish logo" width="160" />
 
-# Octópus
+# Jellyfish
 
 ### A Turkish-first cybersecurity model and agent runtime
 
@@ -13,7 +13,7 @@
 
 </div>
 
-Octópus combines a fine-tuned 9B language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
+Jellyfish (formerly Octópus) pairs a local language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
 
 The product and training examples prioritize Turkish. Repository documentation is in English. This is a research prototype for authorized testing, labs, and defensive work.
 
@@ -30,6 +30,15 @@ Runtime defaults live in [`agent/config.py`](agent/config.py):
 | Ollama import recipe | `models/Modelfile.v10` |
 
 The v0.8 tokenizer directory is intentional: it is the template used in the recorded v1.0 evaluations. The backend renders it itself and calls Ollama in raw mode. Explicit model and tokenizer overrides are supported.
+
+**Candidate base (2026-11-22): stock Gemma 4 E4B with native tool calling.** On 212 held-out cases it passed 177 vs 137 for `octopus-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM; it is weaker at investigating open-ended server incidents on its own. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md). It is not the configured default yet. Try it with:
+
+```powershell
+ollama pull gemma4:e4b
+uv run python -m agent.cli --gguf --native gemma4:e4b
+```
+
+Artifact names such as `octopus-v10` and the `octopus-lab` Docker network keep their original names.
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 

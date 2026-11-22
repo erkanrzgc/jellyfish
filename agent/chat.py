@@ -98,7 +98,7 @@ def main() -> int:
     from agent.profiles import create_model
     from agent.backends.assistant_executor import AssistantExecutor
     from agent.composite_executor import CompositeExecutor
-    parser = argparse.ArgumentParser(description="Octopus local conversation")
+    parser = argparse.ArgumentParser(description="Jellyfish local conversation")
     parser.add_argument("--mode", choices=["advise", "assist"], default="advise")
     parser.add_argument("--profile", default=DEFAULT_MODEL)
     parser.add_argument("--executor", choices=["mock", "kali", "docker"], default="mock")
@@ -125,7 +125,7 @@ def main() -> int:
     workspace = str(args.workspace.resolve())
     registry = ToolRegistry(LabPolicy(scope=args.scope, workspace_root=workspace),
                             CompositeExecutor(security, AssistantExecutor(workspace)), AuditLog.default())
-    print(f"Octopus | profil={args.profile} | mod={args.mode} | guvenlik executor={args.executor}")
+    print(f"Jellyfish | profil={args.profile} | mod={args.mode} | guvenlik executor={args.executor}")
     if args.executor == "mock" and args.mode == "assist":
         print("Guvenlik taramalari SIMULASYON; dosya islemleri gercek ve onaylidir.")
     while True:

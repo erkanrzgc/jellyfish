@@ -1,4 +1,4 @@
-# Octopus agent instructions
+# Jellyfish agent instructions
 
 These instructions are shared by Codex, Claude, and other coding agents working in this repository.
 
@@ -12,7 +12,7 @@ These instructions are shared by Codex, Claude, and other coding agents working 
 
 ## Working agreements
 
-- The product is Turkish-first; public repository documentation is English. Use ASCII paths (`octopus`); `Octópus` is the display brand.
+- The product is Turkish-first; public repository documentation is English. The product name is **Jellyfish** (formerly Octópus); new paths and identifiers use ASCII `jellyfish`. Existing artifact names (`octopus-v10`, `octopus-lab`, `OCTOPUS_*` prompts that v1.0 was trained on) stay unchanged.
 - Keep v1.0 / `octopus-v10` as the evaluated default. v1.1 and v1.2 are experiments that were not promoted. Changing a default is not authorization to retrain or publish a model.
 - Preserve ignored model files, checkpoints, data, and audit logs. Never reset or delete artifacts just to obtain a clean tree.
 - Get explicit user approval before spending money on pods/cloud training. Keep credentials out of commands, logs, commits, and handoff documents.

@@ -1,4 +1,4 @@
-# Octopus shared project handoff
+# Jellyfish shared project handoff
 
 > Read this first when switching between Codex and Claude. This file is the shared current state; it replaces reliance on chat history. Update it at the end of meaningful work.
 
