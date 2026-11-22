@@ -36,3 +36,16 @@ def test_bakeoff_uses_exactly_the_val_families():
     cases = [{"id": f"c{i}", "family_id": f"fam-{i // 3}"} for i in range(300)]
     ids = bakeoff_ids(cases)
     assert ids and set(ids) == {c["id"] for c in cases if split_of(c["family_id"]) == "val"}
+
+
+def test_v10_arms_apply_catalog_repair_only_to_catalog_named_calls():
+    from eval.native_tool_bakeoff import _v10_arms
+    bad_key = '```arac\n{"arac":"dig","parametreler":{"alan":"a"}}\n```'
+    invented = '```arac\n{"arac":"dns-dig","parametreler":{}}\n```'
+    fixed = '```arac\n{"arac":"dig","parametreler":{"domain":"a"}}\n```'
+    rows = [{"id": "a", "reply": bad_key, "reply_repair_any": fixed},
+            {"id": "b", "reply": invented, "reply_repair_any": fixed}]
+    arms = _v10_arms(rows)
+    assert arms["octopus-v10"] == {"a": bad_key, "b": invented}
+    assert arms["octopus-v10+repair"] == {"a": fixed, "b": invented}
+    assert arms["octopus-v10+repair-any-name"] == {"a": fixed, "b": fixed}

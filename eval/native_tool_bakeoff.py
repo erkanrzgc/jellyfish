@@ -103,6 +103,40 @@ def run_model(model: str, cases: dict, ids: list[str], host: str, num_ctx: int) 
     return dict(stats)
 
 
+def run_v10(cases: dict, ids: list[str], host: str) -> dict:
+    """v1.0 on the SAME Ollama build as the stock arms: free reply plus the repair from the same call."""
+    from agent.messages import Message
+    from agent.profiles import create_model, get_profile
+    profile = get_profile("octopus-v10")
+    model = create_model(profile.name, tokenizer_dir=profile.tokenizer_dir, modelfile=profile.modelfile,
+                         temperature=0, num_ctx=4096, num_predict=1024, seed=3407, host=host,
+                         constrain_calls=True, repair_unknown_names=True)
+    out = BAKEOFF_DIR / "octopus-v10.jsonl"
+    done = {row["id"] for row in read_jsonl(out)}
+    stats = collections.Counter()
+    for case_id in ids:
+        if case_id in done:
+            continue
+        result = model.generate_result([Message("user", cases[case_id]["prompt"])])
+        if result.error:
+            log.warning("%s: %s", case_id, result.error)
+            stats["error"] += 1
+            continue
+        repair = result.metadata.get("call_repair") or {}
+        append_jsonl(out, {"id": case_id, "model": "octopus-v10", "reply": repair.get("original", result.text),
+                           "reply_repair_any": result.text, "repair_applied": bool(repair.get("applied")),
+                           "truncated": result.truncated})
+        stats["done"] += 1
+    return dict(stats)
+
+
+def _v10_arms(rows: list[dict]) -> dict[str, dict[str, str]]:
+    free = {r["id"]: r["reply"] for r in rows}
+    catalog = {r["id"]: r["reply_repair_any"] if repair_prefix(r["reply"]) is not None else r["reply"] for r in rows}
+    return {"octopus-v10": free, "octopus-v10+repair": catalog,
+            "octopus-v10+repair-any-name": {r["id"]: r["reply_repair_any"] for r in rows}}
+
+
 def _score(cases: dict, replies: dict[str, str], ids: list[str]) -> dict:
     labels, failed = collections.Counter(), 0
     scored = [case_id for case_id in ids if case_id in replies]
@@ -126,11 +160,14 @@ def summary(cases: dict, ids: list[str]) -> dict:
         fix = fixes.get(case_id)
         use = fix and fix["applied"] and repair_prefix(reply) is not None
         repaired[case_id] = fix["repaired_reply"] if use else reply
-    report = {"sample_ids": len(ids), "v10": _score(cases, baseline, ids),
-              "v10+repair": _score(cases, repaired, ids)}
+    report = {"sample_ids": len(ids), "v10@ollama-0.30 (stored)": _score(cases, baseline, ids),
+              "v10+repair@ollama-0.30 (stored, partial)": _score(cases, repaired, ids)}
     for path in sorted(BAKEOFF_DIR.glob("*.jsonl")):
         rows = read_jsonl(path)
-        report[rows[0]["model"] if rows else path.stem] = _score(cases, {r["id"]: r["reply"] for r in rows}, ids)
+        if rows and "reply_repair_any" in rows[0]:
+            report.update({arm: _score(cases, replies, ids) for arm, replies in _v10_arms(rows).items()})
+        else:
+            report[rows[0]["model"] if rows else path.stem] = _score(cases, {r["id"]: r["reply"] for r in rows}, ids)
     return report
 
 
@@ -139,12 +176,15 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", action="append", default=[])
     parser.add_argument("--host", default="http://127.0.0.1:11434")
     parser.add_argument("--num-ctx", type=int, default=16384)
+    parser.add_argument("--v10", action="store_true", help="run octopus-v10 (+repair) on this Ollama build")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
     ids = bakeoff_ids(list(cases.values()))
     if not args.summary:
+        if args.v10:
+            print(json.dumps(run_v10(cases, ids, args.host), ensure_ascii=False))
         for model in args.model:
             print(json.dumps(run_model(model, cases, ids, args.host, args.num_ctx), ensure_ascii=False))
     print(json.dumps(summary(cases, ids), ensure_ascii=False, indent=2))
