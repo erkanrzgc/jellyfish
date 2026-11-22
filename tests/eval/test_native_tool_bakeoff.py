@@ -1,5 +1,6 @@
 from agent.toolcall import parse_tool_reply
-from eval.native_tool_bakeoff import native_tools, select_sample, to_arac_reply
+from data.dpo.build import split_of
+from eval.native_tool_bakeoff import bakeoff_ids, native_tools, to_arac_reply
 
 
 def test_native_tools_cover_the_catalog_with_own_keys():
@@ -31,11 +32,7 @@ def test_unparseable_arguments_stay_visible_as_bad_json():
     assert parse_tool_reply(reply).errors
 
 
-def test_sample_is_stratified_deterministic_and_bounded():
-    cases = [{"id": f"{cat}-{tools}-{i}", "category": cat, "allow_tools": tools}
-             for cat in ("tooling", "authorization") for tools in (True, False) for i in range(50)]
-    first = select_sample(cases, 40, seed=7)
-    assert first == select_sample(cases, 40, seed=7)
-    assert len(first) == 40
-    strata = {(c["category"], c["allow_tools"]) for c in cases if c["id"] in set(first)}
-    assert len(strata) == 4
+def test_bakeoff_uses_exactly_the_val_families():
+    cases = [{"id": f"c{i}", "family_id": f"fam-{i // 3}"} for i in range(300)]
+    ids = bakeoff_ids(cases)
+    assert ids and set(ids) == {c["id"] for c in cases if split_of(c["family_id"]) == "val"}

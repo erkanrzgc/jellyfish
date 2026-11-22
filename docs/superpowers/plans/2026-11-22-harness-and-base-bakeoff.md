@@ -38,6 +38,25 @@ autonomously on everything that costs $0 and stops at the money gate.
   `ollama pull qwen3:8b gemma4:e4b gemma4:12b` running in background (log `data/dpo/out/pulls.log`).
   DPO chain resumed after a PC shutdown at 17:04 (rejected 1282/2193; chain `rejected -> chosen -> build`).
 
+## Progress log (autonomous run, 2026-11-22 evening)
+
+- 19:05 resumed. Corrected breakdown on 1936 rejected rows: `catalog` 243 = bad parameter key 118, unknown name 99,
+  missing required 15, bad JSON 9. Plus 7 bad-JSON blocks counted as `missing_call`; 52 `missing_call` are
+  ```bash advice instead of a call (not repairable safely: converting advice into execution is a policy change).
+- Probe: Ollama 0.30.0 honours `format` (JSON schema) in raw mode; v10 `{"alan":..}` -> `{"domain":..}`.
+- `5a8ae6b` constrained repair (`agent/constrained.py`, `GgufModel.constrain_calls`). Default repairs only calls
+  naming a catalog tool; invented-name repair behind `repair_unknown_names` (advisor: on refusal prompts it could
+  turn a non-executable invented call into a runnable real one). Replay eval `eval/call_repair_replay.py`.
+- `65e43bf` router folds Turkish letters: general fallback 56.2% -> 53.9% on 1407 tool prompts; routed-role
+  recall of an acceptable tool only 78% -> do NOT narrow the v10 repair schema by router (full catalog).
+- `239cd32` stock-model bake-off runner `eval/native_tool_bakeoff.py` (native tools, num_ctx 16k, think off,
+  320-case stratified sample, same labels). qwen3:8b smoke: correct `dig` call, prompt 6.7k tokens.
+- Task 6 DONE: `build_sft --source distill seed_tr tools --seed-repeat 3` at `fb2e0c9` -> train=3231, sha
+  e633b060..., deterministic across two runs. v1.0 SFT is reproducible for a pod run.
+- Background chain: `refs/after_rejected_v2.sh` (rejected end -> repair replay on 0.30.0 -> Ollama upgrade ->
+  gemma4 pulls) then `refs/after_pulls_bakeoff.sh` (format re-probe -> bake-off qwen3:8b, gemma4:e4b,
+  gemma4:12b -> `data/dpo/out/bakeoff_summary.json`). Logs: pulls.log, repair_replay.log, bakeoff.log.
+
 ## Tasks
 
 1. [ ] **Mingbird review** (clone into a separate dir outside the repo): read tool-subset routing, completion

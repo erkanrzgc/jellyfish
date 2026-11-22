@@ -2,7 +2,7 @@
 
 Stock models get every catalog tool as an Ollama native tool (/api/chat `tools`). Their tool_calls are
 converted to ```arac``` text, so `data.dpo.common.classify_failures` scores every arm identically.
-v1.0 arms are read from stored replies (rejected.jsonl, repair_replay.jsonl) on the same sample ids.
+v1.0 arms are read from stored replies (rejected.jsonl, repair_replay.jsonl) on the same val-family ids.
 
     uv run python -m eval.native_tool_bakeoff --model qwen3:8b       # resumable
     uv run python -m eval.native_tool_bakeoff --summary
@@ -13,20 +13,18 @@ import argparse
 import collections
 import json
 import logging
-import random
 import time
 import urllib.request
 from pathlib import Path
 
 from agent.catalog import CATALOG
 from agent.constrained import required_keys, repair_prefix
+from data.dpo.build import split_of
 from data.dpo.common import OUT_DIR, append_jsonl, classify_failures, read_jsonl
 from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
 
 log = logging.getLogger(__name__)
 BAKEOFF_DIR = OUT_DIR / "bakeoff"
-SAMPLE_SIZE = 320
-SAMPLE_SEED = 7
 NATIVE_SYSTEM_PROMPT = OCTOPUS_SYSTEM_PROMPT + (
     "\n\nBir işi yapmak için araç gerekiyorsa verilen araçlardan uygun olanı çağır; araç gerekmiyorsa "
     "(kavram sorusu, yapıştırılan çıktının yorumu, reddedilmesi gereken istek) araç çağırmadan Türkçe yanıt ver.")
@@ -66,18 +64,9 @@ def to_arac_reply(message: dict) -> str:
     return "\n".join(part for part in parts if part)
 
 
-def select_sample(cases: list[dict], size: int = SAMPLE_SIZE, seed: int = SAMPLE_SEED) -> list[str]:
-    """Proportional stratified sample over (category, allow_tools); deterministic for a given seed."""
-    strata = collections.defaultdict(list)
-    for case in cases:
-        strata[(case["category"], bool(case.get("allow_tools")))].append(case["id"])
-    rng = random.Random(seed)
-    chosen = []
-    for key in sorted(strata):
-        ids = sorted(strata[key])
-        rng.shuffle(ids)
-        chosen.extend(ids[:max(1, round(size * len(ids) / len(cases)))])
-    return sorted(chosen)[:size] if len(chosen) > size else sorted(chosen)
+def bakeoff_ids(cases: list[dict]) -> list[str]:
+    """The DPO val families (held out from preference training), so this table is also the pre-DPO baseline."""
+    return sorted(case["id"] for case in cases if split_of(case["family_id"]) == "val")
 
 
 def chat(host: str, model: str, prompt: str, *, num_ctx: int, timeout: int = 600) -> dict:
@@ -154,7 +143,7 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
-    ids = select_sample(list(cases.values()))
+    ids = bakeoff_ids(list(cases.values()))
     if not args.summary:
         for model in args.model:
             print(json.dumps(run_model(model, cases, ids, args.host, args.num_ctx), ensure_ascii=False))
