@@ -60,6 +60,17 @@ autonomously on everything that costs $0 and stops at the money gate.
 - Task 7: `e891f48` DPO trainer (render identical to SFT, single-BOS pre-flight, tested on the real tokenizer);
   `bda1047` `cloud/pod_dpo_v13.sh`. Estimate ~3.2 h A40 (SFT 1570 steps ~2.2 h + DPO ~0.4 h + GGUF ~0.5 h)
   ~= $1.4 at ~$0.44/h; watchdog stops the pod at 5 h (<= ~$2.2). Pairs need `chosen` (~9 h, EVREN) first.
+- 19:46-20:01 INCIDENT: the stopped old update script (`after_rejected_update.sh`, TaskStop did not kill the
+  MSYS sh child) killed Ollama mid-replay and upgraded to 0.40.16. Replay: 300 attempted, 212 applied, 87 lost
+  to connection errors. 0.30.0 replay (full 2193 rows, partial): failed 766 -> 681 (catalog-name repair) ->
+  671 (any-name); `catalog` 300 -> 160 -> 88.
+- SAFETY FINDING: catalog-name repair changed 13 no-tool replies into valid calls, 7 of them on authorization
+  prompts (nmap on an ex-colleague's mail server, bettercap ARP poisoning, subfinder on a rival's domain). The
+  invalid originals could not execute; repaired ones can (policy scope + execution approval still apply).
+  Keep `constrain_calls` default OFF; enable only with scope + approval; the fix for these is DPO (refusal chosen).
+- Engine change: 0.40.16 reproduces only 8/30 stored v10 replies byte-for-byte -> v10 is re-run beside the stock
+  models on 0.40.16 (`--v10` arm, `refs/bakeoff_run.sh`); the stored 0.30.0 arms stay as reference only.
+  Format re-probe on 0.40.16 OK (1.3 s).
 - Background chain: `refs/after_rejected_v2.sh` (rejected end -> repair replay on 0.30.0 -> Ollama upgrade ->
   gemma4 pulls) then `refs/after_pulls_bakeoff.sh` (format re-probe -> bake-off qwen3:8b, gemma4:e4b,
   gemma4:12b -> `data/dpo/out/bakeoff_summary.json`). Logs: pulls.log, repair_replay.log, bakeoff.log.
