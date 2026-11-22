@@ -17,10 +17,10 @@ from agent.backends.gguf_model import GenerationResult
 from agent.catalog import CATALOG
 from agent.messages import Message
 from agent.toolcall import _ARAC_RE, parse_tool_reply
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from agent.persona import JELLYFISH_SYSTEM_PROMPT
 
 DEFAULT_NATIVE_MODEL = "gemma4:e4b"
-NATIVE_SYSTEM_PROMPT = OCTOPUS_SYSTEM_PROMPT + (
+NATIVE_SYSTEM_PROMPT = JELLYFISH_SYSTEM_PROMPT + (
     "\n\nBir işi yapmak için araç gerekiyorsa verilen araçlardan uygun olanı çağır; araç gerekmiyorsa "
     "(kavram sorusu, yapıştırılan çıktının yorumu, reddedilmesi gereken istek) araç çağırmadan Türkçe yanıt ver.")
 

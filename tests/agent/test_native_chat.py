@@ -75,3 +75,13 @@ def test_native_model_drives_the_unchanged_tool_loop(monkeypatch, tmp_path):
     assert [call.name for call in result.calls] == ["nmap"]
     assert bodies[1]["messages"][-1]["role"] == "tool"
     assert "22" in result.final
+
+
+def test_native_persona_is_jellyfish_and_v10_training_prompt_is_untouched():
+    from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT
+    from agent.persona import JELLYFISH_SYSTEM_PROMPT
+    from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+    assert NATIVE_SYSTEM_PROMPT.startswith(JELLYFISH_SYSTEM_PROMPT)
+    assert "Jellyfish" in NATIVE_SYSTEM_PROMPT and "Octópus" not in NATIVE_SYSTEM_PROMPT
+    assert "yalnızca" in JELLYFISH_SYSTEM_PROMPT          # introduce only when asked
+    assert OCTOPUS_SYSTEM_PROMPT.startswith("Sen Octópus'sun")  # v10 was trained on this exact text
