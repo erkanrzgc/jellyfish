@@ -29,3 +29,10 @@ def test_blue_server():
 def test_empty_and_unknown_go_general():
     assert route("") == "general"
     assert route("bugun hava nasil") == "general"
+
+
+def test_turkish_letters_are_folded_before_matching():
+    assert route("yetki yükseltme yap") == "privesc"
+    assert route("sunucuyu sertleştir") == "blue-server"
+    assert route("şifre kır") == "password"
+    assert route("İç ağda PORT TARAMASI yap") == "recon-scan"

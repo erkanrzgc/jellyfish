@@ -3,7 +3,7 @@ yoksa kanitsiz TAHMIN mi ediyor? Cekirdek metrik = kanit-once-sonuc.
 
 Held-out senaryolar (egitim setinde YOK). Tek-tur uretim: modele olay verilir, ILK yaniti
 arac cagiriyor mu (invest.) yoksa dogrudan sonuc/oneri mi (guess). v0.9 baseline vs v1.0 karsilastir.
-Kullanim: uv run python -m eval.rca_eval --model octopus-v9
+Kullanim: uv run python -m eval.rca_eval --model jellyfish-v9
 """
 from __future__ import annotations
 
@@ -78,7 +78,7 @@ def _report(model: str, r: RcaResult) -> str:
     return "\n".join(lines)
 
 
-def run_against_ollama(model: str = "octopus-v9", num_predict: int = 640) -> str:
+def run_against_ollama(model: str = "jellyfish-v9", num_predict: int = 640, native: bool = False) -> str:
     """GERCEK model ile RCA kanit-once-sonuc olcumu (temp=0). Ollama+GGUF gerektirir.
 
     num_predict=640: arac blogu yanitin SONUNDA gelir; yogun Turkce `dusunce` bu tokenizer'da
@@ -86,10 +86,14 @@ def run_against_ollama(model: str = "octopus-v9", num_predict: int = 640) -> str
     Baseline ve aday AYNI num_predict'te olculmeli (adil karsilastirma)."""
     from agent.backends.gguf_model import GgufModel
     from agent.messages import Message
-    from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
-    gm = GgufModel(model=model, tokenizer_dir="models/octopus-v8-tokenizer",
-                   system_prompt=OCTOPUS_TOOL_SYSTEM_PROMPT, temperature=0.0, num_predict=num_predict)
+    if native:  # hazir talimat modeli, yerel arac-cagirma; ayni taban (nudge'siz) olcum
+        from agent.backends.native_chat import NativeChatModel
+        gm = NativeChatModel(model=model, temperature=0.0, num_predict=num_predict)
+    else:
+        gm = GgufModel(model=model, tokenizer_dir="models/jellyfish-v8-tokenizer",
+                       system_prompt=LEGACY_TOOL_SYSTEM_PROMPT, temperature=0.0, num_predict=num_predict)
 
     def gen(olay: str) -> str:
         return gm([Message("user", olay)])
@@ -99,7 +103,8 @@ def run_against_ollama(model: str = "octopus-v9", num_predict: int = 640) -> str
 
 if __name__ == "__main__":
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v9")
+    ap.add_argument("--model", default="jellyfish-v9")
     ap.add_argument("--num-predict", type=int, default=640)
+    ap.add_argument("--native", action="store_true", help="--model'i yerel arac-cagirmayla kullan")
     args = ap.parse_args()
-    print(run_against_ollama(args.model, args.num_predict))
+    print(run_against_ollama(args.model, args.num_predict, args.native))

@@ -11,7 +11,7 @@
 ## Checklist
 
 - [x] Add regression coverage for v1.0 model/tokenizer selection and CLI overrides; run it and observe failures before implementation.
-- [x] Centralize defaults: `octopus-v10`, `models/octopus-v8-tokenizer` (the template used in v1.0 evaluations), `models/Modelfile.v10`. Align CLI, backend, and active eval runners. Keep historical reports and conversion recipes unchanged.
+- [x] Centralize defaults: `jellyfish-v10`, `models/jellyfish-v8-tokenizer` (the template used in v1.0 evaluations), `models/Modelfile.v10`. Align CLI, backend, and active eval runners. Keep historical reports and conversion recipes unchanged.
 - [x] Add an offline runner for three checks: allowed mock scan through the tool loop, rejected out-of-scope scan before execution, real temporary-workspace file round trip plus rejected path escape. Exit nonzero on a failed check. Cover detection of executor failures.
 - [x] Rewrite README/model setup docs with accurate version status, executor coverage, prerequisites, expected smoke output, and evaluation limits. Separate historical measurements from current verification.
 - [x] Add `AGENTS.md` and `PROJECT_HANDOFF.md`; prepend the shared entry point to existing local `CLAUDE.md` without removing historical notes.

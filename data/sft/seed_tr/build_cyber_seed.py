@@ -1,4 +1,4 @@
-"""v0.3 distillation — RAG bilgi tabanina DAYALI Turkce cyber Q&A -> octopus_cyber_tr.jsonl.
+"""v0.3 distillation — RAG bilgi tabanina DAYALI Turkce cyber Q&A -> jellyfish_cyber_tr.jsonl.
 
 Amac: Turkce cyber DERINLIGINI artirmak (v0.2'de sig kaliyordu). Teacher = guclu model
 (bu ureticiyi yazan), kaynak = rag/knowledge/ (dogru MITRE/CVE/OWASP ID'leri). Yani
@@ -12,7 +12,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "octopus_cyber_tr.jsonl"
+OUT = Path(__file__).resolve().parent / "jellyfish_cyber_tr.jsonl"
 
 # (user, assistant) — Turkce, DOGRU ID'ler (rag/knowledge ile tutarli), yetkili durus.
 PAIRS: list[tuple[str, str]] = [

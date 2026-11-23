@@ -2,7 +2,7 @@
 """Tokenizer fertility (kelime başına token) ölç ve baseline'larla karşılaştır.
 
 Fertility düşük = Türkçeyi daha az parçaya bölüyor = aynı context'e daha çok bilgi,
-daha hızlı/ucuz eğitim. Octopus tokenizer'ını mevcut tokenizer'lara (örn. Qwen2.5)
+daha hızlı/ucuz eğitim. Jellyfish tokenizer'ını mevcut tokenizer'lara (örn. Qwen2.5)
 karşı ölçeriz. Hedef: Qwen'in Türkçe fertility'sinin ALTINA inmek.
 
 Kullanım:
@@ -45,7 +45,7 @@ def measure_hf(name: str, text: str) -> int | None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--text", type=Path, required=True, help="değerlendirme metni (held-out TR)")
-    ap.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    ap.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     ap.add_argument("--baselines", nargs="*", default=["Qwen/Qwen2.5-0.5B"])
     args = ap.parse_args()
 
@@ -65,7 +65,7 @@ def main() -> None:
         print(f"{label:32s} {n_tokens:9d}  {n_tokens / n_words:9.3f}  {n_tokens / n_chars:8.3f}")
 
     if Path(args.spm).exists():
-        report("octopus-tr (bizim)", measure_spm(args.spm, text))
+        report("jellyfish-tr (bizim)", measure_spm(args.spm, text))
     else:
         print(f"[!] {args.spm} yok — önce tokenizer/train_tokenizer.py çalıştır")
     for name in args.baselines:

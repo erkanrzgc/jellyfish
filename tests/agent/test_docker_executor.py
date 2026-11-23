@@ -2,10 +2,10 @@ from agent.backends.docker_executor import build_argv, DockerExecutor
 
 
 def test_build_argv_nmap_docker_run():
-    argv = build_argv("nmap", {"hedef": "octopus-target", "secenekler": "-Pn -sV -p80"})
+    argv = build_argv("nmap", {"hedef": "jellyfish-target", "secenekler": "-Pn -sV -p80"})
     assert argv == [
-        "wsl.exe", "-d", "kali-linux", "--", "docker", "run", "--rm", "--network", "octopus-lab",
-        "instrumentisto/nmap", "-Pn", "-sV", "-p80", "octopus-target",
+        "wsl.exe", "-d", "kali-linux", "--", "docker", "run", "--rm", "--network", "jellyfish-lab",
+        "instrumentisto/nmap", "-Pn", "-sV", "-p80", "jellyfish-target",
     ]
 
 
@@ -38,7 +38,7 @@ def test_build_argv_renders_subcommand_param_not_dropped():
     # BUG FIX: secenekler+hedef disindaki parametreler (or. ghunt 'modul') dusuruluyordu.
     # Imaj-haritasi enjekte ederek positional render'in docker yolundan da gectigini dogrula.
     argv = build_argv("ghunt", {"modul": "email", "hedef": "a@b.com"},
-                      images={"ghunt": "octopus/ghunt"})
+                      images={"ghunt": "jellyfish/ghunt"})
     assert argv is not None
     assert "email" in argv                     # modul artik dusmuyor
     assert argv.index("email") < argv.index("a@b.com")  # alt-komut hedeften once

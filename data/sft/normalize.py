@@ -9,7 +9,7 @@ from __future__ import annotations
 import hashlib
 import unicodedata
 
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
 # Cok kisa cevap = dusuk sinyal; ele. (karakter)
 MIN_ASSISTANT_CHARS = 16
@@ -69,7 +69,7 @@ def to_messages(row: dict) -> list[dict] | None:
     return None
 
 
-def ensure_system(msgs: list[dict], system_prompt: str = OCTOPUS_SYSTEM_PROMPT) -> list[dict]:
+def ensure_system(msgs: list[dict], system_prompt: str = LEGACY_SYSTEM_PROMPT) -> list[dict]:
     """Ilk mesaj system degilse verilen system prompt'u basa ekle (varsa KORUR)."""
     if msgs and msgs[0]["role"] == "system":
         return msgs
@@ -81,8 +81,8 @@ def strip_system(msgs: list[dict]) -> list[dict]:
     return [m for m in msgs if m["role"] != "system"]
 
 
-def apply_octopus_system(msgs: list[dict], system_prompt: str = OCTOPUS_SYSTEM_PROMPT) -> list[dict]:
-    """Kaynagin system'ini AT, Octopus persona/guardrail'ini system olarak koy.
+def apply_jellyfish_system(msgs: list[dict], system_prompt: str = LEGACY_SYSTEM_PROMPT) -> list[dict]:
+    """Kaynagin system'ini AT, Jellyfish persona/guardrail'ini system olarak koy.
 
     Persona tutarliligi icin: model 'system = Ben Octopus + guardrail' baglar.
     Kaynagin jenerik/Ingilizce system'i (or. Fenrir) korunmaz.

@@ -7,11 +7,11 @@
   QLoRA was used only in v0.1/v0.2; v0.6+ is Turkish-Gemma bf16.) The "Qwen3-8B / QLoRA / Unsloth" statements
   below are therefore HISTORICAL — see ADR 0003 for the current path.
 - **Supersedes:** [ADR 0001](0001-from-scratch-turkish-first.md) (from-scratch pretraining)
-- **Directory:** `C:\Users\erkanrzgc\Desktop\Octopus` (ASCII)
+- **Directory:** `C:\Users\erkanrzgc\Desktop\Jellyfish` (ASCII)
 
 ## Context
 
-Under ADR 0001, Octópus was trained **from scratch**: a custom Turkish tokenizer (`octopus-tr`, fertility
+Under ADR 0001, Jellyfish was trained **from scratch**: a custom Turkish tokenizer (`jellyfish-tr`, fertility
 1.735 vs Qwen 2.674, −35%) + a nanoGPT-style Llama + pretraining. Phases 1-4 stood up end-to-end locally
 (100M model, E2E smoke green). But the **cost of a scaling run** became concrete:
 
@@ -48,13 +48,13 @@ model we fine-tune very carefully."**
 
 ## Consequences (honest)
 
-- **Tokenizer cost:** fine-tuning inherits the Qwen tokenizer → `octopus-tr`'s −35% fertility win is **not
+- **Tokenizer cost:** fine-tuning inherits the Qwen tokenizer → `jellyfish-tr`'s −35% fertility win is **not
   used** on this path (Qwen uses ~35% more tokens in Turkish = slightly more expensive but fully usable). The
-  from-scratch artifacts (`tokenizer/octopus-tr.*`, `checkpoints_web/`) are **archived, not deleted.**
+  from-scratch artifacts (`tokenizer/jellyfish-tr.*`, `checkpoints_web/`) are **archived, not deleted.**
 - **Gain:** much cheaper/faster, a much higher capability ceiling (8B base >> 100M from-scratch), and both
   Turkish + cyber are reachable via proven paths.
 - **Cisco 2026 warning:** cyber fine-tuning can create "representation drift"/brittleness → obfuscation-variant
-  red-teaming in eval is mandatory (see the `octopus-eval` skill).
+  red-teaming in eval is mandatory (see the `jellyfish-eval` skill).
 
 ## Open knobs (to be updated with evidence)
 

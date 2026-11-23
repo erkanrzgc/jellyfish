@@ -2,7 +2,7 @@
 
 **Date:** 2026-07-10
 **Status:** Design — approved for spec, pending implementation plan
-**Scope:** Data foundation for the next Octópus retrain. Part **A** of a 4-part dataset
+**Scope:** Data foundation for the next Jellyfish retrain. Part **A** of a 4-part dataset
 expansion (A: data foundation → B: assistant tools → C: domain depth → D: reasoning + memory).
 One retrain at the end; data built in pieces.
 
@@ -82,7 +82,7 @@ The remapper is deterministic given a seed (reproducible dataset).
 
 A sampler that draws targets with a hard distribution cap so no single target dominates.
 
-- **Hostnames** (lab/authorized framing): `octopus-target`, `web01.lab.local`, `dc01.corp.local`,
+- **Hostnames** (lab/authorized framing): `jellyfish-target`, `web01.lab.local`, `dc01.corp.local`,
   `app-staging.internal`, `kali-victim`, … (a curated list, all clearly internal/lab).
 - **Private IP ranges:** `10.0.0.0/8`, `172.16.0.0/12`, `192.168.0.0/16` — sampled subnets/hosts.
 - **CIDRs:** `/24` and `/28` blocks drawn from the ranges above.
@@ -103,7 +103,7 @@ and seed the pattern the remapper then amplifies.
 
 - New augment step runs **before** `build_tools.py`: `tools/*.jsonl` (+ `hostname_tr.jsonl`) →
   `augment_targets.py` → expanded per-domain set → existing `build_tools.py` (dedup, validate,
-  coverage report) → `tools_dist/octopus_tools_tr.jsonl` → `build_sft.py` (unchanged).
+  coverage report) → `tools_dist/jellyfish_tools_tr.jsonl` → `build_sft.py` (unchanged).
 - No change to `build_sft.py`, persona, or the training script in A.
 
 ## 5. Data flow
@@ -115,7 +115,7 @@ tools/*.jsonl  +  hostname_tr.jsonl
    augmented per-domain examples
         │
         ▼  build_tools.py  (dedup + _valid + coverage/distribution report)
-   tools_dist/octopus_tools_tr.jsonl
+   tools_dist/jellyfish_tools_tr.jsonl
         │
         ▼  build_sft.py  (normalize + persona + split)   ← unchanged
    train.jsonl / val.jsonl / test.jsonl

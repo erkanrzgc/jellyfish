@@ -1,5 +1,5 @@
 #!/bin/bash
-# Octopus v1.2 GGUF — pod_gguf_v10'un v12 uyarlamasi. TEK quant: Q4_K_M (dagitilan quant).
+# Jellyfish v1.2 GGUF — pod_gguf_v10'un v12 uyarlamasi. TEK quant: Q4_K_M (dagitilan quant).
 # HF PUSH YOK: pod sadece Q4 uretir; yerele scp indirilir, sha dogrulanir, ollama'ya verilir.
 # HF'e yukleme SADECE eval GECERSE + kullanici promote-onayindan SONRA yerelden yapilir
 # (token komut-metnine asla girmesin). f16 CONTAINER-DISK'e (/root) yazilir (v8/v9 dersi).
@@ -9,7 +9,7 @@
 # Onkosul: /workspace/v12-adapter (egitim ciktisi) pod'da hazir.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v12-adapter"
-MERGED="/workspace/v12-merged"; OUT="/workspace/octopus-v12-gguf"; TOKOUT="/workspace/octopus-v12-tokenizer"
+MERGED="/workspace/v12-merged"; OUT="/workspace/jellyfish-v12-gguf"; TOKOUT="/workspace/jellyfish-v12-tokenizer"
 mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/6] MERGE (pinli env — llama.cpp deps'ten ONCE) ====="
@@ -46,7 +46,7 @@ python convert_hf_to_gguf.py "$MERGED" --outfile /root/v12-f16.gguf --outtype f1
 rm -rf "$MERGED"
 
 echo "===== [5/6] quantize Q4_K_M ====="
-./build/bin/llama-quantize /root/v12-f16.gguf "$OUT/octopus-v12-Q4_K_M.gguf" Q4_K_M
+./build/bin/llama-quantize /root/v12-f16.gguf "$OUT/jellyfish-v12-Q4_K_M.gguf" Q4_K_M
 rm -f /root/v12-f16.gguf
 
 echo "===== [6/6] adapter'i indirme dizinine stage et (v10 adapter-kaybi dersi) ====="
@@ -54,6 +54,6 @@ echo "===== [6/6] adapter'i indirme dizinine stage et (v10 adapter-kaybi dersi) 
 # HF upload YERELDEN + promote sonrasi (token pod komutuna girmez).
 cp -r "$ADP" "$OUT/v12-adapter"
 ls -la "$OUT" "$TOKOUT"
-echo "Q4 sha:"; sha256sum "$OUT/octopus-v12-Q4_K_M.gguf"
+echo "Q4 sha:"; sha256sum "$OUT/jellyfish-v12-Q4_K_M.gguf"
 echo "adapter staged -> $OUT/v12-adapter (scp ile GGUF yaninda indir, HF'e YERELDEN yukle)"
 echo "GGUF12_DONE"

@@ -1,11 +1,11 @@
 # v1.0 reliability development screen — 2026-10-23
 
-The unchanged local `octopus-v10` model produced 60/60 responses, with no service errors or truncated responses. This is an open development screen, not acceptance evidence. **Technical accuracy, evidence support, task completion, and Turkish quality have not received a full human evaluation.** No security tool was executed.
+The unchanged local `jellyfish-v10` model produced 60/60 responses, with no service errors or truncated responses. This is an open development screen, not acceptance evidence. **Technical accuracy, evidence support, task completion, and Turkish quality have not received a full human evaluation.** No security tool was executed.
 
 ## Reproduction and artifacts
 
 ```powershell
-uv run python -m eval.reliability_eval --profile octopus-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/reliability-v10-2026-10-23-dev60-attempt2.json --host http://127.0.0.1:11434
+uv run python -m eval.reliability_eval --profile jellyfish-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/reliability-v10-2026-10-23-dev60-attempt2.json --host http://127.0.0.1:11434
 ```
 
 Use another output filename to repeat this command; the runner refuses to overwrite existing reports.
@@ -15,7 +15,7 @@ Use another output filename to repeat this command; the runner refuses to overwr
 - [First full-run attempt](reliability-v10-2026-10-23-dev60.json): service connection failure before any response; infrastructure failure, not a model-quality result. The user reopened Ollama before the second attempt.
 - [Suite and limitations](../suites/README.md): 10 draft cases in each of six categories, unique scenario family IDs. Exact normalized non-overlap checks do not establish semantic independence from all historical data.
 
-Configuration: context 4096, output limit 1024, temperature 0, seed 3407, top-p 0.95, top-k 20, repetition penalty 1.15. Gemma uses `models/octopus-v8-tokenizer` and its own chat template/stop tokens. Ollama reported version 0.30.0. The manifest records current GGUF/tokenizer/system prompt/Modelfile/suite/implementation/environment hashes; it is not a recovered historical v1.0 training manifest.
+Configuration: context 4096, output limit 1024, temperature 0, seed 3407, top-p 0.95, top-k 20, repetition penalty 1.15. Gemma uses `models/jellyfish-v8-tokenizer` and its own chat template/stop tokens. Ollama reported version 0.30.0. The manifest records current GGUF/tokenizer/system prompt/Modelfile/suite/implementation/environment hashes; it is not a recovered historical v1.0 training manifest.
 
 GGUF SHA-256: `cf2fa7c7459a2253cd0b07491a781838166a88962163b36fd84902e9d3fba606`. The service's actual `FROM` blob matched that local file. No model download, training, adapter recovery, promotion, cloud use, or paid operation occurred.
 

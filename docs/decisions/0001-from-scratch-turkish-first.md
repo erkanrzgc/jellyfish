@@ -4,15 +4,15 @@
 - **Status:** ⛔ SUPERSEDED (2026-07-03) → replaced by [ADR 0002](0002-pivot-to-finetuning.md) (pivot to
   fine-tuning). This document is a **historical record**; see 0002 for the current strategy. The from-scratch
   artifacts are preserved under `archive/`.
-- **Directory:** `C:\Users\erkanrzgc\Desktop\Octópus` (a new, clean start)
+- **Directory:** `C:\Users\erkanrzgc\Desktop\Jellyfish` (a new, clean start)
 
 ## Context
 
-The previous project (`agentic-model`, GitHub `erkanrzgc/octopus-v0`) built Octópus with **Qwen2.5 + QLoRA**
+The previous project (`agentic-model`, GitHub `erkanrzgc/jellyfish-v0`) built Jellyfish with **Qwen2.5 + QLoRA**
 and was ~80% mature: agent runtime (Track B), authorization gate, Obsidian memory, language-first curriculum,
 a 7B pod run. Two things were **proven** on that path:
 
-1. Turkish garbling was **not** caused by the tokenizer — `octopus-tr-base` tokenization matched the original
+1. Turkish garbling was **not** caused by the tokenizer — `jellyfish-tr-base` tokenization matched the original
    Qwen exactly; the culprit was Phase 2's high learning rate (1e-4 → catastrophic forgetting).
 2. **QLoRA cannot train a tokenizer** (it freezes the base + embeddings) — hence the "don't touch the
    tokenizer" decision there.
@@ -23,7 +23,7 @@ deliberately.
 
 ## Decision
 
-1. Octópus will be trained via **from-scratch pretraining** (random init; no Qwen base).
+1. Jellyfish will be trained via **from-scratch pretraining** (random init; no Qwen base).
 2. **Turkish-first.** The first and highest priority: a **Turkish-specific tokenizer.**
 3. Tokenizer = **SentencePiece Unigram**, vocab ~32k, **diacritic-preserving** (NFKC, NO casefold → Turkish
    dotted-i is not broken), `byte_fallback`, `split_digits` (consistent ports/IPs). Goal: beat Qwen2.5's
@@ -60,5 +60,5 @@ deliberately.
 
 ## Related
 
-- `agentic-model/OCTOPUS.md` — the previous north star (Qwen + QLoRA era).
+- `agentic-model/JELLYFISH.md` — the previous north star (Qwen + QLoRA era).
 - `agentic-model/SOUL.md` — persona/constitution (to be ported here).

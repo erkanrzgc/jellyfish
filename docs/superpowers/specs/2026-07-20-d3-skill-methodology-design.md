@@ -17,8 +17,8 @@ Bu karar iki turda oturdu:
    - Tez çelişkisi: "9B yeterli — zekâ orkestrasyonda, **bilgi inference'ta gelir**" ilkesi
      OLGULARA uygulanır. Bir **metodoloji** (keşif→enum→exploit; "önce say sonra saldır") =
      orchestration → **modelin İÇİNDE** olmalı, dışarıdan yüklenmemeli.
-   - [[octopus-skill-layer-reference]] zaten "openclaw'in kendisi ajan, MODEL DEĞİL; symlink/skill-
-     yükleme = harness infra, Octópus'a uygun değil" diye işaretliyordu — kendi notumuza aykırıydık.
+   - [[jellyfish-skill-layer-reference]] zaten "openclaw'in kendisi ajan, MODEL DEĞİL; symlink/skill-
+     yükleme = harness infra, Jellyfish'a uygun değil" diye işaretliyordu — kendi notumuza aykırıydık.
    - En zayıf metriğimiz `in_catalog %50`; yeni araç tam bu kırılgan yüzeyi büyütür VE D1 ölçüm
      kapısını **karıştırır** (v0.8'de araç-güvenilirliği düşerse sebep reasoning mı yeni araç mı
      ayırt edilemez). Decomposition tablosu D3'ü **DÜŞÜK risk** diyor — yeni araç bunu YALAN yapar.
@@ -102,7 +102,7 @@ disiplinle**yi öğretir.
   çerçeve dayatma yok / net "bu metodoloji burada uygun değil".
 
 ### Üretim deseni (Faz C/D2 ile aynı)
-scratchpad `gen_d3_skill.py` (kayıt listesi → append `data/sft/distilled/octopus_distill_d3_skill.jsonl`,
+scratchpad `gen_d3_skill.py` (kayıt listesi → append `data/sft/distilled/jellyfish_distill_d3_skill.jsonl`,
 `ensure_ascii=False`) → `build_sft --source distill seed_tr tools --seed-repeat 3` → `uv run pytest`
 → **teknik doğruluk ELLE tara** (Faz C dersi: testler içeriği doğrulamaz) → commit.
 
@@ -127,8 +127,8 @@ scratchpad `gen_d3_skill.py` (kayıt listesi → append `data/sft/distilled/octo
 
 ## Bitince (D-fazı kapanışı)
 D3 verisi tamam → toplam distill A+B+C+D1+D2+**D3** → **tek v0.8 retrain (💰 para-checkpoint, DUR)** →
-`run_toolcall_eval --model octopus-v8 --label v0.8-pilot` → ölçüm kapısı (in_catalog + expected_tool
+`run_toolcall_eval --model jellyfish-v8 --label v0.8-pilot` → ölçüm kapısı (in_catalog + expected_tool
 v0.7 baseline'dan >~5 puan DÜŞMEMELİ) → sonuca göre D1 reasoning ölçekle/ertele.
 
-İlgili: [[octopus-dataset-expansion]] · [[octopus-skill-layer-reference]] · [[octopus-cyberm4fia-repos]] ·
-[[octopus-agent-harness]] · [[octopus-v08-assistant-tools]] · [[octopus-finetune-state]].
+İlgili: [[jellyfish-dataset-expansion]] · [[jellyfish-skill-layer-reference]] · [[jellyfish-cyberm4fia-repos]] ·
+[[jellyfish-agent-harness]] · [[jellyfish-v08-assistant-tools]] · [[jellyfish-finetune-state]].

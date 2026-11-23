@@ -1,7 +1,7 @@
 import json
 from pathlib import Path
 
-P = Path("data/sft/distilled/octopus_distill_v12_accuracy.jsonl")
+P = Path("data/sft/distilled/jellyfish_distill_v12_accuracy.jsonl")
 
 
 def _rows():

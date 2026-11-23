@@ -1,4 +1,4 @@
-"""GgufModel: gercek Octópus'u Ollama uzerinden harness'e baglar (mock yerine).
+"""GgufModel: gercek Jellyfish'u Ollama uzerinden harness'e baglar (mock yerine).
 
 Prompt EGITIMLE BIREBIR: kaydedilmis tokenizer'in kendi chat template'i (system rolu +
 enable_thinking'i destekler) uygulanir, bastaki cift <bos> siyrilir (ADR 0003 tuzagi),
@@ -14,10 +14,10 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from agent.messages import Message
-from agent.config import DEFAULT_MODEL, DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR
+from agent.config import DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR, LEGACY_MODEL as DEFAULT_MODEL
 from agent.toolcall import render_for_model
 from data.sft.normalize import ensure_system
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 _EOT = "<end_of_turn>"
 
@@ -63,7 +63,7 @@ class GgufModel:
     model: str = DEFAULT_MODEL
     host: str = "http://localhost:11434"
     tokenizer_dir: str = DEFAULT_TOKENIZER_DIR
-    system_prompt: str = OCTOPUS_TOOL_SYSTEM_PROMPT  # araç-farkında: model ```arac``` bloğu basar
+    system_prompt: str = LEGACY_TOOL_SYSTEM_PROMPT  # araç-farkında: model ```arac``` bloğu basar
     temperature: float = 0.6
     top_p: float = 0.95
     top_k: int = 20
@@ -77,6 +77,9 @@ class GgufModel:
     modelfile: str = DEFAULT_MODELFILE
     timeout: int = 180
     renderer: Callable[[list[dict]], str] | None = None  # test enjeksiyonu (transformers'i atlar)
+    constrain_calls: bool = False  # gecersiz arac blogunu katalog-semasiyla yeniden uret (agent.constrained)
+    constrain_tools: tuple[str, ...] | None = None  # onarim semasini bu araclarla sinirla (None = tum katalog)
+    repair_unknown_names: bool = False  # uydurma ad onarimi: ret-istemini calisir cagriya cevirebilir, ayri olc
     _tokenizer: object = field(default=None, init=False, repr=False)
 
     def __call__(self, messages: list[Message]) -> str:
@@ -98,7 +101,29 @@ class GgufModel:
             return GenerationResult(error=f"HATA: prompt/tokenizer hazirlanamadi ({type(e).__name__}: {e})",
                                     metadata={"settings": self.generation_settings(),
                                               "elapsed_seconds": time.perf_counter() - started})
-        return self._generate_result(prompt, started)
+        result = self._generate_result(prompt, started)
+        if self.constrain_calls and not result.error and not result.truncated:
+            return self._repair_calls(prompt, result)
+        return result
+
+    def _repair_calls(self, prompt: str, result: GenerationResult) -> GenerationResult:
+        """Ilk gecersiz arac blogunu kisitli cozumlemeyle yeniden uret; basarisizsa orijinali koru."""
+        from agent.constrained import call_schema, is_valid_repair, repair_prefix, splice_repaired_call
+        prefix = repair_prefix(result.text, allow_unknown_names=self.repair_unknown_names)
+        if prefix is None:
+            return result
+        repaired = self._generate_result(prompt + prefix, time.perf_counter(),
+                                         fmt=call_schema(self.constrain_tools))
+        applied = not repaired.error and not repaired.truncated and is_valid_repair(repaired.text)
+        info = {"applied": applied, "original": result.text,
+                "elapsed_seconds": repaired.metadata.get("elapsed_seconds")}
+        if not applied:
+            info["repair_text"] = repaired.text
+            info["repair_error"] = repaired.error
+            return GenerationResult(text=result.text, done_reason=result.done_reason,
+                                    metadata={**result.metadata, "call_repair": info})
+        return GenerationResult(text=splice_repaired_call(prefix, repaired.text), done_reason=result.done_reason,
+                                metadata={**result.metadata, "call_repair": info})
 
     def _render(self, dicts: list[dict]) -> str:
         if self.renderer is not None:
@@ -111,7 +136,7 @@ class GgufModel:
         result = self._generate_result(prompt, time.perf_counter())
         return result.display_text()
 
-    def _generate_result(self, prompt: str, started: float) -> GenerationResult:
+    def _generate_result(self, prompt: str, started: float, fmt: dict | None = None) -> GenerationResult:
         settings = self.generation_settings()
         fingerprint_text = prompt if isinstance(prompt, str) else json.dumps(prompt, ensure_ascii=False)
         metadata = {"settings": settings, "model": self.model, "host": self.host,
@@ -119,10 +144,10 @@ class GgufModel:
         def failure(error, text=""):
             metadata["elapsed_seconds"] = time.perf_counter() - started
             return GenerationResult(text=text, error=error, metadata=metadata)
-        body = json.dumps({
-            "model": self.model, "prompt": prompt, "raw": True, "stream": False,
-            "options": settings,
-        }).encode("utf-8")
+        payload = {"model": self.model, "prompt": prompt, "raw": True, "stream": False, "options": settings}
+        if fmt is not None:
+            payload["format"] = fmt
+        body = json.dumps(payload).encode("utf-8")
         req = urllib.request.Request(
             f"{self.host}/api/generate", data=body,
             headers={"Content-Type": "application/json"})

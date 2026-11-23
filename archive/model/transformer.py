@@ -1,4 +1,4 @@
-"""octopus decoder-only transformer — nanoGPT-tarzı modern Llama.
+"""jellyfish decoder-only transformer — nanoGPT-tarzı modern Llama.
 
 Bileşenler: RMSNorm · RoPE (rotary) · GQA causal attention (PyTorch SDPA) · SwiGLU MLP ·
 tied embeddings. Kütüphanesiz, sade, sahiplenilen PyTorch.
@@ -12,7 +12,7 @@ import torch.nn as nn
 import torch.nn.functional as F
 from torch.utils.checkpoint import checkpoint as _ckpt
 
-from model.config import OctopusConfig
+from model.config import JellyfishConfig
 
 
 class RMSNorm(nn.Module):
@@ -53,7 +53,7 @@ def _apply_rope(q: torch.Tensor, k: torch.Tensor, cos: torch.Tensor, sin: torch.
 class Attention(nn.Module):
     """GQA + RoPE + causal SDPA."""
 
-    def __init__(self, cfg: OctopusConfig) -> None:
+    def __init__(self, cfg: JellyfishConfig) -> None:
         super().__init__()
         self.n_heads = cfg.n_heads
         self.n_kv_heads = cfg.n_kv_heads
@@ -84,7 +84,7 @@ class Attention(nn.Module):
 class SwiGLU(nn.Module):
     """SwiGLU MLP: down(silu(gate(x)) * up(x))."""
 
-    def __init__(self, cfg: OctopusConfig) -> None:
+    def __init__(self, cfg: JellyfishConfig) -> None:
         super().__init__()
         hidden = int(cfg.ffn_mult * cfg.dim)
         m = cfg.ffn_multiple_of
@@ -100,7 +100,7 @@ class SwiGLU(nn.Module):
 class Block(nn.Module):
     """Pre-norm transformer bloğu (residual: norm→attn, norm→ffn)."""
 
-    def __init__(self, cfg: OctopusConfig) -> None:
+    def __init__(self, cfg: JellyfishConfig) -> None:
         super().__init__()
         self.attn_norm = RMSNorm(cfg.dim, cfg.norm_eps)
         self.attn = Attention(cfg)
@@ -113,8 +113,8 @@ class Block(nn.Module):
         return x
 
 
-class OctopusLM(nn.Module):
-    def __init__(self, cfg: OctopusConfig) -> None:
+class JellyfishLM(nn.Module):
+    def __init__(self, cfg: JellyfishConfig) -> None:
         super().__init__()
         self.cfg = cfg
         self.grad_checkpoint = False  # 8GB'da büyük model için: aktivasyonu backward'da yeniden hesapla

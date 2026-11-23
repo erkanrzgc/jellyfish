@@ -1,4 +1,4 @@
-# RunPod Runbook — Octópus eğitim turu
+# RunPod Runbook — Jellyfish eğitim turu
 
 > **DOĞRULANMIŞ** (2026-06-20): A4000 16GB SECURE'da 200M model uçtan uca eğitildi, $0.17.
 > Aşağıdaki komutlar gerçek bir turda çalıştı. Asistan pod'a `runpodctl` + SSH ile erişir.
@@ -20,7 +20,7 @@
 # runpodctl kurulu (WindowsApps'te). API key (GİZLİ — kendi terminalinde):
 runpodctl doctor                      # key'i prompt'a yapıştır → ~/.runpod/config.toml
 # SSH anahtarı üret + hesaba ekle:
-ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N '' -C octopus-runpod
+ssh-keygen -t ed25519 -f ~/.ssh/id_ed25519 -N '' -C jellyfish-runpod
 runpodctl ssh add-key --key-file "$env:USERPROFILE\.ssh\id_ed25519.pub"
 icacls "$env:USERPROFILE\.ssh\id_ed25519" /grant:r "$(whoami):F"; icacls "$env:USERPROFILE\.ssh\id_ed25519" /inheritance:r
 runpodctl me                          # bakiye kontrol (0.5B turu için ~$60 yükle)
@@ -30,7 +30,7 @@ runpodctl me                          # bakiye kontrol (0.5B turu için ~$60 yü
 
 ```powershell
 $term = (Get-Date).ToUniversalTime().AddHours(8).ToString("yyyy-MM-ddTHH:mm:ssZ")  # güvenlik limiti
-runpodctl pod create --name octopus-train --gpu-id "NVIDIA RTX A5000" --cloud-type SECURE `
+runpodctl pod create --name jellyfish-train --gpu-id "NVIDIA RTX A5000" --cloud-type SECURE `
   --template-id runpod-torch-v240 --terminate-after $term
 # boşsa dene: "NVIDIA RTX A4500" / "NVIDIA RTX A6000" / "NVIDIA RTX A4000"
 # çok-GPU (DDP): --gpu-count 4
@@ -44,10 +44,10 @@ runpodctl ssh info <POD_ID> -v        # ip + port + ssh_command döner (RUNNING+
 
 ```powershell
 # tarball (sadece scriptler + tokenizer; veri pod'da üretilir)
-tar -czf octopus_code.tgz --exclude=data/bin --exclude=data/corpus --exclude=*/__pycache__ model train eval data tokenizer/octopus-tr.model
+tar -czf jellyfish_code.tgz --exclude=data/bin --exclude=data/corpus --exclude=*/__pycache__ model train eval data tokenizer/jellyfish-tr.model
 $k="$env:USERPROFILE\.ssh\id_ed25519"; $H="root@<IP>"; $P=<PORT>
-scp -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -P $P octopus_code.tgz "${H}:/workspace/"
-ssh -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -p $P $H 'cd /workspace && tar -xzf octopus_code.tgz && pip install -q sentencepiece datasets'
+scp -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -P $P jellyfish_code.tgz "${H}:/workspace/"
+ssh -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -p $P $H 'cd /workspace && tar -xzf jellyfish_code.tgz && pip install -q sentencepiece datasets'
 ```
 
 ## 3. Veri üret (pod'da, ~1M tok/s)
@@ -62,7 +62,7 @@ ssh ... $H 'cd /workspace && python -m data.build_pretrain_data --max-tokens 150
 ```powershell
 # tek GPU:
 ssh ... $H 'cd /workspace && python -m train.pretrain --data-dir data/bin/fineweb2_tr --out-dir ckpt \
-  --preset octopus-500m --max-steps 60000 --warmup 1000 --lr 4e-4 --min-lr 4e-5 \
+  --preset jellyfish-500m --max-steps 60000 --warmup 1000 --lr 4e-4 --min-lr 4e-5 \
   --batch-size 8 --grad-accum 8 --eval-interval 1000 --sample-interval 2000 --save-interval 2000'
 # çok-GPU (N kart, Linux NCCL):
 ssh ... $H 'cd /workspace && torchrun --nproc_per_node=4 -m train.pretrain --data-dir data/bin/fineweb2_tr ...'

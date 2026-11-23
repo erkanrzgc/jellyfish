@@ -8,7 +8,7 @@ import argparse
 import re
 import sys
 from agent.backends.mock_model import ScriptedModel
-from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
+from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR, is_native
 from agent.display import render_transcript
 from agent.loop import run_tool_loop
 from agent.messages import Message
@@ -69,8 +69,8 @@ def run_real_demo(target: str = "127.0.0.1", scope: list[str] | None = None,
     return _scan_demo(RealExecutor(distro=distro), target, scope, f"-Pn -sV -p{port}", "gercek demo bitti")
 
 
-def run_docker_demo(target: str = "octopus-target", scope: list[str] | None = None,
-                    network: str = "octopus-lab", port: int = 80) -> str:
+def run_docker_demo(target: str = "jellyfish-target", scope: list[str] | None = None,
+                    network: str = "jellyfish-lab", port: int = 80) -> str:
     """DOCKER LAB (Model B): arac lab aginda container -> hedefe DNS adiyla erisir."""
     from agent.backends.docker_executor import DockerExecutor
     scope = scope or [target, "172.30.0.0/24"]
@@ -92,7 +92,7 @@ def _demo_registry(scope: list[str], executor, role: str | None = None) -> ToolR
 def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
                   executor=None, target: str = "10.10.10.5", label: str = "gguf demo bitti",
                   skills=_LOAD_SKILLS, role: str | None = None,
-                  tokenizer_dir: str = DEFAULT_TOKENIZER_DIR) -> str:
+                  tokenizer_dir: str = DEFAULT_TOKENIZER_DIR, native_model: str | None = None) -> str:
     """GERCEK BEYIN: GgufModel (Ollama) dongüyü sürer. executor=None -> MockExecutor eller.
     executor verilirse (ör. DockerExecutor) gercek beyin + gercek eller uctan-uca calisir.
     Ollama yoksa GgufModel net HATA stringi döner -> döngü çökmez, onu nihai cevap alir.
@@ -113,16 +113,25 @@ def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
     #  1) Skill acikken: egitim-disi araclari (trufflehog/magika/ghunt) KESIF manifesti olarak ekle.
     #  2) Gorev bir sunucu-OLAYI ise: RCA "kanit-once-sonuc" kurali ekle (assemble_incident_aware).
     #     Kural GLOBAL uygulaninca toolcall'i bozar (dogru-arac 75->54) -> yalniz olay dilinde.
-    from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
     from agent.incident import assemble_incident_aware_prompt
     task = msgs[0].content
-    base = OCTOPUS_TOOL_SYSTEM_PROMPT
+    base = LEGACY_TOOL_SYSTEM_PROMPT
     if skills is not None:
         from agent.catalog import extension_augmented_system_prompt
         base = extension_augmented_system_prompt(base)
+    native_model = native_model or (model if is_native(model) else None)
+    if native_model:
+        # Hazir talimat modeli (or. gemma4:e4b) yerel arac-cagirma ile: tum katalog (eklentiler dahil)
+        # native tool olarak gider -> manifest gereksiz; RCA olay kurali ayni sekilde kosullu eklenir.
+        from agent.backends import native_chat
+        brain = native_chat.NativeChatModel(
+            model=native_model, system_prompt=assemble_incident_aware_prompt(native_chat.NATIVE_SYSTEM_PROMPT, task))
+        result = run_tool_loop(msgs, brain, registry, skills=skills, approval_handler=approval_prompt(registry))
+        return _format_run(msgs, result, label)
     system_prompt = assemble_incident_aware_prompt(base, task)
     gguf_kwargs: dict = {"model": model, "tokenizer_dir": tokenizer_dir}
-    if system_prompt != OCTOPUS_TOOL_SYSTEM_PROMPT:   # taban degistiyse (manifest veya RCA kurali)
+    if system_prompt != LEGACY_TOOL_SYSTEM_PROMPT:   # taban degistiyse (manifest veya RCA kurali)
         gguf_kwargs["system_prompt"] = system_prompt
     result = run_tool_loop(msgs, GgufModel(**gguf_kwargs), registry, skills=skills,
                            approval_handler=approval_prompt(registry))
@@ -150,7 +159,7 @@ def _docker_container_ip(container: str, distro: str = "kali-linux") -> str | No
 
 
 def run_gguf_docker_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
-                         target: str = "octopus-target", network: str = "octopus-lab",
+                         target: str = "jellyfish-target", network: str = "jellyfish-lab",
                          tokenizer_dir: str = DEFAULT_TOKENIZER_DIR) -> str:
     """UCTAN UCA (Model B): GERCEK model + GERCEK docker-lab eli (container nmap).
     Model arac blogu uretir -> policy -> DockerExecutor lab aginda gercek nmap -> hedef.
@@ -174,7 +183,7 @@ def run_assistant_demo(workspace: str | None = None, real_cmd: bool = False) -> 
     from agent.executor import MockExecutor
     from agent.policy import LabPolicy
     from agent.toolcall import ToolCall
-    ws = workspace or tempfile.mkdtemp(prefix="octopus-ws-")
+    ws = workspace or tempfile.mkdtemp(prefix="jellyfish-ws-")
     sandbox = None
     if real_cmd:
         from agent.backends.sandbox_executor import DockerSandboxExecutor
@@ -187,12 +196,12 @@ def run_assistant_demo(workspace: str | None = None, real_cmd: bool = False) -> 
     registry = ToolRegistry(LabPolicy(scope=[], allow_high=real_cmd, workspace_root=ws),
                             execu, AuditLog.default())
     steps = [
-        ToolCall(name="write_file", params={"yol": "not.txt", "icerik": "Octópus lab notu"}),
+        ToolCall(name="write_file", params={"yol": "not.txt", "icerik": "Jellyfish lab notu"}),
         ToolCall(name="read_file", params={"yol": "not.txt"}),
         ToolCall(name="write_file", params={"yol": "../kacis.txt", "icerik": "x"}),  # reddedilmeli
     ]
     if real_cmd:  # gercek sandbox turunda run_cmd'yi de goster (docker yoksa zarifce HATA doner)
-        steps.append(ToolCall(name="run_cmd", params={"komut": "echo octopus-sandbox && id && pwd"}))
+        steps.append(ToolCall(name="run_cmd", params={"komut": "echo jellyfish-sandbox && id && pwd"}))
     lines = [f"[workspace] {ws}"]
     succeeded = True
     for c in steps:
@@ -213,14 +222,16 @@ def main() -> int:
         sys.stdout.reconfigure(encoding="utf-8")
     except Exception:
         pass
-    ap = argparse.ArgumentParser(description="Octópus agent harness demo")
+    ap = argparse.ArgumentParser(description="Jellyfish agent harness demo")
     ap.add_argument("--scope", nargs="*", default=None, help="izinli IP/CIDR (mod varsayilanini ezer)")
     ap.add_argument("--real", action="store_true", help="RealExecutor: Kali WSL'de gercek nmap")
     ap.add_argument("--docker", action="store_true", help="DockerExecutor: lab docker aginda gercek nmap")
-    ap.add_argument("--gguf", action="store_true", help=f"GgufModel: Ollama'da {DEFAULT_MODEL}")
+    ap.add_argument("--gguf", action="store_true", help=f"gercek model (Ollama): varsayilan {DEFAULT_MODEL}; eski v1.0 icin --model jellyfish-v10")
     ap.add_argument("--assistant", action="store_true", help="Asistan araclari demo (jailed file + policy)")
     ap.add_argument("--real-cmd", action="store_true", help="run_cmd'yi GERCEK docker sandbox'ta "
                     "calistir (alpine, --network none, --rm; Docker gerekir). --assistant ile.")
+    ap.add_argument("--native", default=None, metavar="MODEL",
+                    help="--gguf ile: hazir modeli yerel arac-cagirmayla kullan (or. gemma4:e4b)")
     ap.add_argument("--model", default=DEFAULT_MODEL, help=f"Ollama model adi (varsayilan {DEFAULT_MODEL})")
     ap.add_argument("--tokenizer-dir", default=DEFAULT_TOKENIZER_DIR,
                     help=f"egitim chat-template dizini (varsayilan {DEFAULT_TOKENIZER_DIR})")
@@ -233,12 +244,13 @@ def main() -> int:
         output = run_assistant_demo(real_cmd=args.real_cmd)
     elif args.gguf and args.docker:
         output = run_gguf_docker_demo(args.scope, args.model,
-                                   args.target or "octopus-target", tokenizer_dir=args.tokenizer_dir)
+                                   args.target or "jellyfish-target", tokenizer_dir=args.tokenizer_dir)
     elif args.gguf:
         output = run_gguf_demo(args.scope, args.model, role=args.rol,
-                            target=args.target or "10.10.10.5", tokenizer_dir=args.tokenizer_dir)
+                            target=args.target or "10.10.10.5", tokenizer_dir=args.tokenizer_dir,
+                            native_model=args.native)
     elif args.docker:
-        output = run_docker_demo(args.target or "octopus-target", args.scope, port=args.port or 80)
+        output = run_docker_demo(args.target or "jellyfish-target", args.scope, port=args.port or 80)
     elif args.real:
         output = run_real_demo(args.target or "127.0.0.1", args.scope, port=args.port or 8000)
     else:

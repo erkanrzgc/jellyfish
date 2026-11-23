@@ -11,7 +11,7 @@ B4 (Claude-Code-style display).
 
 ## 1. Problem
 
-Octópus's harness has 117 **security** tools (nmap, sqlmap, …) plus a generic `shell`, but no
+Jellyfish's harness has 117 **security** tools (nmap, sqlmap, …) plus a generic `shell`, but no
 standard **general-assistant** tools. To become an agentic assistant (coding + research) it needs
 file, command, and web tools. These are **dangerous** — `run_cmd` is arbitrary execution,
 `write_file`/`edit_file` mutate the filesystem, `web_fetch` can be pointed at internal services
@@ -157,5 +157,5 @@ model ```arac``` (asistan tool)
 ## 9. Related
 
 - Interfaces: `agent/{policy,executor,registry,catalog}.py` (unchanged contracts, extended).
-- Memory: [[octopus-v08-assistant-tools]], [[octopus-dataset-expansion]], [[octopus-agent-harness]].
+- Memory: [[jellyfish-v08-assistant-tools]], [[jellyfish-dataset-expansion]], [[jellyfish-agent-harness]].
 - Reuse for schemas/examples (B2 later): OpenHands / Hermes / xLAM / ToolACE function-call datasets.

@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Çok-kaynaklı ağırlıklı korpus derleyici — recipe JSON'dan Octópus veri karışımı.
+"""Çok-kaynaklı ağırlıklı korpus derleyici — recipe JSON'dan Jellyfish veri karışımı.
 
 Birden çok HF dataset'ini streaming çeker, ağırlıklı round-robin ile karıştırır,
-her belgeyi temizle (NFC + kalite) → octopus-tr tokenize (belge-sonu EOS) → uint16 shard.
+her belgeyi temizle (NFC + kalite) → jellyfish-tr tokenize (belge-sonu EOS) → uint16 shard.
 Tek-kaynak `build_pretrain_data.py`'ın genel hali; mantık/yardımcılar oradan reuse.
 
 Recipe (data/recipes/*.json):
@@ -13,7 +13,7 @@ Recipe (data/recipes/*.json):
       "template":"{User}\\n\\n{Assistant}","weight":0.20}, ...]}
 
 Kullanım:
-  uv run python -m data.build_corpus_mix --recipe data/recipes/octopus-v1.json --max-tokens 5_000_000
+  uv run python -m data.build_corpus_mix --recipe data/recipes/jellyfish-v1.json --max-tokens 5_000_000
 """
 from __future__ import annotations
 
@@ -60,7 +60,7 @@ def extract_text(ex: dict, src: dict) -> str:
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--recipe", required=True, help="recipe JSON (sources + ağırlıklar)")
-    p.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    p.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     p.add_argument("--out-dir", type=Path, default=Path("data/bin/mix"))
     p.add_argument("--max-tokens", type=int, default=0, help="0 = sınırsız")
     p.add_argument("--shard-tokens", type=int, default=100_000_000)

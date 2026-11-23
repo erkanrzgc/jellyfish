@@ -20,7 +20,7 @@ import platform
 from importlib.metadata import version, PackageNotFoundError
 import urllib.request
 
-from agent.config import DEFAULT_MODEL
+from agent.config import LEGACY_MODEL as DEFAULT_MODEL
 from agent.backends.gguf_model import GenerationResult
 from agent.messages import Message
 from agent.profiles import ModelProfile, create_model, get_profile

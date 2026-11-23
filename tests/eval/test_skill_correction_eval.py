@@ -89,6 +89,6 @@ def test_report_flags_skill_correction():
         CaseOutcome(prompt="p", tool="nmap", secenekler="--turbo", called=True, valid=False)])
     on = EvalResult(total=1, valid_flags_before=1, valid_flags_after=1, outcomes=[
         CaseOutcome(prompt="p", tool="nmap", secenekler="-sV", called=True, valid=True)])
-    out = _report("octopus-test", off, on)
+    out = _report("jellyfish-test", off, on)
     assert "SKILL DUZELTTI" in out
     assert "NET (ON - OFF): +1" in out

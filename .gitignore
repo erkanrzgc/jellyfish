@@ -40,7 +40,7 @@ runpod_val_log.jsonl
 *.pt
 *.ckpt
 *.tgz
-models/octopus-v*-tokenizer/
+models/jellyfish-v*-tokenizer/
 
 # --- RAG vektör deposu (yeniden inşa edilir) ---
 rag/chroma/
@@ -70,3 +70,6 @@ Thumbs.db
 .idea/
 .vscode/
 scratchpad/
+
+# EVREN preference-data intermediate outputs (review before committing)
+data/dpo/out/

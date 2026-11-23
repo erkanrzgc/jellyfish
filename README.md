@@ -1,35 +1,42 @@
 <div align="center">
 
-<img src="assets/octopus.png" alt="Octópus logo" width="160" />
+<img src="assets/jellyfish.png" alt="Jellyfish logo" width="160" />
 
-# Octópus
+# Jellyfish
 
 ### A Turkish-first cybersecurity model and agent runtime
 
-[![CI](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml/badge.svg)](https://github.com/erkanrzgc/octopus/actions/workflows/ci.yml)
+[![CI](https://github.com/erkanrzgc/jellyfish/actions/workflows/ci.yml/badge.svg)](https://github.com/erkanrzgc/jellyfish/actions/workflows/ci.yml)
 ![Evaluated default](https://img.shields.io/badge/evaluated_default-v1.0-orange)
 ![Method](https://img.shields.io/badge/training-bf16_LoRA-blue)
 ![License](https://img.shields.io/badge/code-MIT-green)
 
 </div>
 
-Octópus combines a fine-tuned 9B language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
+Jellyfish (formerly Jellyfish) pairs a local language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
 
 The product and training examples prioritize Turkish. Repository documentation is in English. This is a research prototype for authorized testing, labs, and defensive work.
 
 ## Current status
 
-**The evaluated default is v1.0 (`octopus-v10`).** v1.1 and v1.2 remain experiments: their recorded tool-selection regressions prevented promotion. The v1.2 findings and trade-offs are recorded in the [experiment report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md).
+**Default model (since 2026-11-22): stock Gemma 4 E4B (`gemma4:e4b`) with native tool calling.** On 212 held-out cases it passed 177 vs 137 for the fine-tuned `jellyfish-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM. It is weaker at investigating open-ended server incidents on its own; `run_tool_loop(evidence_push=True)` is an opt-in harness fix with a measured trade-off. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md).
 
 Runtime defaults live in [`agent/config.py`](agent/config.py):
 
 | Setting | Default |
 |---|---|
-| Ollama model | `octopus-v10` |
-| Training chat template | `models/octopus-v8-tokenizer` |
-| Ollama import recipe | `models/Modelfile.v10` |
+| Ollama model | `gemma4:e4b` (native tools via `agent/backends/native_chat.py`) |
+| Legacy model | `jellyfish-v10` (raw-prompt path, `--model jellyfish-v10`) |
+| Legacy chat template | `models/jellyfish-v8-tokenizer` |
+| Legacy import recipe | `models/Modelfile.v10` |
 
-The v0.8 tokenizer directory is intentional: it is the template used in the recorded v1.0 evaluations. The backend renders it itself and calls Ollama in raw mode. Explicit model and tokenizer overrides are supported.
+```powershell
+ollama pull gemma4:e4b
+uv run python -m agent.chat --ask "Kimsin sen?"
+uv run python -m agent.cli --gguf
+```
+
+The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `jellyfish-v10` before the rename (same weights); the `jellyfish-lab` Docker network keeps its original name.
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 
@@ -72,14 +79,14 @@ Prepare the existing v1.0 Q4 GGUF and the evaluated tokenizer files as described
 With Ollama running and the artifacts present:
 
 ```powershell
-ollama create octopus-v10 -f models/Modelfile.v10
+ollama create jellyfish-v10 -f models/Modelfile.v10
 uv run python -m agent.cli --gguf
 ```
 
 This runs the real model with **mock security-tool output**. It does not scan a network. To choose another compatible model/template pair (already imported into Ollama; see [models/README.md](models/README.md)):
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/octopus-v8-tokenizer
+uv run python -m agent.cli --gguf --model jellyfish-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 The normal CLI is a single lab-scan demo, not a general chat interface. `--target` selects the demo target and `--scope` supplies the allowlist. Real execution uses `--real` or `--docker`; follow the demo guide before selecting those modes.
@@ -89,7 +96,7 @@ The normal CLI is a single lab-scan demo, not a general chat interface. `--targe
 The separate conversation entry point supports advisory answers and approved tool work:
 
 ```powershell
-uv run python -m agent.chat --mode advise --profile octopus-v10
+uv run python -m agent.chat --mode advise --profile jellyfish-v10
 uv run python -m agent.chat --mode assist --executor mock --scope 10.10.10.0/24 --session lab/logs/chat.json
 ```
 
@@ -98,7 +105,7 @@ Advisory mode executes no tools. In assist mode, mock security results are label
 The model-only baseline runner records raw responses, every emitted call, settings, timings, errors, truncation, and artifact hashes without executing security tools:
 
 ```powershell
-uv run python -m eval.reliability_eval --profile octopus-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/my-v10-dev60.json --host http://127.0.0.1:11434
+uv run python -m eval.reliability_eval --profile jellyfish-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/my-v10-dev60.json --host http://127.0.0.1:11434
 ```
 
 Use a new report path for each run. Automatic checks cover output structure and selected tool/parameter expectations; semantic scores remain pending human review. The alternate `qwen3-4b-instruct-2507` profile has its own template configuration but its artifacts have not been provisioned or evaluated. An installed `qwen3:4b` alias is not evidence of that exact model.
@@ -145,10 +152,12 @@ The retained v1.0 artifact is Q4 GGUF. Its bf16 adapter was not archived, which 
 | `rag/` | Knowledge base and retrieval tooling |
 | `tests/` | Runtime, data, and evaluator regression tests |
 | `docs/` | Decisions, designs, implementation plans, demo guide |
-| `archive/`, `serve/` | Earlier experiments; `serve/octopus_chat.py` is the legacy Qwen/Unsloth path |
+| `archive/`, `serve/` | Earlier experiments; `serve/jellyfish_chat.py` is the legacy Qwen/Unsloth path |
 
 ## License and author
 
 Code is licensed under [MIT](LICENSE). Model weights and adapters remain subject to the base model's [Gemma terms](https://ai.google.dev/gemma/terms). Use real security tools only against systems within your authorized scope.
 
 Created by [Erkan](https://github.com/erkanrzgc).
+
+Logo icon: [Flaticon](https://www.flaticon.com/free-icons/jellyfish) (free license, attribution required).

@@ -31,7 +31,7 @@ SPECIAL_TOKENS = [
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", type=Path, default=Path("data/corpus/tr_wiki.txt"))
-    ap.add_argument("--model-prefix", default="tokenizer/octopus-tr")
+    ap.add_argument("--model-prefix", default="tokenizer/jellyfish-tr")
     ap.add_argument("--vocab-size", type=int, default=32000)
     ap.add_argument("--character-coverage", type=float, default=0.9999)
     ap.add_argument("--input-sentence-size", type=int, default=5_000_000,

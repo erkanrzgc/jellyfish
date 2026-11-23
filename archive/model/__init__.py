@@ -1,1 +1,1 @@
-"""octopus model paketi — nanoGPT-tarzı minimal Llama (RoPE · RMSNorm · SwiGLU · GQA)."""
+"""jellyfish model paketi — nanoGPT-tarzı minimal Llama (RoPE · RMSNorm · SwiGLU · GQA)."""

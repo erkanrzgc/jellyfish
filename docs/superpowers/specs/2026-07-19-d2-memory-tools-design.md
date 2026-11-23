@@ -6,9 +6,9 @@
 > Bu faz PARA HARCAMAZ.
 
 ## Amaç
-Octópus uzun/çok-adımlı görevlerde ve kullanıcı tercihlerinde **kalıcı hafıza** kullanabilsin:
+Jellyfish uzun/çok-adımlı görevlerde ve kullanıcı tercihlerinde **kalıcı hafıza** kullanabilsin:
 önemli bir olguyu/tercihi/ara-sonucu KAYDET, sonra gerektiğinde GETİR. Bu, 8K context sınırına
-karşı ([[octopus-dataset-expansion]] D notu) ve kişiselleştirme için kaldıraçtır.
+karşı ([[jellyfish-dataset-expansion]] D notu) ve kişiselleştirme için kaldıraçtır.
 
 ## Kapsam kararı (dar, doğru sıra)
 D2 iki parçadır ve bu spec **veri + katalog kaydını** hedefler; kalıcı store/executor'ı (inference-
@@ -29,7 +29,7 @@ zamanı çalışması) AYRI takip işine bırakır — çünkü:
 - `build_catalog` çalıştırılıp `catalog_data.py` yeniden üretilir → `get_spec("hafiza_kaydet")` çalışır.
 
 ## Veri şekli (distilled/, D1 Tip B gibi çok-turlu)
-Çıktı: `data/sft/distilled/octopus_distill_d2_memory.jsonl`. `dusunce` YOK (D1 ölçüm-oranını
+Çıktı: `data/sft/distilled/jellyfish_distill_d2_memory.jsonl`. `dusunce` YOK (D1 ölçüm-oranını
 kirletmesin — D2 araç/routing verisidir). İki tip:
 
 - **Tip A — KAYDET+GETİR zinciri (agentic):** user tercih/olgu verir → assistant `hafiza_kaydet`
@@ -57,5 +57,5 @@ Grounding/dürüstlük: getirilen değer YOKSA uydurma; kaydedileni sadık kulla
 ## Bitince
 D2 verisi hazır → D3 → tek retrain v0.8 (💰 para-checkpoint). Executor takip işinde.
 
-İlgili: [[octopus-dataset-expansion]] · [[octopus-agent-harness]] · [[octopus-v08-assistant-tools]] ·
-[[octopus-skill-layer-reference]].
+İlgili: [[jellyfish-dataset-expansion]] · [[jellyfish-agent-harness]] · [[jellyfish-v08-assistant-tools]] ·
+[[jellyfish-skill-layer-reference]].

@@ -24,5 +24,5 @@ def test_eval_defaults_match_promoted_runtime(monkeypatch, tmp_path, runner):
         monkeypatch.setattr(runner, "GgufModel", model)
     runner.main()
     assert captured == {
-        "model": "octopus-v10", "tokenizer_dir": "models/octopus-v8-tokenizer",
+        "model": "jellyfish-v10", "tokenizer_dir": "models/jellyfish-v8-tokenizer",
     }

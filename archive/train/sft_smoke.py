@@ -1,15 +1,15 @@
-"""Octopus SFT duman turu — Unsloth QLoRA, YEREL (RTX 5060 8GB), para-oncesi.
+"""Jellyfish SFT duman turu — Unsloth QLoRA, YEREL (RTX 5060 8GB), para-oncesi.
 
 Amac: pipeline + veri + persona baglama dogru mu? (Nihai model DEGIL — smoke.)
 8GB'de 8B QLoRA OOM riskli oldugundan smoke tabani varsayilan Qwen3-4B; gercek 8B
 turu RunPod'da (once para-checkpoint). cyberm4fia 02_train.py deseninden uyarlandi.
 
 ONEMLI: bu script cyberm4fiaModel'in .venv'iyle (Python 3.12 + unsloth) kosulur;
-Octopus'un kendi .venv'i 3.14 olup torch/unsloth desteklemez.
+Jellyfish'un kendi .venv'i 3.14 olup torch/unsloth desteklemez.
 
 Kosul (Git Bash / PowerShell):
     CY=C:/Users/erkanrzgc/Desktop/cyberm4fiaModel/.venv/Scripts/python.exe
-    "$CY" C:/Users/erkanrzgc/Desktop/Octopus/train/sft_smoke.py --max-steps 40 --max-train 2000
+    "$CY" C:/Users/erkanrzgc/Desktop/Jellyfish/train/sft_smoke.py --max-steps 40 --max-train 2000
 """
 from __future__ import annotations
 
@@ -30,7 +30,7 @@ from pathlib import Path  # noqa: E402
 
 import torch  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent  # .../Octopus
+ROOT = Path(__file__).resolve().parent.parent  # .../Jellyfish
 sys.path.insert(0, str(ROOT))  # cyberm4fia venv'iyle kosarken data.sft.* import edilebilsin
 SFT_DIR = ROOT / "data" / "sft"
 
@@ -53,7 +53,7 @@ SMOKE_PROMPTS = [
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Octopus SFT duman turu")
+    ap = argparse.ArgumentParser(description="Jellyfish SFT duman turu")
     ap.add_argument("--base", default="unsloth/Qwen3-4B-Instruct-2507",
                     help="Smoke tabani (8GB'a sigar). Gercek: unsloth/Qwen3-8B-Instruct-2507 (RunPod)")
     ap.add_argument("--max-steps", type=int, default=40, help="Duman turu adim sayisi")
@@ -138,11 +138,11 @@ def main() -> None:
 
 def _generate_smoke(model, tokenizer) -> None:
     """Egitim sonrasi persona/Turkce/ret davranisini gozle dogrula."""
-    from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_SYSTEM_PROMPT
     FastLanguageModel.for_inference(model)
     print("\n" + "=" * 60 + "\n[*] URETIM TESTI (persona/Turkce/ret):\n" + "=" * 60)
     for prompt in SMOKE_PROMPTS:
-        msgs = [{"role": "system", "content": OCTOPUS_SYSTEM_PROMPT},
+        msgs = [{"role": "system", "content": LEGACY_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}]
         # return_dict -> attention_mask da gelsin (v0.1'de eksikti, uyari veriyordu);
         # enable_thinking=False -> <think> uretme; no_repeat_ngram -> tekrar dongusunu kes.
@@ -159,7 +159,7 @@ def _generate_smoke(model, tokenizer) -> None:
             repetition_penalty=1.15, no_repeat_ngram_size=4,
             pad_token_id=tokenizer.eos_token_id)
         text = tokenizer.decode(out[0][enc["input_ids"].shape[1]:], skip_special_tokens=True)
-        print(f"\n### KULLANICI: {prompt}\n### OCTOPUS: {text.strip()[:700]}\n{'-'*60}")
+        print(f"\n### KULLANICI: {prompt}\n### JELLYFISH: {text.strip()[:700]}\n{'-'*60}")
 
 
 if __name__ == "__main__":

@@ -1,5 +1,5 @@
 [project]
-name = "octopus"
+name = "jellyfish"
 version = "0.0.1"
 description = "Türkçe-önce, siber güvenlik odaklı ince ayarlı dil modeli ve ajan çalışma ortamı"
 requires-python = ">=3.10"

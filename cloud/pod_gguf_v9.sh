@@ -1,11 +1,11 @@
 #!/bin/bash
-# Octopus v0.9 GGUF — pod_gguf_v81'in v9 uyarlamasi. IKI quant: Q4_K_M + Q8_0 (niceleme eksenini
+# Jellyfish v0.9 GGUF — pod_gguf_v81'in v9 uyarlamasi. IKI quant: Q4_K_M + Q8_0 (niceleme eksenini
 # eval'de olcmek icin). f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi). Adapter zaten pod'da:
 # /workspace/v9-adapter (egitim ciktisi). Sonunda GGUF'lar + tokenizer HF'e yuklenir.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v9-adapter"
-MERGED="/workspace/v9-merged"; OUT="/workspace/octopus-v9-gguf"; TOKOUT="/workspace/octopus-v9-tokenizer"
-REPO="erkanrzgcc/octopus-gemma-v0.9"
+MERGED="/workspace/v9-merged"; OUT="/workspace/jellyfish-v9-gguf"; TOKOUT="/workspace/jellyfish-v9-tokenizer"
+REPO="erkanrzgcc/jellyfish-gemma-v0.9"
 mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/6] MERGE ====="
@@ -42,18 +42,18 @@ python convert_hf_to_gguf.py "$MERGED" --outfile /root/v9-f16.gguf --outtype f16
 rm -rf "$MERGED"
 
 echo "===== [5/6] quantize Q4_K_M + Q8_0 ====="
-./build/bin/llama-quantize /root/v9-f16.gguf "$OUT/octopus-v9-Q4_K_M.gguf" Q4_K_M
-./build/bin/llama-quantize /root/v9-f16.gguf "$OUT/octopus-v9-Q8_0.gguf" Q8_0
+./build/bin/llama-quantize /root/v9-f16.gguf "$OUT/jellyfish-v9-Q4_K_M.gguf" Q4_K_M
+./build/bin/llama-quantize /root/v9-f16.gguf "$OUT/jellyfish-v9-Q8_0.gguf" Q8_0
 rm -f /root/v9-f16.gguf
 ls -la "$OUT" "$TOKOUT"
-echo "Q4 sha:"; sha256sum "$OUT/octopus-v9-Q4_K_M.gguf"
-echo "Q8 sha:"; sha256sum "$OUT/octopus-v9-Q8_0.gguf"
+echo "Q4 sha:"; sha256sum "$OUT/jellyfish-v9-Q4_K_M.gguf"
+echo "Q8 sha:"; sha256sum "$OUT/jellyfish-v9-Q8_0.gguf"
 
 echo "===== [6/6] HF upload ====="
 python - <<PY
 from huggingface_hub import HfApi
 api=HfApi()
-for f in ["octopus-v9-Q4_K_M.gguf","octopus-v9-Q8_0.gguf"]:
+for f in ["jellyfish-v9-Q4_K_M.gguf","jellyfish-v9-Q8_0.gguf"]:
     api.upload_file(path_or_fileobj=f"$OUT/{f}", path_in_repo=f, repo_id="$REPO",
                     commit_message=f"v0.9 GGUF {f}")
 api.upload_folder(folder_path="$TOKOUT", path_in_repo="tokenizer-v9", repo_id="$REPO",

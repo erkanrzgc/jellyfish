@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Give the Octópus agent harness a runtime skill layer so the model reads a tool's correct-usage `.md` *before* the harness executes that tool (post-call correction), plus load the existing methodology skills and a small set of workflow skills — measured on a pilot of ~10 tools + 4 workflows.
+**Goal:** Give the Jellyfish agent harness a runtime skill layer so the model reads a tool's correct-usage `.md` *before* the harness executes that tool (post-call correction), plus load the existing methodology skills and a small set of workflow skills — measured on a pilot of ~10 tools + 4 workflows.
 
 **Architecture:** A new pure module `agent/skills.py` discovers and loads three skill families (tool skills `agent/skills/tools/`, workflow skills `agent/skills/workflows/`, methodology skills `rag/knowledge/methodologies/`) from YAML-frontmatter markdown. `run_tool_loop` gains an optional `skills` parameter: after parsing an `arac` block, if a called tool has a skill not yet shown this conversation, the harness injects that tool's `.md` as a **user** turn and regenerates so the model can revise its call; each tool is injected at most once (cache). When `skills=None`, the loop behaves exactly as today (backward compatible).
 
@@ -1320,7 +1320,7 @@ Expected: PASS.
 Append to `eval/skill_correction_eval.py`:
 
 ```python
-def run_against_ollama(model: str = "octopus-v9", scope: list[str] | None = None) -> str:
+def run_against_ollama(model: str = "jellyfish-v9", scope: list[str] | None = None) -> str:
     """GERCEK model ile skill OFF vs ON karsilastirmasi. Ollama+GGUF gerektirir.
     Kullanim: uv run python -m eval.skill_correction_eval  (v9 GGUF indirilince)."""
     from agent.audit import AuditLog
@@ -1387,10 +1387,10 @@ git commit -m "feat(skills): fabricated-flag correction eval (scripted proxy tes
 ## Out of Scope (post-pilot)
 
 - **117-tool auto-draft generator** (`agent/build_skills.py` from `CATALOG`, write-if-absent so hand-enriched files survive) — the scaling step after the pilot measures a positive effect.
-- **Manifest → system prompt wiring** (augment `OCTOPUS_TOOL_SYSTEM_PROMPT` with `manifest_text()`), measured separately; risks destabilizing the untrained model, so gate it behind an eval.
+- **Manifest → system prompt wiring** (augment `LEGACY_TOOL_SYSTEM_PROMPT` with `manifest_text()`), measured separately; risks destabilizing the untrained model, so gate it behind an eval.
 - **SFT distillation** of proven skills into the model (the "ikisi de" later phase).
 - **Embedding-based `match`** (keyword is enough for the pilot).
-- **v0.9 GGUF download + `run_against_ollama` real-model numbers** — blocked on the interrupted download (`octopus-v0.9` Q4, sha `c98f6a06`).
+- **v0.9 GGUF download + `run_against_ollama` real-model numbers** — blocked on the interrupted download (`jellyfish-v0.9` Q4, sha `c98f6a06`).
 
 ## Execution Handoff
 

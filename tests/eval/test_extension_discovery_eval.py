@@ -47,6 +47,6 @@ def test_discovery_cases_target_real_extension_tools():
 def test_report_marks_discovery_gain():
     res = DiscoveryResult(total=1, called_off=0, called_on=1, outcomes=[
         DiscoveryOutcome(prompt="p", tool="trufflehog", off_called=False, on_called=True)])
-    out = _report("octopus-test", res)
+    out = _report("jellyfish-test", res)
     assert "KESIF KAZANCI (ON - OFF): +1" in out
     assert "<== KESIF KAZANCI" in out

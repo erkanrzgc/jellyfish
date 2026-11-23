@@ -8,7 +8,7 @@ rol-dışını reddedip self-correct ettirmek, araç-seçim doğruluğunu (flat 
              self-correction SONRASI) skorlanır. Prompt DEĞİŞMEZ (on-distribution).
 
 Kullanım (pod ya da yerel GGUF):
-  uv run python -m eval.run_subagent_eval --model octopus-v10 --tokenizer-dir models/octopus-v8-tokenizer
+  uv run python -m eval.run_subagent_eval --model jellyfish-v10 --tokenizer-dir models/jellyfish-v8-tokenizer
 """
 from __future__ import annotations
 
@@ -17,7 +17,7 @@ from datetime import date
 from pathlib import Path
 
 from agent.backends.gguf_model import GgufModel
-from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
+from agent.config import DEFAULT_TOKENIZER_DIR, LEGACY_MODEL as DEFAULT_MODEL
 from agent.messages import Message
 from agent.subagent import run_task
 from agent.toolcall import parse_arac_calls

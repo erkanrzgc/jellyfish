@@ -1,4 +1,4 @@
-# Subagent scoping ölçümü — octopus-v10
+# Subagent scoping ölçümü — jellyfish-v10
 _Tarih: 2026-08-17 · 24 istem · flat vs scoped-B_
 
 - **flat doğru-araç:** 20/24 = 83%

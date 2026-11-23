@@ -29,17 +29,21 @@ def get_spec(name: str) -> ToolSpec | None:
     return CATALOG.get(name)
 
 
+# Asistan araclarinin zorunlu parametreleri. TEK KAYNAK: parameter_error + kisitli cozumleme semasi.
+REQUIRED_PARAMS: dict[str, tuple[str, ...]] = {
+    "read_file": ("yol",), "write_file": ("yol", "icerik"),
+    "edit_file": ("yol", "eski", "yeni"), "grep": ("desen",),
+    "run_cmd": ("komut",), "web_fetch": ("url",), "web_search": ("sorgu",),
+}
+
+
 def parameter_error(spec: ToolSpec, params) -> str | None:
     """The current catalog wire format uses named textual parameter values."""
     if not isinstance(params, dict) or set(params) - set(spec.params):
         return f"'{spec.name}' icin bilinmeyen/gecersiz parametre"
     if any(not isinstance(value, str) for value in params.values()):
         return f"'{spec.name}' parametre degerleri metin olmali"
-    required = {
-        "read_file": ("yol",), "write_file": ("yol", "icerik"),
-        "edit_file": ("yol", "eski", "yeni"), "grep": ("desen",),
-        "run_cmd": ("komut",), "web_fetch": ("url",), "web_search": ("sorgu",),
-    }.get(spec.name, ())
+    required = REQUIRED_PARAMS.get(spec.name, ())
     for key in required:
         if key not in params or (key not in {"icerik", "yeni"} and not params[key].strip()):
             return f"'{spec.name}' icin zorunlu parametre eksik: {key}"

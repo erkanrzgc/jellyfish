@@ -1,1 +1,1 @@
-"""Octopus SFT (instruction) veri hazirlama paketi."""
+"""Jellyfish SFT (instruction) veri hazirlama paketi."""

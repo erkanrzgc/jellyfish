@@ -7,7 +7,7 @@ import json
 import re
 from pathlib import Path
 
-P = Path("data/sft/distilled/octopus_distill_d2_memory.jsonl")
+P = Path("data/sft/distilled/jellyfish_distill_d2_memory.jsonl")
 ARAC_JSON = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)
 HAFIZA = {"hafiza_kaydet", "hafiza_getir"}
 

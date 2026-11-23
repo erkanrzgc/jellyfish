@@ -1,9 +1,9 @@
 #!/bin/bash
-# Octopus v0.8.1 GGUF — pod_gguf_v8'in v81 uyarlamasi. f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi:
+# Jellyfish v0.8.1 GGUF — pod_gguf_v8'in v81 uyarlamasi. f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi:
 # network-volume yazimi ~%55'te oldu). Merge env zaten kurulu (egitim pod'u). Adapter: /workspace/v81-adapter.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v81-adapter"
-MERGED="/workspace/v81-merged"; OUT="/workspace/octopus-v81-gguf"; TOKOUT="/workspace/octopus-v81-tokenizer"
+MERGED="/workspace/v81-merged"; OUT="/workspace/jellyfish-v81-gguf"; TOKOUT="/workspace/jellyfish-v81-tokenizer"
 mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/5] MERGE ====="
@@ -40,7 +40,7 @@ python convert_hf_to_gguf.py "$MERGED" --outfile /root/v81-f16.gguf --outtype f1
 
 echo "===== [5/5] quantize Q4_K_M ====="
 rm -rf "$MERGED"
-./build/bin/llama-quantize /root/v81-f16.gguf "$OUT/octopus-v81-Q4_K_M.gguf" Q4_K_M
+./build/bin/llama-quantize /root/v81-f16.gguf "$OUT/jellyfish-v81-Q4_K_M.gguf" Q4_K_M
 rm -f /root/v81-f16.gguf
-ls -la "$OUT" "$TOKOUT"; sha256sum "$OUT/octopus-v81-Q4_K_M.gguf"
+ls -la "$OUT" "$TOKOUT"; sha256sum "$OUT/jellyfish-v81-Q4_K_M.gguf"
 echo "GGUF81_DONE"

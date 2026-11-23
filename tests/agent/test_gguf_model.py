@@ -123,7 +123,7 @@ def test_default_request_uses_promoted_model(monkeypatch):
     captured = {}
     monkeypatch.setattr(urllib.request, "urlopen", _urlopen_ok(captured, {"response": "ok"}))
     GgufModel(renderer=lambda messages: "prompt")([Message("user", "U")])
-    assert captured["body"]["model"] == "octopus-v10"
+    assert captured["body"]["model"] == "jellyfish-v10"
 
 
 def test_default_renderer_loads_evaluated_tokenizer(monkeypatch):
@@ -132,14 +132,14 @@ def test_default_renderer_loads_evaluated_tokenizer(monkeypatch):
     monkeypatch.setattr(gm, "load_tokenizer", lambda path: seen.append(path) or _FakeTok())
     monkeypatch.setattr(urllib.request, "urlopen", _urlopen_ok({}, {"response": "ok"}))
     GgufModel()([Message("user", "U")])
-    assert seen == ["models/octopus-v8-tokenizer"]
+    assert seen == ["models/jellyfish-v8-tokenizer"]
 
 
 def test_missing_default_model_points_to_matching_modelfile(monkeypatch):
     err = urllib.error.HTTPError("u", 404, "not found", {}, None)
     monkeypatch.setattr(urllib.request, "urlopen", _urlopen_raises(err))
     out = GgufModel(renderer=lambda messages: "P")([Message("user", "U")])
-    assert "ollama create octopus-v10 -f models/Modelfile.v10" in out
+    assert "ollama create jellyfish-v10 -f models/Modelfile.v10" in out
 
 
 def test_structured_result_preserves_raw_text_counters_and_truncation(monkeypatch):
@@ -205,4 +205,4 @@ def test_error_payload_retains_partial_reply_and_request_fingerprint(monkeypatch
     result = GgufModel(renderer=lambda messages: "PROMPT").generate_result([Message("user", "U")])
     assert result.text == "partial" and result.error
     assert result.metadata["prompt_sha256"] == hashlib.sha256(b"PROMPT").hexdigest()
-    assert result.metadata["model"] == "octopus-v10"
+    assert result.metadata["model"] == "jellyfish-v10"

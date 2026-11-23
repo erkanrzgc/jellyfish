@@ -1,6 +1,6 @@
 {
-  "name": "octopus-v2",
-  "description": "Octópus v2 — 6 kaynak, token-payı hedefli (%70 TR / %30 siber). weight = HEDEF token-payı. Kod+reasoning v3'te eklenince ~62/23/9/6'ya çekilecek.",
+  "name": "jellyfish-v2",
+  "description": "Jellyfish v2 — 6 kaynak, token-payı hedefli (%70 TR / %30 siber). weight = HEDEF token-payı. Kod+reasoning v3'te eklenince ~62/23/9/6'ya çekilecek.",
   "sources": [
     {"name": "lumees-tr",      "dataset": "lumees/turkish-corpus-100b",   "config": "pretrain",     "text_field": "text", "weight": 0.42},
     {"name": "bella-ozenli",   "dataset": "turkish-nlp-suite/BellaTurca",  "config": "OzenliDerlem",  "text_field": "text", "weight": 0.10},

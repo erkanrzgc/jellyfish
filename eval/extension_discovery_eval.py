@@ -98,7 +98,7 @@ def _report(model: str, res: DiscoveryResult) -> str:
     return "\n".join(lines)
 
 
-def run_against_ollama(model: str = "octopus-v9", scope: list[str] | None = None) -> str:
+def run_against_ollama(model: str = "jellyfish-v9", scope: list[str] | None = None) -> str:
     """GERCEK model ile manifest OFF vs ON kesif olcumu (temp=0). Ollama+GGUF gerektirir.
     Kullanim: uv run python -m eval.extension_discovery_eval."""
     from agent.audit import AuditLog
@@ -106,10 +106,10 @@ def run_against_ollama(model: str = "octopus-v9", scope: list[str] | None = None
     from agent.policy import LabPolicy
     from agent.backends.gguf_model import GgufModel
     from agent.catalog import extension_augmented_system_prompt
-    from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
     scope = scope or ["10.10.10.0/24"]
-    base = OCTOPUS_TOOL_SYSTEM_PROMPT
+    base = LEGACY_TOOL_SYSTEM_PROMPT
     augmented = extension_augmented_system_prompt(base)   # TEK KAYNAK (cli demo ile ayni)
 
     def reg() -> ToolRegistry:

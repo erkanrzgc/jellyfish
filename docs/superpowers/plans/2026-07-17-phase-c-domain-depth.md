@@ -49,7 +49,7 @@ kırmızı **ve mavi**: her saldırı konusuna savunma perspektifi ekle.
   detay, konteyner kaçış önleme, CIS benchmark, yama otomasyonu, secrets vault, TPM/HSM.
 
 ## Dosya & doğrulama
-- Çıktı: `data/sft/distilled/octopus_distill_c.jsonl` (build_sft `distilled/*.jsonl` glob'lar → otomatik dahil).
+- Çıktı: `data/sft/distilled/jellyfish_distill_c.jsonl` (build_sft `distilled/*.jsonl` glob'lar → otomatik dahil).
 - Her batch sonrası: `uv run python -m data.sft.build_sft --source distill seed_tr tools --seed-repeat 3`
   → geçerli sayısı artmalı, 0 dup/0 kısa. `uv run pytest -q` yeşil.
 - Kalite: teknik doğruluk elle gözden geçir; komut/parametre gerçek olsun.

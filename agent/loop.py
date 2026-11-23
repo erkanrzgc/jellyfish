@@ -5,6 +5,7 @@ ekle, tekrarla. max_steps sonsuz-dongu korumasi."""
 from __future__ import annotations
 from collections.abc import Callable
 from dataclasses import dataclass, field
+from agent.incident import looks_like_incident
 from agent.messages import Message
 from agent.registry import ToolRegistry
 from agent.skills import SkillLibrary
@@ -12,6 +13,12 @@ from agent.toolcall import ToolCall, parse_tool_reply, strip_dusunce
 from agent.execution import ExecutionResult
 
 Generate = Callable[[list[Message]], str]
+
+# Mingbird "completion check" analogue: an incident answered without any evidence gets ONE push to call a
+# tool itself. Opt-in: on the 2026-11-22 measurement gemma4:e4b RCA went 0/5 -> 5/5, but 3 DPO-val
+# "interpret this pasted log" cases (no tool expected) became unnecessary calls.
+EVIDENCE_PUSH = ("Henüz hiçbir kanıt toplanmadı. Kullanıcıya komut listesi verme: şimdi verilen araçlardan "
+                 "uygun olanı (ör. run_cmd, read_file, grep) KENDİN çağırarak ilk kanıtı topla.")
 
 
 @dataclass
@@ -52,6 +59,7 @@ def run_tool_loop(
     max_steps: int = 10,
     skills: SkillLibrary | None = None,
     approval_handler: Callable[[ExecutionResult], str | None] | None = None,
+    evidence_push: bool = False,
 ) -> ToolLoopResult:
     if max_steps < 1:
         raise ValueError("max_steps en az 1 olmali")
@@ -59,6 +67,8 @@ def run_tool_loop(
     attempts: list[ExecutionResult] = []
     shown: set[str] = set()
     repairs = 0
+    task = next((m.content for m in messages if m.role == "user"), "")
+    may_push = evidence_push and looks_like_incident(task)
 
     def stopped(status, detail, step, pending=None):
         return ToolLoopResult("Gorev tamamlanmadi: " + detail, step, executed,
@@ -81,6 +91,10 @@ def run_tool_loop(
                                     + ". Bir kez gecerli arac/parametreler JSON'u ile duzelt; hicbir arac calismadi."))
             continue
         calls = parsed.calls
+        if not calls and may_push and not executed:
+            may_push = False
+            messages.append(Message("user", EVIDENCE_PUSH))
+            continue
         if not calls:
             return ToolLoopResult(final=strip_dusunce(reply), steps=step + 1,
                                   calls=executed, attempts=attempts)

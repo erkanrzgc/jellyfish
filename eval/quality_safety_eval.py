@@ -1,6 +1,6 @@
-"""Octópus kalite + safety/balance + brittleness eval — yerel Ollama RAW üretimi.
+"""Jellyfish kalite + safety/balance + brittleness eval — yerel Ollama RAW üretimi.
 
-`octopus-eval` skill'in 3 ekseninin (kalite / safety-denge / brittleness) ÜRETİM adımı.
+`jellyfish-eval` skill'in 3 ekseninin (kalite / safety-denge / brittleness) ÜRETİM adımı.
 Yargı içerik-tabanlıdır ve insan/Claude tarafından ham çıktılar üzerinden yapılır — bu betik
 YALNIZ deterministik (temp=0) üretimi toplar, kelime-eşleşmesiyle puan VERMEZ.
 
@@ -9,12 +9,12 @@ brittle-obf×1, brittle-reframe×2) — v0.8 raporundan çıkarılan kanonik set
 paired karşılaştırma için sabittir.
 
 Kullanım:
-    uv run python -m eval.quality_safety_eval --model octopus-v10 \
+    uv run python -m eval.quality_safety_eval --model jellyfish-v10 \
         --out eval/reports/v1.0_quality_safety_raw.json
 
-Sistem promptu = OCTOPUS_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
+Sistem promptu = LEGACY_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
 ```arac``` bloğu basabilir — v0.8'in "reddederken araç emit etme" glitch'i bu modda görünür).
-Template = octopus-v8-tokenizer (v8/v9/v10 aynı Gemma tabanı+template'i paylaşır).
+Template = jellyfish-v8-tokenizer (v8/v9/v10 aynı Gemma tabanı+template'i paylaşır).
 """
 from __future__ import annotations
 
@@ -28,7 +28,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from agent.backends.gguf_model import GgufModel
 from agent.messages import Message
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 DEFAULT_BATTERY = "eval/data/quality_safety_tr.jsonl"
 
@@ -44,15 +44,19 @@ def load_battery(path: str) -> list[dict]:
 
 
 def run(model: str, tokenizer_dir: str, temperature: float, num_predict: int,
-        battery_path: str) -> list[dict]:
+        battery_path: str, native: bool = False) -> list[dict]:
     battery = load_battery(battery_path)
-    gm = GgufModel(
-        model=model,
-        tokenizer_dir=tokenizer_dir,
-        system_prompt=OCTOPUS_TOOL_SYSTEM_PROMPT,
-        temperature=temperature,
-        num_predict=num_predict,
-    )
+    if native:  # hazir talimat modeli, yerel arac-cagirma (agent.backends.native_chat)
+        from agent.backends.native_chat import NativeChatModel
+        gm = NativeChatModel(model=model, temperature=temperature, num_predict=num_predict)
+    else:
+        gm = GgufModel(
+            model=model,
+            tokenizer_dir=tokenizer_dir,
+            system_prompt=LEGACY_TOOL_SYSTEM_PROMPT,
+            temperature=temperature,
+            num_predict=num_predict,
+        )
     results: list[dict] = []
     for it in battery:
         out = gm([Message("user", it["soru"])])
@@ -65,15 +69,16 @@ def run(model: str, tokenizer_dir: str, temperature: float, num_predict: int,
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v10")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--model", default="jellyfish-v10")
+    ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--temp", type=float, default=0.0)
     ap.add_argument("--num-predict", type=int, default=512)
     ap.add_argument("--battery", default=DEFAULT_BATTERY)
     ap.add_argument("--out", default="eval/reports/quality_safety_raw.json")
+    ap.add_argument("--native", action="store_true", help="--model'i yerel arac-cagirmayla kullan (or. gemma4:e4b)")
     args = ap.parse_args()
 
-    results = run(args.model, args.tokenizer_dir, args.temp, args.num_predict, args.battery)
+    results = run(args.model, args.tokenizer_dir, args.temp, args.num_predict, args.battery, args.native)
     out_path = Path(args.out)
     out_path.parent.mkdir(parents=True, exist_ok=True)
     out_path.write_text(json.dumps(results, ensure_ascii=False, indent=2), encoding="utf-8")

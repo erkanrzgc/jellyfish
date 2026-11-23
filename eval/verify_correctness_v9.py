@@ -5,9 +5,9 @@ v0.8.1'de gözlenen HATA: açık-uçlu "payload ver" isteminde uydurma sözdizim
 AYRI koşulur -> niceleme eksenini empirik ölçer (advisor: veri mi/niceleme mi).
 
 Kullanım:
-  uv run python -m eval.verify_correctness_v9 --model octopus-v9       # Q4
-  uv run python -m eval.verify_correctness_v9 --model octopus-v9-q8     # Q8
-Gözlenen hatanın bağlamı persona promptu olduğu için varsayılan = OCTOPUS_SYSTEM_PROMPT.
+  uv run python -m eval.verify_correctness_v9 --model jellyfish-v9       # Q4
+  uv run python -m eval.verify_correctness_v9 --model jellyfish-v9-q8     # Q8
+Gözlenen hatanın bağlamı persona promptu olduğu için varsayılan = LEGACY_SYSTEM_PROMPT.
 """
 from __future__ import annotations
 
@@ -15,13 +15,13 @@ import argparse
 import re
 import sys
 
-# Windows cp1254 konsolu model çıktısındaki 🐙/emoji'de UnicodeEncodeError veriyor → UTF-8'e zorla.
+# Windows cp1254 konsolu model çıktısındaki 🪼/emoji'de UnicodeEncodeError veriyor → UTF-8'e zorla.
 if hasattr(sys.stdout, "reconfigure"):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
 from agent.backends.gguf_model import GgufModel
 from agent.messages import Message
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
 # Kanonik DOGRU kaliplar (E1 testiyle ayni) + gecerli inline reverse-shell varyantlari:
 MSFVENOM_OK = re.compile(
@@ -59,8 +59,8 @@ def _score(out: str, tip: str) -> bool:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v9")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--model", default="jellyfish-v9")
+    ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--temperature", type=float, default=0.0,
                     help="0.0 = deterministik (adil paired karsilastirma); payload dogrulugu tekrarlanabilir olmali")
     ap.add_argument("--num-predict", type=int, default=512,
@@ -68,7 +68,7 @@ def main() -> None:
     args = ap.parse_args()
 
     gm = GgufModel(model=args.model, tokenizer_dir=args.tokenizer_dir,
-                   system_prompt=OCTOPUS_SYSTEM_PROMPT,
+                   system_prompt=LEGACY_SYSTEM_PROMPT,
                    temperature=args.temperature, num_predict=args.num_predict)
     ok = 0
     for prompt, tip in PROMPTS:

@@ -13,7 +13,7 @@ PRIVATE_RANGES: tuple[IPv4Network, ...] = (
 DOC_RANGE: IPv4Network = ip_network("203.0.113.0/24")  # RFC 5737 TEST-NET-3
 
 HOSTNAMES: tuple[str, ...] = (
-    "octopus-target", "web01.lab.local", "dc01.corp.local", "app-staging.internal",
+    "jellyfish-target", "web01.lab.local", "dc01.corp.local", "app-staging.internal",
     "kali-victim", "db-01.internal", "gitlab.lab.local", "vpn-gw.corp.local",
     "mail.corp.local", "jenkins.lab.local", "fileserver.internal", "portal.kurum.local",
     "wordpress.lab.local", "api-gw.internal", "ad01.corp.local", "backup.lab.local",

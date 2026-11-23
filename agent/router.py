@@ -1,6 +1,7 @@
 """Deterministik gorev->rol yonlendirici (KOD, model degil). Turkce anahtar + arac-adi ipuclari.
 Ilk eslesen rol kazanir (oncelik = tuple sirasi); eslesme yoksa GENERAL (bugunku tam-katalog)."""
 from __future__ import annotations
+from agent.incident import _norm as fold_turkish
 from agent.roles import GENERAL
 
 # (rol, anahtar-kelimeler). SIRA = oncelik: daha ozgul roller once.
@@ -29,7 +30,7 @@ _ROUTES: tuple[tuple[str, tuple[str, ...]], ...] = (
 
 
 def route(gorev: str) -> str:
-    low = (gorev or "").lower()
+    low = fold_turkish(gorev)  # anahtarlar ASCII: "yükseltme"/"sertleştir" da eslesmeli
     for role, keys in _ROUTES:
         if any(k in low for k in keys):
             return role
