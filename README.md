@@ -1,6 +1,6 @@
 <div align="center">
 
-<img src="assets/octopus.png" alt="Jellyfish logo" width="160" />
+<img src="assets/jellyfish.png" alt="Jellyfish logo" width="160" />
 
 # Jellyfish
 
