@@ -81,7 +81,7 @@ Memory uyarısı: düşünce ~350 tok, arac ~31 tok → uzun düşünce araç si
   (sonucu yorumla) + sonraki arac veya nihai cevap. (~25 örnek)
 
 ### Çıktı & doğrulama
-- **Veri dosyası:** `data/sft/distilled/octopus_distill_d1_reasoning.jsonl` (build_sft `distilled/*`
+- **Veri dosyası:** `data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl` (build_sft `distilled/*`
   glob'lar → otomatik dahil). Tip B çok-turlu ise → uygun kaynağa (chains) veya distill'e
   çok-mesajlı kayıt; build_sft'in çok-turluyu nasıl aldığı plan aşamasında netleşir.
 - **Üretim deseni (Faz C ile aynı):** scratchpad `gen_d1_reasoning.py` (PAIRS/kayıt listesi → append),

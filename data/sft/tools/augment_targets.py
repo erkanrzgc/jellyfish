@@ -16,7 +16,7 @@ from pathlib import Path
 from data.sft.tools import target_pool as tp
 
 _HERE = Path(__file__).resolve().parent
-_SKIP = {"octopus_tools_tr.jsonl"}  # build ciktisi — kaynak degil
+_SKIP = {"jellyfish_tools_tr.jsonl"}  # build ciktisi — kaynak degil
 # asistan_* dosyalari (B2): semantik ornekler (ret'lerde 169.254.169.254/127.0.0.1 gibi
 # ANLAMLI IP'ler var) — hedef remap ETME, verbatim kopyala. Boylece tools_aug'a girer
 # ama SSRF/loopback/metadata anlatilari bozulmaz.

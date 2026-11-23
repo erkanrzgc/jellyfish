@@ -45,7 +45,7 @@ def measure_hf(name: str, text: str) -> int | None:
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--text", type=Path, required=True, help="değerlendirme metni (held-out TR)")
-    ap.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    ap.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     ap.add_argument("--baselines", nargs="*", default=["Qwen/Qwen2.5-0.5B"])
     args = ap.parse_args()
 

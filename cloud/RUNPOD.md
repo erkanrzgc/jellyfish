@@ -44,7 +44,7 @@ runpodctl ssh info <POD_ID> -v        # ip + port + ssh_command döner (RUNNING+
 
 ```powershell
 # tarball (sadece scriptler + tokenizer; veri pod'da üretilir)
-tar -czf octopus_code.tgz --exclude=data/bin --exclude=data/corpus --exclude=*/__pycache__ model train eval data tokenizer/octopus-tr.model
+tar -czf octopus_code.tgz --exclude=data/bin --exclude=data/corpus --exclude=*/__pycache__ model train eval data tokenizer/jellyfish-tr.model
 $k="$env:USERPROFILE\.ssh\id_ed25519"; $H="root@<IP>"; $P=<PORT>
 scp -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -P $P octopus_code.tgz "${H}:/workspace/"
 ssh -i $k -o StrictHostKeyChecking=no -o UserKnownHostsFile=NUL -p $P $H 'cd /workspace && tar -xzf octopus_code.tgz && pip install -q sentencepiece datasets'

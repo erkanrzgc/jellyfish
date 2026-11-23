@@ -179,13 +179,13 @@ git commit -m "feat(d1): loop final'inda dusunce strip — gecmiste ham, kullani
 ### Task 3: Pilot veri — Tip A (reasoning→cevap, bilgi) + format testi
 
 **Files:**
-- Create: `data/sft/distilled/octopus_distill_d1_reasoning.jsonl` (append hedefi)
+- Create: `data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl` (append hedefi)
 - Create (scratchpad): `<scratchpad>/gen_d1_reasoning_a.py` (generator — repoya GİRMEZ)
 - Create: `tests/data/test_dusunce_format.py` (yeni — d1 dosyasını doğrular)
 
 **Interfaces:**
 - Consumes: yok
-- Produces: `data/sft/distilled/octopus_distill_d1_reasoning.jsonl` — her kayıt `{"messages":[user, assistant]}`; assistant içeriği `` ```dusunce\n...\n``` `` ile BAŞLAR, sonra nihai cevap gelir.
+- Produces: `data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl` — her kayıt `{"messages":[user, assistant]}`; assistant içeriği `` ```dusunce\n...\n``` `` ile BAŞLAR, sonra nihai cevap gelir.
 
 - [ ] **Step 1: Format testini yaz (henüz dosya yok → fail)**
 
@@ -194,7 +194,7 @@ git commit -m "feat(d1): loop final'inda dusunce strip — gecmiste ham, kullani
 import json, re
 from pathlib import Path
 
-P = Path("data/sft/distilled/octopus_distill_d1_reasoning.jsonl")
+P = Path("data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl")
 DUSUNCE = re.compile(r"```dusunce\s*(.*?)```", re.S)
 
 
@@ -258,7 +258,7 @@ PAIRS = [
 ]
 
 def main():
-    out = Path("data/sft/distilled/octopus_distill_d1_reasoning.jsonl")
+    out = Path("data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl")
     n = 0
     with open(out, "a", encoding="utf-8") as w:
         for u, a in PAIRS:
@@ -276,7 +276,7 @@ if __name__ == "__main__":
 PAIRS'i ~15 örneğe tamamla (kırmızı+mavi, göreve-özgü natural CoT, teknik doğru). Sonra:
 
 Run: `uv run python <scratchpad>/gen_d1_reasoning_a.py`
-Expected: `[OK] D1 Tip A: +15 -> data/sft/distilled/octopus_distill_d1_reasoning.jsonl`
+Expected: `[OK] D1 Tip A: +15 -> data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl`
 
 - [ ] **Step 4: Format testini geçir + build doğrula**
 
@@ -291,7 +291,7 @@ Expected: format testi PASS; build "Gecerli" sayısı ~15 artar, "Atlanan" deği
 
 ```bash
 uv run pytest -q   # 150+ yesil
-git add data/sft/distilled/octopus_distill_d1_reasoning.jsonl data/sft tests/data/test_dusunce_format.py
+git add data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl data/sft tests/data/test_dusunce_format.py
 git commit -m "feat(d1): reasoning pilot Tip A (reasoning->cevap, ~15 ornek) + format testi"
 ```
 
@@ -300,7 +300,7 @@ git commit -m "feat(d1): reasoning pilot Tip A (reasoning->cevap, ~15 ornek) + f
 ### Task 4: Pilot veri — Tip B (reasoning→arac→tool→reasoning, agentic) + zincir doğrulama
 
 **Files:**
-- Modify: `data/sft/distilled/octopus_distill_d1_reasoning.jsonl` (Tip B kayıtları append)
+- Modify: `data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl` (Tip B kayıtları append)
 - Create (scratchpad): `<scratchpad>/gen_d1_reasoning_b.py`
 - Modify: `tests/data/test_dusunce_format.py` (çok-turlu zincir + arac birlikteliği testi ekle)
 
@@ -358,7 +358,7 @@ RECORDS = [
 ]
 
 def main():
-    out = Path("data/sft/distilled/octopus_distill_d1_reasoning.jsonl")
+    out = Path("data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl")
     n = 0
     with open(out, "a", encoding="utf-8") as w:
         for rec in RECORDS:
@@ -388,7 +388,7 @@ Expected: tüm format testleri PASS (zincir dahil); build "Gecerli" ~25 daha art
 
 ```bash
 uv run pytest -q
-git add data/sft/distilled/octopus_distill_d1_reasoning.jsonl data/sft tests/data/test_dusunce_format.py
+git add data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl data/sft tests/data/test_dusunce_format.py
 git commit -m "feat(d1): reasoning pilot Tip B (agentic zincir, ~25 ornek) + zincir dogrulama"
 ```
 
@@ -409,7 +409,7 @@ git commit -m "feat(d1): reasoning pilot Tip B (agentic zincir, ~25 ornek) + zin
 
 D1 dosyasındaki her CVE-ID, komut/flag, sürüm ve gerçek-vaka iddiasını ELLE gözden geçir (grep ile spesifikleri çek). Yanlış olanı düzelt, generator'ı yeniden çalıştırmadan önce `git checkout -- <dosya>` ile sıfırla ve düzeltilmiş generator'la yeniden üret (Faz C akışı). Örnek çekme:
 
-Run: `uv run python -c "import json; [print(m['content'][:200]) for l in open('data/sft/distilled/octopus_distill_d1_reasoning.jsonl',encoding='utf-8') if l.strip() for m in json.loads(l)['messages'] if m['role']=='assistant']" | grep -iE "cve-|nmap|--script|[0-9]+\.[0-9]+"`
+Run: `uv run python -c "import json; [print(m['content'][:200]) for l in open('data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl',encoding='utf-8') if l.strip() for m in json.loads(l)['messages'] if m['role']=='assistant']" | grep -iE "cve-|nmap|--script|[0-9]+\.[0-9]+"`
 
 - [ ] **Step 2: Signal-oran raporu (pilot ölçek küçük kalmalı)**
 
@@ -444,7 +444,7 @@ git commit -m "docs(d1): pilot dogrulama — teknik tarama + signal-oran raporu 
 
 ## PİLOT DURUMU (2026-07-18 — kod tamam, retrain bekliyor)
 
-Task 1-5 tamamlandı. Veri `data/sft/distilled/octopus_distill_d1_reasoning.jsonl` = **39 kayıt**
+Task 1-5 tamamlandı. Veri `data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl` = **39 kayıt**
 (15 Tip A reasoning→cevap + 24 Tip B agentic zincir). Commit'ler: `84f2400` strip_dusunce · `d464d27`
 loop entegrasyon · `7564cd3` Tip A · `0df5e90` Tip B. Test suite 161 yeşil (format+strip+zincir).
 **Signal-oran sağlıklı:** reasoning distill'in %3.4'ü, düşünce ort **22 kelime** (max 28, cap 90) —

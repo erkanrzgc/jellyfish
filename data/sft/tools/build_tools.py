@@ -4,7 +4,7 @@ Ne yapar:
   1. data/sft/tools/*.jsonl (bu script + cikti haric) tum el-uretimi ornekleri toplar.
   2. Her ornegi dogrular: messages yapisi, en az 1 ```arac``` cagrisi VEYA ret ("yapmam").
   3. Icerik-hash ile tekrari eler.
-  4. Birlestirilmis -> octopus_tools_tr.jsonl (build_sft.py bunu 'tools' kaynagi olarak alir).
+  4. Birlestirilmis -> jellyfish_tools_tr.jsonl (build_sft.py bunu 'tools' kaynagi olarak alir).
   5. KAPSAMA RAPORU: katalogdaki ~90 aracin her biri icin ornek sayisi + BOSLUK (0 ornekli araclar) =
      bir sonraki uretim dalgasinin hedef listesi.
 
@@ -25,7 +25,7 @@ HERE = Path(__file__).resolve().parent
 # Boylece per-domain dosyalar (tools/*.jsonl) ile cift-sayim olmaz.
 OUT_DIR = HERE.parent / "tools_dist"
 OUT_DIR.mkdir(exist_ok=True)
-OUT = OUT_DIR / "octopus_tools_tr.jsonl"
+OUT = OUT_DIR / "jellyfish_tools_tr.jsonl"
 ARAC_RE = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)
 
 # Katalog araclari (docs/v0.7-tools-catalog.md ile senkron) — kapsama boslugu icin hedef liste.

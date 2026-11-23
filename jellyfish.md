@@ -59,7 +59,7 @@ Historical note: the v1.0 model says **“Ben Octópus”** (dotted ó). Code/pa
 7. **(later)** strengthen the structured ```arac``` block (v0.7.1) + RAG grounding (MITRE/CVE/OWASP).
 
 ## Archive (from-scratch attempt)
-The custom tokenizer (`archive/tokenizer/octopus-tr.*`, ~35% lower fertility), from-scratch data pipeline
+The custom tokenizer (`archive/tokenizer/jellyfish-tr.*`, ~35% lower fertility), from-scratch data pipeline
 (`archive/data/`), and 100M model (`archive/model/`, `archive/train/`) are **preserved** but off the active
 path. No knowledge lost; kept for reference/experiments. Details:
 [ADR 0001](docs/decisions/0001-from-scratch-turkish-first.md).

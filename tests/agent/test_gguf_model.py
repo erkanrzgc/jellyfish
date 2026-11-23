@@ -132,7 +132,7 @@ def test_default_renderer_loads_evaluated_tokenizer(monkeypatch):
     monkeypatch.setattr(gm, "load_tokenizer", lambda path: seen.append(path) or _FakeTok())
     monkeypatch.setattr(urllib.request, "urlopen", _urlopen_ok({}, {"response": "ok"}))
     GgufModel()([Message("user", "U")])
-    assert seen == ["models/octopus-v8-tokenizer"]
+    assert seen == ["models/jellyfish-v8-tokenizer"]
 
 
 def test_missing_default_model_points_to_matching_modelfile(monkeypatch):

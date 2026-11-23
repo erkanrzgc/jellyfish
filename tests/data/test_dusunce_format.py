@@ -3,7 +3,7 @@ import json
 import re
 from pathlib import Path
 
-P = Path("data/sft/distilled/octopus_distill_d1_reasoning.jsonl")
+P = Path("data/sft/distilled/jellyfish_distill_d1_reasoning.jsonl")
 DUSUNCE = re.compile(r"```dusunce\s*(.*?)```", re.S)
 ARAC = re.compile(r"```arac\s*\{.*?\}\s*```", re.S)
 ARAC_JSON = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)

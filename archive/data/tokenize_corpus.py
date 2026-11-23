@@ -23,7 +23,7 @@ import sentencepiece as spm
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument("--input", type=Path, default=Path("data/corpus/tr_wiki.clean.txt"))
-    ap.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    ap.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     ap.add_argument("--out", type=Path, default=Path("data/bin/train.bin"))
     ap.add_argument("--val-out", type=Path, default=Path("data/bin/val.bin"))
     ap.add_argument("--val-fraction", type=float, default=0.005)

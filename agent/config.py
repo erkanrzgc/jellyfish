@@ -8,7 +8,7 @@ NATIVE_MODELS = frozenset({"gemma4:e4b", "gemma4:12b", "qwen3:8b"})
 # Legacy fine-tuned model (raw-prompt ```arac``` path, agent.backends.gguf_model). The tokenizer and Modelfile
 # below belong to it: v1.0 was evaluated with the v0.8 training chat template; see the v1.0 reports.
 LEGACY_MODEL = "octopus-v10"
-DEFAULT_TOKENIZER_DIR = "models/octopus-v8-tokenizer"
+DEFAULT_TOKENIZER_DIR = "models/jellyfish-v8-tokenizer"
 DEFAULT_MODELFILE = "models/Modelfile.v10"
 
 

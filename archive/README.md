@@ -6,7 +6,7 @@ on the active code path; the live pipeline lives at the repository root (`data/s
 
 ## `model/`, `tokenizer/`, `train/pretrain.py`, `train/dataset.py`, `data/*`
 The original **from-scratch pretraining** attempt: a custom Turkish SentencePiece tokenizer
-(`tokenizer/octopus-tr.*`, ~35% lower fertility than Qwen), a nanoGPT-style Llama model, and the
+(`tokenizer/jellyfish-tr.*`, ~35% lower fertility than Qwen), a nanoGPT-style Llama model, and the
 pretraining data pipeline. Abandoned on cost grounds — see
 [`docs/decisions/0002-pivot-to-finetuning.md`](../docs/decisions/0002-pivot-to-finetuning.md).
 

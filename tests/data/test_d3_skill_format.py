@@ -9,7 +9,7 @@ import json
 import re
 from pathlib import Path
 
-P = Path("data/sft/distilled/octopus_distill_d3_skill.jsonl")
+P = Path("data/sft/distilled/jellyfish_distill_d3_skill.jsonl")
 ARAC_JSON = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)
 
 

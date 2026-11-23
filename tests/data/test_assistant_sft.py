@@ -1,10 +1,10 @@
 """B2 Task 4 — toplu dogrulama: asistan araci kapsamasi + merged denetim.
 
-Not: B2-tek denetim degil, MERGED committed artifact (tools_dist/octopus_tools_tr.jsonl)
+Not: B2-tek denetim degil, MERGED committed artifact (tools_dist/jellyfish_tools_tr.jsonl)
 denetlenir — asil gate odur (augment'lenmis guvenlik ornekleri hedef havuzunu buyutur,
 CVE-DB host kumelenmesini seyreltir). B2 uretim zinciri:
   augment_targets --k 3 --seed 3407  (asistan_* passthrough)  ->  tools_aug/
-  build_tools.py --src data/sft/tools_aug                      ->  tools_dist/octopus_tools_tr.jsonl
+  build_tools.py --src data/sft/tools_aug                      ->  tools_dist/jellyfish_tools_tr.jsonl
 """
 import json
 import re
@@ -15,7 +15,7 @@ from data.sft.tools.build_tools import target_audit
 
 SRC = Path("data/sft/tools")
 B2_FILES = ["asistan_emit_tr.jsonl", "asistan_tr.jsonl", "asistan_chains_tr.jsonl"]
-MERGED = Path("data/sft/tools_dist/octopus_tools_tr.jsonl")
+MERGED = Path("data/sft/tools_dist/jellyfish_tools_tr.jsonl")
 ARAC = re.compile(r"```arac\s*(\{.*?\})\s*```", re.S)
 ASSISTANT_TOOLS = ["read_file", "list_dir", "grep", "write_file",
                    "edit_file", "run_cmd", "web_fetch", "web_search"]
@@ -53,7 +53,7 @@ def test_her_asistan_araci_esik_ustu():
 
 def test_merged_artifact_asistan_iceriyor():
     """Committed merged set 8 asistan aracini da icermeli (pipeline calistirilmis)."""
-    assert MERGED.exists(), "octopus_tools_tr.jsonl yok — build_tools --src tools_aug calistir"
+    assert MERGED.exists(), "jellyfish_tools_tr.jsonl yok — build_tools --src tools_aug calistir"
     c = _tool_counts(_rows([MERGED]))
     for t in ASSISTANT_TOOLS:
         assert c[t] >= 12, f"merged'de {t} az: {c[t]} (pipeline'i yeniden calistir)"

@@ -39,7 +39,7 @@ def test_bos_check_requires_exactly_one_leading_bos():
 
 def test_real_gemma_tokenizer_gives_one_bos_and_sft_turn_ending():
     from pathlib import Path
-    directory = Path("models/octopus-v8-tokenizer")
+    directory = Path("models/jellyfish-v8-tokenizer")
     if not directory.is_dir():
         pytest.skip("local tokenizer not present")
     from agent.backends.gguf_model import load_tokenizer

@@ -6,8 +6,8 @@ no-repeat) Turkce cevap ver. cyberm4fia venv (3.12+unsloth) ile kosulur.
 
 Kosum:
     CY=C:/Users/erkanrzgc/Desktop/cyberm4fiaModel/.venv/Scripts/python.exe
-    "$CY" serve/octopus_chat.py --adapter checkpoints_sft/octopus-8b-adapter --ask "Log4Shell nedir" --rag
-    "$CY" serve/octopus_chat.py --adapter checkpoints_sft/octopus-8b-adapter        # interaktif
+    "$CY" serve/jellyfish_chat.py --adapter checkpoints_sft/jellyfish-8b-adapter --ask "Log4Shell nedir" --rag
+    "$CY" serve/jellyfish_chat.py --adapter checkpoints_sft/jellyfish-8b-adapter        # interaktif
 """
 from __future__ import annotations
 
@@ -59,7 +59,7 @@ def _generate(model, tok, question: str, use_rag: bool) -> str:
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--adapter", default=str(ROOT / "checkpoints_sft" / "octopus-8b-adapter"))
+    ap.add_argument("--adapter", default=str(ROOT / "checkpoints_sft" / "jellyfish-8b-adapter"))
     ap.add_argument("--base", default=BASE)
     ap.add_argument("--ask", default=None, help="Tek soru sor ve cik (test icin)")
     ap.add_argument("--rag", action="store_true", help="RAG grounding ekle")

@@ -1,6 +1,6 @@
 # Repeatable runtime demos
 
-Run every command from the repository root. The default model is `octopus-v10`; the evaluated tokenizer is `models/octopus-v8-tokenizer`. Runtime defaults are defined in `agent/config.py`.
+Run every command from the repository root. The default model is `octopus-v10`; the evaluated tokenizer is `models/jellyfish-v8-tokenizer`. Runtime defaults are defined in `agent/config.py`.
 
 ## 1. Offline acceptance checks
 
@@ -39,7 +39,7 @@ Expected: the actual model generates a valid `nmap` call for the allowed target,
 Explicit model/template selection remains available (the override model must already be imported into Ollama; see [models/README.md](../models/README.md)):
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/octopus-v8-tokenizer
+uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 An initial 2026-10-23 service check failed. The user subsequently started Ollama and live v1.0 inference was recorded. See `PROJECT_HANDOFF.md` for current report paths and results; service availability remains a per-run prerequisite.

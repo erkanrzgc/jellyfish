@@ -62,7 +62,7 @@ def main() -> None:
     ap.add_argument("--dataset", default="HuggingFaceFW/fineweb-2")
     ap.add_argument("--config", default="tur_Latn")
     ap.add_argument("--split", default="train")
-    ap.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    ap.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     ap.add_argument("--out-dir", type=Path, default=Path("data/bin/fineweb2_tr"))
     ap.add_argument("--max-tokens", type=int, default=0, help="0 = sınırsız (tüm split)")
     ap.add_argument("--shard-tokens", type=int, default=100_000_000, help="shard başına token")

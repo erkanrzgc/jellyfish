@@ -58,9 +58,9 @@ cmake --build build --config Release -j --target llama-quantize 2>&1 | tail -2
 echo "===== [5/6] GGUF f16 (container disk) -> Q4_K_M ====="
 python convert_hf_to_gguf.py "$MERGED" --outfile /root/v13-f16.gguf --outtype f16
 rm -rf "$MERGED"
-./build/bin/llama-quantize /root/v13-f16.gguf "$OUT/octopus-v13-Q4_K_M.gguf" Q4_K_M
+./build/bin/llama-quantize /root/v13-f16.gguf "$OUT/jellyfish-v13-Q4_K_M.gguf" Q4_K_M
 rm -f /root/v13-f16.gguf
 
 echo "===== [6/6] staged for scp ====="
-ls -la "$OUT"; sha256sum "$OUT/octopus-v13-Q4_K_M.gguf"
+ls -la "$OUT"; sha256sum "$OUT/jellyfish-v13-Q4_K_M.gguf"
 echo "V13_DONE"

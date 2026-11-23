@@ -6,7 +6,7 @@ model, rag/knowledge/ (18 Türkçe dosya, doğru ID'ler) her parçasından FARKL
 → binlerce ÇEŞİTLİ, faktüel-doğru Türkçe cyber örneği. cyberm4fia/agentic distill deseninden.
 
 ÇALIŞTIRMA (pod'da — torch/unsloth gerekir):
-    python data/sft/distill_tr.py --teacher unsloth/Qwen3-14B --per-chunk 3 --out data/sft/seed_tr/octopus_distill_tr.jsonl
+    python data/sft/distill_tr.py --teacher unsloth/Qwen3-14B --per-chunk 3 --out data/sft/seed_tr/jellyfish_distill_tr.jsonl
 
 Çıktı: seed_tr/*.jsonl -> build_sft otomatik toplar (seed_tr kaynağı). Çıktı 'messages' formatında.
 """
@@ -74,7 +74,7 @@ def main() -> None:
     ap.add_argument("--teacher", default="unsloth/Qwen3-14B")
     ap.add_argument("--per-chunk", type=int, default=3, help="parca basi Q&A (her biri farkli acidan)")
     ap.add_argument("--max-chunks", type=int, default=0, help="0=hepsi; test icin sinirla")
-    ap.add_argument("--out", default=str(ROOT / "data" / "sft" / "distilled" / "octopus_distill_tr.jsonl"))
+    ap.add_argument("--out", default=str(ROOT / "data" / "sft" / "distilled" / "jellyfish_distill_tr.jsonl"))
     args = ap.parse_args()
     Path(args.out).parent.mkdir(parents=True, exist_ok=True)  # ayri klasor (seed_tr degil -> upsample edilmez)
 

@@ -27,7 +27,7 @@ Runtime defaults live in [`agent/config.py`](agent/config.py):
 |---|---|
 | Ollama model | `gemma4:e4b` (native tools via `agent/backends/native_chat.py`) |
 | Legacy model | `octopus-v10` (raw-prompt path, `--model octopus-v10`) |
-| Legacy chat template | `models/octopus-v8-tokenizer` |
+| Legacy chat template | `models/jellyfish-v8-tokenizer` |
 | Legacy import recipe | `models/Modelfile.v10` |
 
 ```powershell
@@ -86,7 +86,7 @@ uv run python -m agent.cli --gguf
 This runs the real model with **mock security-tool output**. It does not scan a network. To choose another compatible model/template pair (already imported into Ollama; see [models/README.md](models/README.md)):
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/octopus-v8-tokenizer
+uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 The normal CLI is a single lab-scan demo, not a general chat interface. `--target` selects the demo target and `--scope` supplies the allowlist. Real execution uses `--real` or `--docker`; follow the demo guide before selecting those modes.
@@ -152,7 +152,7 @@ The retained v1.0 artifact is Q4 GGUF. Its bf16 adapter was not archived, which 
 | `rag/` | Knowledge base and retrieval tooling |
 | `tests/` | Runtime, data, and evaluator regression tests |
 | `docs/` | Decisions, designs, implementation plans, demo guide |
-| `archive/`, `serve/` | Earlier experiments; `serve/octopus_chat.py` is the legacy Qwen/Unsloth path |
+| `archive/`, `serve/` | Earlier experiments; `serve/jellyfish_chat.py` is the legacy Qwen/Unsloth path |
 
 ## License and author
 

@@ -31,7 +31,7 @@ The user delegated routine implementation with "top sende". There is no authoriz
 - Turkish-first cybersecurity and Linux/server model with a separate agent runtime.
 - Base: `ytu-ce-cosmos/Turkish-Gemma-9b-v0.1`; training: bf16 LoRA via Transformers/PEFT/TRL. Earlier from-scratch and Qwen/Unsloth paths are historical experiments.
 - **Default (2026-11-22, user decision):** stock `gemma4:e4b`, native tool calling (`agent/config.py`). **Legacy:** v1.0 / `octopus-v10`. v1.1 and v1.2 were not promoted after tool-selection regressions; see `eval/reports/v1.2_gapfill_retrain_2026-09-15.md`.
-- **Template:** `models/octopus-v8-tokenizer`, intentionally matching the v1.0 evaluation setup. This is not a request to rename/copy tokenizer folders.
+- **Template:** `models/jellyfish-v8-tokenizer`, intentionally matching the v1.0 evaluation setup. (Folder renamed from octopus-v8-tokenizer on 2026-11-23; contents unchanged.)
 - **Single source for runtime defaults:** `agent/config.py`. CLI/backend and active toolcall/subagent eval runners import it. Explicit model and tokenizer overrides remain supported.
 - The v1.0 Q4 GGUF exists locally. Its bf16 adapter was not retained, according to the August quality report. Do not assume a fresh clone includes ignored weights, tokenizer directories, or generated evaluation data.
 
@@ -101,7 +101,7 @@ For a live model check, follow `models/README.md` and `docs/DEMO_GUIDE.md`; use 
 - The normal CLI still prints a transcript and may exit zero when that transcript contains a backend error. The smoke runner has an explicit failure status; do not confuse the two.
 - Catalog breadth is not integration coverage. Free-form `secenekler` and tool-specific argument/target behavior need validation; `shell=False` does not establish complete policy enforcement.
 - The historical safety report includes a refusal followed by a tool call in one probe. Small successful safety sets do not erase that observation.
-- `serve/octopus_chat.py` is a legacy Qwen/Unsloth entry point, not the current v1.0 GGUF runtime.
+- `serve/jellyfish_chat.py` is a legacy Qwen/Unsloth entry point, not the current v1.0 GGUF runtime.
 - `CLAUDE.md` is currently Git-ignored and kept locally with its original history. `AGENTS.md` and this handoff are normal repository files; after a fresh clone, ask Claude to read them if no local entry point exists.
 
 ## Agent-switch prompt

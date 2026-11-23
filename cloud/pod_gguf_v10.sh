@@ -6,7 +6,7 @@
 # Onkosul: /workspace/v10-adapter (egitim ciktisi) pod'da hazir.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v10-adapter"
-MERGED="/workspace/v10-merged"; OUT="/workspace/octopus-v10-gguf"; TOKOUT="/workspace/octopus-v10-tokenizer"
+MERGED="/workspace/v10-merged"; OUT="/workspace/jellyfish-v10-gguf"; TOKOUT="/workspace/jellyfish-v10-tokenizer"
 mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/5] MERGE (pinli env — llama.cpp deps'ten ONCE) ====="
@@ -43,8 +43,8 @@ python convert_hf_to_gguf.py "$MERGED" --outfile /root/v10-f16.gguf --outtype f1
 rm -rf "$MERGED"
 
 echo "===== [5/5] quantize Q4_K_M ====="
-./build/bin/llama-quantize /root/v10-f16.gguf "$OUT/octopus-v10-Q4_K_M.gguf" Q4_K_M
+./build/bin/llama-quantize /root/v10-f16.gguf "$OUT/jellyfish-v10-Q4_K_M.gguf" Q4_K_M
 rm -f /root/v10-f16.gguf
 ls -la "$OUT" "$TOKOUT"
-echo "Q4 sha:"; sha256sum "$OUT/octopus-v10-Q4_K_M.gguf"
+echo "Q4 sha:"; sha256sum "$OUT/jellyfish-v10-Q4_K_M.gguf"
 echo "GGUF10_DONE"

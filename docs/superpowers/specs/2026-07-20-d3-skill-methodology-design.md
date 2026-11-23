@@ -102,7 +102,7 @@ disiplinle**yi öğretir.
   çerçeve dayatma yok / net "bu metodoloji burada uygun değil".
 
 ### Üretim deseni (Faz C/D2 ile aynı)
-scratchpad `gen_d3_skill.py` (kayıt listesi → append `data/sft/distilled/octopus_distill_d3_skill.jsonl`,
+scratchpad `gen_d3_skill.py` (kayıt listesi → append `data/sft/distilled/jellyfish_distill_d3_skill.jsonl`,
 `ensure_ascii=False`) → `build_sft --source distill seed_tr tools --seed-repeat 3` → `uv run pytest`
 → **teknik doğruluk ELLE tara** (Faz C dersi: testler içeriği doğrulamaz) → commit.
 

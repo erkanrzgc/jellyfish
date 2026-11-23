@@ -60,7 +60,7 @@ def _score(out: str, tip: str) -> bool:
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="octopus-v9")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--temperature", type=float, default=0.0,
                     help="0.0 = deterministik (adil paired karsilastirma); payload dogrulugu tekrarlanabilir olmali")
     ap.add_argument("--num-predict", type=int, default=512,

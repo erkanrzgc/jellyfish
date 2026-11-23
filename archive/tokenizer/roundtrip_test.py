@@ -40,7 +40,7 @@ MORPH = ["evlerimizden", "güvenliğini", "kitaplarındaki", "çalıştırabilir
 
 def main() -> None:
     ap = argparse.ArgumentParser(description=__doc__)
-    ap.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    ap.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     args = ap.parse_args()
 
     if not Path(args.spm).exists():

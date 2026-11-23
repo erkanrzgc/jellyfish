@@ -46,7 +46,7 @@ def generate(model: OctopusLM, sp, prompt: str, device: str,
 def main() -> None:
     p = argparse.ArgumentParser(description=__doc__)
     p.add_argument("--ckpt", default="checkpoints/ckpt_best.pt")
-    p.add_argument("--spm", default="tokenizer/octopus-tr.model")
+    p.add_argument("--spm", default="tokenizer/jellyfish-tr.model")
     p.add_argument("--prompt", default="Siber güvenlik")
     p.add_argument("--max-new-tokens", type=int, default=100)
     p.add_argument("--temperature", type=float, default=0.8)

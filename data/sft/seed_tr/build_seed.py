@@ -1,4 +1,4 @@
-"""Elle-yazilmis Turkce Octopus seed SFT ornekleri -> octopus_seed_tr.jsonl (v0.3).
+"""Elle-yazilmis Turkce Octopus seed SFT ornekleri -> jellyfish_seed_tr.jsonl (v0.3).
 
 v0.3 kalibrasyonu (sahip karari, 2026-07-21):
 - KIMLIK: "Ben siber güvenlik yapay zeka modeli Octópus" (ARTIK "asistan" DEGIL; "sunucu yonetimi
@@ -19,7 +19,7 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
-OUT = Path(__file__).resolve().parent / "octopus_seed_tr.jsonl"
+OUT = Path(__file__).resolve().parent / "jellyfish_seed_tr.jsonl"
 
 # --- 1) Persona / kimlik (COGALTILDI — cesitli, dogal) ------------------------
 PERSONA = [

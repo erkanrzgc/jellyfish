@@ -103,7 +103,7 @@ and seed the pattern the remapper then amplifies.
 
 - New augment step runs **before** `build_tools.py`: `tools/*.jsonl` (+ `hostname_tr.jsonl`) →
   `augment_targets.py` → expanded per-domain set → existing `build_tools.py` (dedup, validate,
-  coverage report) → `tools_dist/octopus_tools_tr.jsonl` → `build_sft.py` (unchanged).
+  coverage report) → `tools_dist/jellyfish_tools_tr.jsonl` → `build_sft.py` (unchanged).
 - No change to `build_sft.py`, persona, or the training script in A.
 
 ## 5. Data flow
@@ -115,7 +115,7 @@ tools/*.jsonl  +  hostname_tr.jsonl
    augmented per-domain examples
         │
         ▼  build_tools.py  (dedup + _valid + coverage/distribution report)
-   tools_dist/octopus_tools_tr.jsonl
+   tools_dist/jellyfish_tools_tr.jsonl
         │
         ▼  build_sft.py  (normalize + persona + split)   ← unchanged
    train.jsonl / val.jsonl / test.jsonl

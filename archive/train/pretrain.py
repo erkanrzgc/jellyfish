@@ -146,7 +146,7 @@ def main() -> None:
     p.add_argument("--data-dir", default="", help="çok-shard dizini (manifest.json) — verilirse train-bin yerine")
     p.add_argument("--train-bin", default="data/bin/train.bin")
     p.add_argument("--val-bin", default="data/bin/val.bin")
-    p.add_argument("--tokenizer", default="tokenizer/octopus-tr.model")
+    p.add_argument("--tokenizer", default="tokenizer/jellyfish-tr.model")
     p.add_argument("--out-dir", default="checkpoints")
     p.add_argument("--max-steps", type=int, default=3000)
     p.add_argument("--batch-size", type=int, default=4, help="micro-batch (8GB-dostu)")

@@ -14,7 +14,7 @@ Kullanım:
 
 Sistem promptu = OCTOPUS_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
 ```arac``` bloğu basabilir — v0.8'in "reddederken araç emit etme" glitch'i bu modda görünür).
-Template = octopus-v8-tokenizer (v8/v9/v10 aynı Gemma tabanı+template'i paylaşır).
+Template = jellyfish-v8-tokenizer (v8/v9/v10 aynı Gemma tabanı+template'i paylaşır).
 """
 from __future__ import annotations
 
@@ -70,7 +70,7 @@ def run(model: str, tokenizer_dir: str, temperature: float, num_predict: int,
 def main() -> None:
     ap = argparse.ArgumentParser()
     ap.add_argument("--model", default="octopus-v10")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--temp", type=float, default=0.0)
     ap.add_argument("--num-predict", type=int, default=512)
     ap.add_argument("--battery", default=DEFAULT_BATTERY)

@@ -50,7 +50,7 @@ model we fine-tune very carefully."**
 
 - **Tokenizer cost:** fine-tuning inherits the Qwen tokenizer → `octopus-tr`'s −35% fertility win is **not
   used** on this path (Qwen uses ~35% more tokens in Turkish = slightly more expensive but fully usable). The
-  from-scratch artifacts (`tokenizer/octopus-tr.*`, `checkpoints_web/`) are **archived, not deleted.**
+  from-scratch artifacts (`tokenizer/jellyfish-tr.*`, `checkpoints_web/`) are **archived, not deleted.**
 - **Gain:** much cheaper/faster, a much higher capability ceiling (8B base >> 100M from-scratch), and both
   Turkish + cyber are reachable via proven paths.
 - **Cisco 2026 warning:** cyber fine-tuning can create "representation drift"/brittleness → obfuscation-variant

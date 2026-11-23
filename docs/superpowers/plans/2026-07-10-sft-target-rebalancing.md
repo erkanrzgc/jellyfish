@@ -459,7 +459,7 @@ import sys  # noqa: E402
 from pathlib import Path  # noqa: E402
 
 _HERE = Path(__file__).resolve().parent
-_SKIP = {"octopus_tools_tr.jsonl"}  # build ciktisi — kaynak degil
+_SKIP = {"jellyfish_tools_tr.jsonl"}  # build ciktisi — kaynak degil
 
 
 def augment_example(example: dict, k: int, rng: random.Random) -> list[dict]:
@@ -704,7 +704,7 @@ git commit -m "feat(data): dagilim denetimi (tek hedef<=6%, hostname>=20%) build
 ### Task 7: End-to-end regenerate + verify
 
 **Files:**
-- Modify: `data/sft/manifest.json` (regenerated), `data/sft/train.jsonl` / `val.jsonl` / `test.jsonl` (regenerated), `data/sft/tools_dist/octopus_tools_tr.jsonl` (regenerated)
+- Modify: `data/sft/manifest.json` (regenerated), `data/sft/train.jsonl` / `val.jsonl` / `test.jsonl` (regenerated), `data/sft/tools_dist/jellyfish_tools_tr.jsonl` (regenerated)
 - Create: none (uses Tasks 1-6)
 
 **Interfaces:**
@@ -731,7 +731,7 @@ Expected: `kaynak: {'distill': 1029, 'seed_tr': 143, 'tools': 381}` (tools 125�
 > ⚠️ Do NOT run `build_sft` with no args: its `DEFAULT_SOURCES` is the `fenrir/instructurca` hybrid
 > (~105k rows), not the v0.7 `distill+seed_tr+tools` mix. The `--seed-repeat` upsample factor is a
 > retrain-time knob (💰), decided at training, not here. `tools_aug/` is gitignored scratch; the
-> committed artifact is `tools_dist/octopus_tools_tr.jsonl` (reproducible via `--seed 3407`).
+> committed artifact is `tools_dist/jellyfish_tools_tr.jsonl` (reproducible via `--seed 3407`).
 
 - [ ] **Step 4: Verify the whole suite is green**
 
@@ -741,7 +741,7 @@ Expected: all tests pass (Tasks 1-6 + existing 63).
 - [ ] **Step 5: Commit the regenerated dataset**
 
 ```bash
-git add data/sft/tools_aug data/sft/tools_dist/octopus_tools_tr.jsonl \
+git add data/sft/tools_aug data/sft/tools_dist/jellyfish_tools_tr.jsonl \
         data/sft/train.jsonl data/sft/val.jsonl data/sft/test.jsonl data/sft/manifest.json
 git commit -m "data: hedef-dengeli SFT seti yeniden uretildi (125->~500, denetim GECTI)"
 ```

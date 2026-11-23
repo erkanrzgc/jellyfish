@@ -92,7 +92,7 @@ def run_against_ollama(model: str = "octopus-v9", num_predict: int = 640, native
         from agent.backends.native_chat import NativeChatModel
         gm = NativeChatModel(model=model, temperature=0.0, num_predict=num_predict)
     else:
-        gm = GgufModel(model=model, tokenizer_dir="models/octopus-v8-tokenizer",
+        gm = GgufModel(model=model, tokenizer_dir="models/jellyfish-v8-tokenizer",
                        system_prompt=OCTOPUS_TOOL_SYSTEM_PROMPT, temperature=0.0, num_predict=num_predict)
 
     def gen(olay: str) -> str:

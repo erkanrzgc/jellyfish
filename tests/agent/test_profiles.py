@@ -7,14 +7,14 @@ def test_profiles_keep_default_and_separate_templates():
     gemma = profiles.get_profile("octopus-v10")
     qwen = profiles.get_profile("qwen3-4b-instruct-2507")
     assert gemma.model == "octopus-v10"
-    assert gemma.tokenizer_dir == "models/octopus-v8-tokenizer"
+    assert gemma.tokenizer_dir == "models/jellyfish-v8-tokenizer"
     assert gemma.bos_token == "<bos>" and not gemma.native_tool_roles
     assert gemma.eos_token == "<eos>"
     assert qwen.eos_token == "<|im_end|>"
     assert qwen.bos_token is None and qwen.native_tool_roles
     assert "<end_of_turn>" not in qwen.stop_tokens
     assert qwen.tokenizer_dir != gemma.tokenizer_dir
-    assert gemma.weights_path.endswith("octopus-v10-Q4_K_M.gguf")
+    assert gemma.weights_path.endswith("jellyfish-v10-Q4_K_M.gguf")
     with pytest.raises(ValueError, match="Unknown"):
         profiles.get_profile("v12")
 

@@ -206,7 +206,7 @@ def test_gguf_demo_uses_evaluated_model_and_tokenizer(monkeypatch):
     captured = _capture_gguf_kwargs(monkeypatch)
     cli.run_gguf_demo(skills=None, model="octopus-v10")
     assert captured["model"] == "octopus-v10"
-    assert captured["tokenizer_dir"] == "models/octopus-v8-tokenizer"
+    assert captured["tokenizer_dir"] == "models/jellyfish-v8-tokenizer"
 
 
 def test_gguf_docker_demo_preserves_tokenizer_override(monkeypatch):

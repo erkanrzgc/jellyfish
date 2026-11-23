@@ -4,7 +4,7 @@
 
 **Goal:** 8 asistan aracını (read_file, list_dir, grep, write_file, edit_file, run_cmd, web_fetch, web_search) modele öğreten ~300 örneklik SFT verisi üret — hem doğru ```arac``` blogu (emit) hem `tool` çıktısını sadık yorumlama (anlama).
 
-**Architecture:** Hibrit authoring. Düz emit örnekleri deterministik bir jeneratörle (`gen_asistan_emit.py`) yol/URL/sorgu çeşitliliğinden üretilir. Yüksek-sinyal anlama/zincir/ret örnekleri elle yazılır. Üç jsonl `data/sft/tools/` altına düşer; `build_tools.py` otomatik toplar, doğrular, denetler ve `tools_dist/octopus_tools_tr.jsonl`'i yeniden üretir. Retrain YOK — çıktı A+C+D ile tek büyük retrain'e gider.
+**Architecture:** Hibrit authoring. Düz emit örnekleri deterministik bir jeneratörle (`gen_asistan_emit.py`) yol/URL/sorgu çeşitliliğinden üretilir. Yüksek-sinyal anlama/zincir/ret örnekleri elle yazılır. Üç jsonl `data/sft/tools/` altına düşer; `build_tools.py` otomatik toplar, doğrular, denetler ve `tools_dist/jellyfish_tools_tr.jsonl`'i yeniden üretir. Retrain YOK — çıktı A+C+D ile tek büyük retrain'e gider.
 
 **Tech Stack:** Python 3 (stdlib: json, random, argparse, pathlib), pytest, uv.
 
@@ -470,12 +470,12 @@ git commit -m "feat(b2): asistan zincir + ret ornekleri elle (~50, karisik guven
 
 **Files:**
 - Create: `tests/data/test_assistant_sft.py`
-- Regenerate: `data/sft/tools_dist/octopus_tools_tr.jsonl` (build_tools çıktısı)
+- Regenerate: `data/sft/tools_dist/jellyfish_tools_tr.jsonl` (build_tools çıktısı)
 - Reference (değişmez): `data/sft/tools/build_tools.py`, `agent/build_catalog.py`
 
 **Interfaces:**
 - Consumes: `build_tools.MASTER_TOOLS` yok; bunun yerine 8 asistan aracını doğrudan doğrular. `build_tools.target_audit(rows)` çağrılır.
-- Produces: birleşik `octopus_tools_tr.jsonl` (güvenlik + asistan, denetim GEÇTI).
+- Produces: birleşik `jellyfish_tools_tr.jsonl` (güvenlik + asistan, denetim GEÇTI).
 
 - [ ] **Step 1: Toplu doğrulama testini yaz**
 
@@ -531,7 +531,7 @@ Expected: PASS (üç dosya da önceki task'larda üretildi) — eğer FAIL eders
 - [ ] **Step 3: `build_tools`'u çalıştır — birleşik çıktı + denetim**
 
 Run: `uv run python data/sft/tools/build_tools.py`
-Expected: `[OK] <N> benzersiz ornek -> octopus_tools_tr.jsonl`; KAPSAMA raporunda `read_file/write_file/web_fetch/...` **8 asistan aracı görünür**; `[DENETIM] ... -> GECTI`. Exit 0.
+Expected: `[OK] <N> benzersiz ornek -> jellyfish_tools_tr.jsonl`; KAPSAMA raporunda `read_file/write_file/web_fetch/...` **8 asistan aracı görünür**; `[DENETIM] ... -> GECTI`. Exit 0.
 
 > Eğer `[DENETIM] ... -> KALDI` çıkarsa: en yoğun hedef bir URL host'u ise `gen_asistan_emit.URL_HOSTS`'a çeşit ekle veya `web_fetch` iskeletini artır; hostname payı düşükse web_fetch/web_search emit payını artır. Task 1 jeneratörünü yeniden çalıştır, tekrar dene.
 
@@ -548,8 +548,8 @@ Expected: hepsi PASS (B1'in 131'i + B2'nin yeni testleri).
 - [ ] **Step 6: Commit**
 
 ```bash
-git add tests/data/test_assistant_sft.py data/sft/tools_dist/octopus_tools_tr.jsonl agent/catalog_data.py
-git commit -m "feat(b2): birlesik dogrulama + octopus_tools_tr yeniden uretildi (asistan araclari kapsandi, denetim GECTI)"
+git add tests/data/test_assistant_sft.py data/sft/tools_dist/jellyfish_tools_tr.jsonl agent/catalog_data.py
+git commit -m "feat(b2): birlesik dogrulama + jellyfish_tools_tr yeniden uretildi (asistan araclari kapsandi, denetim GECTI)"
 ```
 
 ---

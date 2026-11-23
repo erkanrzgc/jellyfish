@@ -48,7 +48,7 @@ SOURCES: dict[str, dict] = {
         "lang": "tr", "max_rows": 0,
     },
     "distill": {  # v0.5+v0.7: teacher-uretimi CESITLI Turkce cyber. distilled/ altindaki TUM
-        # *.jsonl'i glob'lar -> octopus_distill_tr.jsonl (918) + octopus_distill_v07.jsonl (111) otomatik dahil.
+        # *.jsonl'i glob'lar -> jellyfish_distill_tr.jsonl (918) + jellyfish_distill_v07.jsonl (111) otomatik dahil.
         "kind": "local", "path": "data/sft/distilled", "license": "distilled+octopus-authored",
         "lang": "tr", "max_rows": 0,
     },

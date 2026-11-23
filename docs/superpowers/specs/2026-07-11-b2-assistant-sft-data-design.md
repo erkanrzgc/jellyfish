@@ -105,7 +105,7 @@ payı yüksek.
 
 1. Üç jsonl `data/sft/tools/` altında → `build_tools.py` glob'u **otomatik toplar**.
 2. `uv run python data/sft/tools/build_tools.py` → doğrula + dedup + `tools_dist/
-   octopus_tools_tr.jsonl` yeniden üret. Kapsama raporunda **8 asistan aracı görünür**;
+   jellyfish_tools_tr.jsonl` yeniden üret. Kapsama raporunda **8 asistan aracı görünür**;
    `target_audit` **GEÇTI** kalmalı.
 3. `build_catalog.py` DEĞİŞMEZ (asistan araçları zaten explicit). İstenirse çalıştırılıp
    parametreler artık eğitimden de doğrulanır.

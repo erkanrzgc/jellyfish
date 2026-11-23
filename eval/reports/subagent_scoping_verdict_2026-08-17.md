@@ -14,7 +14,7 @@
 | **scoped-B** (route → role registry → first executed) | 20/24 = **83%** |
 | **Δ** | **0** |
 
-Data table: `subagent_scoping_octopus-v10_2026-08-17.md`.
+Data table: `subagent_scoping_v10_2026-08-17.md`.
 
 ## Why scoping had zero net effect (three identifiable reasons)
 1. **Router falls back to `general` ~46% of the time.** Routing distribution this run:

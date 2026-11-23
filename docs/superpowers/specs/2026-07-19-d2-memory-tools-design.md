@@ -29,7 +29,7 @@ zamanı çalışması) AYRI takip işine bırakır — çünkü:
 - `build_catalog` çalıştırılıp `catalog_data.py` yeniden üretilir → `get_spec("hafiza_kaydet")` çalışır.
 
 ## Veri şekli (distilled/, D1 Tip B gibi çok-turlu)
-Çıktı: `data/sft/distilled/octopus_distill_d2_memory.jsonl`. `dusunce` YOK (D1 ölçüm-oranını
+Çıktı: `data/sft/distilled/jellyfish_distill_d2_memory.jsonl`. `dusunce` YOK (D1 ölçüm-oranını
 kirletmesin — D2 araç/routing verisidir). İki tip:
 
 - **Tip A — KAYDET+GETİR zinciri (agentic):** user tercih/olgu verir → assistant `hafiza_kaydet`
