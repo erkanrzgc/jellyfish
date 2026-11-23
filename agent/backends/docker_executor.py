@@ -1,8 +1,8 @@
 """DockerExecutor: araci lab docker aginda CONTAINER olarak calistirir (Model B).
 
-NEDEN: kali-linux ve docker-desktop AYRI WSL2 distro'lari -> Kali, docker hedef agina
-route edemez. Cozum: araci da hedefle AYNI docker aginda container koştur -> DNS adiyla
-erisir. (RealExecutor Kali-WSL yolu; bu docker-lab yolu -> erisilebilir savunmasiz hedefler.)
+NEDEN: araci hedefle AYNI docker aginda container olarak kostur -> DNS adiyla erisir.
+Varsayilan `docker` CLI'i dogrudan cagrilir (Kali WSL gerekmez); `docker_prefix` ile istenirse
+baska bir WSL distro'su uzerinden yonlendirilebilir. (RealExecutor Kali-WSL yolu ayridir.)
 
 GUVENLIK: Policy kapisi registry.invoke'da ONCE gecer. Komut argv (shell=False); 'secenekler'
 shlex ile token -> shell metakarakteri literal arg. Imaj entrypoint'i = arac (instrumentisto/nmap
@@ -15,6 +15,7 @@ from agent.catalog import get_spec, positional_args, target_value
 
 _DEFAULT_TIMEOUT = 180
 _DEFAULT_NETWORK = "jellyfish-lab"
+_DEFAULT_DOCKER_PREFIX: tuple[str, ...] = ("docker",)
 
 # Arac -> docker imaji (entrypoint = arac). Genisletilir; haritada olmayan icin
 # ileride tek kali-tools imaji (kali-linux-default) fallback'i eklenecek.
@@ -24,17 +25,18 @@ TOOL_IMAGES: dict[str, str] = {
 
 
 def build_argv(tool: str, params: dict, network: str = _DEFAULT_NETWORK,
-               distro: str = "kali-linux", images: dict[str, str] | None = None) -> list[str] | None:
-    """docker-lab argv: wsl.exe -d <distro> -- docker run --rm --network <net> <image> <flags...> [target].
-    Imaj tanimli degilse None (run() 'imaj yok' doner)."""
+               docker_prefix: list[str] | None = None,
+               images: dict[str, str] | None = None) -> list[str] | None:
+    """docker-lab argv: <docker_prefix> run --rm --network <net> <image> <flags...> [target].
+    docker_prefix varsayilan ['docker']. Imaj tanimli degilse None (run() 'imaj yok' doner)."""
+    prefix = list(docker_prefix) if docker_prefix is not None else list(_DEFAULT_DOCKER_PREFIX)
     images = images if images is not None else TOOL_IMAGES
     image = images.get(tool)
     if image is None:
         return None
     lead = positional_args(get_spec(tool), params)
     flag_args = shlex.split(str(params.get("secenekler", "") or ""))
-    argv = ["wsl.exe", "-d", distro, "--", "docker", "run", "--rm", "--network", network,
-            image, *lead, *flag_args]
+    argv = [*prefix, "run", "--rm", "--network", network, image, *lead, *flag_args]
     target = target_value(params)
     if target is not None:
         argv.append(target)
@@ -44,12 +46,12 @@ def build_argv(tool: str, params: dict, network: str = _DEFAULT_NETWORK,
 @dataclass
 class DockerExecutor:
     network: str = _DEFAULT_NETWORK
-    distro: str = "kali-linux"
+    docker_prefix: list[str] = field(default_factory=lambda: list(_DEFAULT_DOCKER_PREFIX))
     timeout: int = _DEFAULT_TIMEOUT
     images: dict[str, str] = field(default_factory=lambda: dict(TOOL_IMAGES))
 
     def preview(self, tool: str, params: dict) -> list[str]:
-        argv = build_argv(tool, params, self.network, self.distro, self.images)
+        argv = build_argv(tool, params, self.network, self.docker_prefix, self.images)
         if argv is None:
             raise ValueError(f"'{tool}' icin docker imaji yok")
         return argv
@@ -57,7 +59,7 @@ class DockerExecutor:
     def run(self, tool: str, params: dict) -> str:
         if get_spec(tool) is None:
             return f"HATA: bilinmeyen arac '{tool}'"
-        argv = build_argv(tool, params, self.network, self.distro, self.images)
+        argv = build_argv(tool, params, self.network, self.docker_prefix, self.images)
         if argv is None:
             return f"HATA: '{tool}' icin docker imaji tanimli degil (kali-tools imaji ileride)"
         try:
@@ -65,7 +67,7 @@ class DockerExecutor:
         except subprocess.TimeoutExpired:
             return f"HATA: '{tool}' zaman asimi ({self.timeout}s)"
         except FileNotFoundError:
-            return "HATA: wsl.exe bulunamadi (WSL kurulu mu?)"
+            return f"HATA: '{self.docker_prefix[0]}' bulunamadi (Docker kurulu ve PATH'te mi?)"
         out = (proc.stdout or "") + (proc.stderr or "")
         if proc.returncode:
             return f"HATA: '{tool}' exit={proc.returncode}: {out.strip()}"

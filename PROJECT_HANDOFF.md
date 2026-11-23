@@ -23,20 +23,22 @@
 | CI fix (`6a6f8b7`) | `.github/workflows/ci.yml` now installs `pyyaml` and `jinja2` besides pytest. `main` CI had been red since 2026-09 because `agent/skills.py` imports `yaml`. `tests/train/test_dpo_render.py` now skips the real-tokenizer test when `transformers` is absent |
 | PR #12 `fix/logo-icon` | Merged as `68c4a06`; restores the orange logo |
 | Branches | `feat/evren-preference-data` and `fix/logo-icon` deleted locally and on GitHub |
+| Docker path without Kali (PR #15) | `DockerExecutor` and `_docker_container_ip` now call `docker` directly; optional `docker_prefix` (same pattern as `sandbox_executor`) can still route through a WSL distro. Kali WSL is no longer installed on this PC, so the old `wsl -d kali-linux` prefix failed with `WSL_E_DISTRO_NOT_FOUND`. `RealExecutor` (`--real`, tools run natively inside Kali) still requires Kali WSL |
 | Docker lab renamed | Created network `jellyfish-lab` and container `jellyfish-target` (`bkimminich/juice-shop`, port 3000, no host port binding); removed old `octopus-target` and `octopus-lab`. `docs/DEMO_GUIDE.md` now shows the lab setup commands and `--port 3000` |
 
 ## Verification snapshot (2026-11-24)
 
 | Command | Observed result |
 |---|---|
-| `uv run pytest -q` | 549 passed |
+| `uv run pytest -q` | 553 passed |
 | Clean Python 3.12 venv with only `pytest`, `pyyaml`, `jinja2` (mirrors CI), `pytest -q` | 548 passed, 1 skipped |
 | GitHub Actions `test` on `6a6f8b7` | pass |
 | `uv run python -m agent.smoke` | 3/3 offline checks passed |
 | `docker run --rm --network jellyfish-lab instrumentisto/nmap -Pn -p 3000 jellyfish-target` (executor argv without the `wsl` prefix) | 1 host up, `3000/tcp open` |
+| `echo evet \| uv run python -m agent.cli --docker --target jellyfish-target --port 3000 --scope jellyfish-target` | approval prompt shown; real `docker run ... instrumentisto/nmap -Pn -sV -p3000 jellyfish-target`; `3000/tcp open`, host 172.25.0.2; `durum=completed` |
 | `ollama list` | `jellyfish-v10`, `gemma4:e4b`, `gemma4:12b`, `qwen3:8b`, `qwen3:4b` present |
 
-The nmap row is a direct Docker run against the local lab, not a run through `agent.cli`. No live model run was performed in these sessions. No training, pod, or spending happened.
+The `agent.cli --docker` row uses the scripted model with real nmap. No live model run was performed in these sessions. No training, pod, or spending happened.
 
 ## Resume commands
 
@@ -59,10 +61,10 @@ For a live check follow `models/README.md` and `docs/DEMO_GUIDE.md`. Review actu
 
 ## Next steps, in order
 
-1. **Kali WSL missing (open bug):** `DockerExecutor` builds `wsl.exe -d kali-linux -- docker run ...` (`agent/backends/docker_executor.py`, default `distro="kali-linux"`), but this PC only has WSL distros `Ubuntu-24.04` and `docker-desktop`; `wsl -d kali-linux` fails with `WSL_E_DISTRO_NOT_FOUND`. Docker itself works from Windows. Fix by installing Kali WSL with Docker Desktop integration, or by letting the executor call `docker` directly / take a configurable distro. Until then `agent.cli --docker` cannot run real tools.
+1. **Real-model + real-tool demo:** `uv run python -m agent.cli --gguf --docker --target jellyfish-target` (combined path; not yet run). Record the resolved IP, the emitted call, and the model's interpretation.
 2. **Persona and evidence push (from the 2026-11-22 plan):** make gemma4 introduce itself only when asked; decide the default for the opt-in `evidence_push` (gemma4 RCA 0/5 base, 5/5 with push, but push costs 3 no-tool val cases).
 3. **DPO training decision:** the 758 pairs target v1.0's ```` ```arac``` ```` format. Since stock gemma4 is now the default, training would need either a converter to gemma4's native tool format or a decision to train v1.0. Any run needs explicit user approval; cap $3 (plan `docs/superpowers/plans/2026-11-22-harness-and-base-bakeoff.md`, task 7). Free EVREN inference ends **2026-12-01**; any extra teacher data must be generated before then.
-4. **Real nmap integration:** the lab is ready (`jellyfish-lab` / `jellyfish-target`, port 3000); after step 1, run the scripted-model/real-tool demo, then real-model/real-tool against the local authorized lab only.
+4. **Real nmap integration:** scripted-model/real-tool passes; the real-model/real-tool path is step 1. Scan only the local authorized lab.
 5. **Per-tool CLI adapters and eval depth:** lab-test a few tools before claiming broad execution support; extend the held-out set to argument correctness, all emitted calls, and varied refusal probes.
 6. **Artifact reproducibility:** any future training must keep the adapter, tokenizer, pinned environment, data manifest/split, and eval outputs before the pod is deleted.
 

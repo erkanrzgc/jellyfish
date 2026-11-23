@@ -58,6 +58,23 @@ def test_docker_container_ip_rejects_injection(monkeypatch):
     assert "ran" not in called                            # subprocess'e hic gidilmedi
 
 
+def test_docker_container_ip_calls_docker_directly(monkeypatch):
+    """IP cozumu WSL distro'suna bagli degil: dogrudan `docker inspect` cagrilir."""
+    import subprocess
+    seen: dict = {}
+
+    class _Proc:
+        stdout = '{"jellyfish-lab":{"IPAddress":"172.25.0.2"}}'
+
+    def _fake_run(argv, **kwargs):
+        seen["argv"] = argv
+        return _Proc()
+
+    monkeypatch.setattr(subprocess, "run", _fake_run)
+    assert cli._docker_container_ip("jellyfish-target") == "172.25.0.2"
+    assert seen["argv"][:3] == ["docker", "inspect", "jellyfish-target"]
+
+
 def test_gguf_demo_activates_skills_by_default(monkeypatch):
     """Canlı beyin yolu skill katmanini VARSAYILAN olarak yukler (dormant DEGIL)."""
     import agent.backends.gguf_model as gm

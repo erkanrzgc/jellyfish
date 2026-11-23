@@ -138,18 +138,18 @@ def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
     return _format_run(msgs, result, label)
 
 
-def _docker_container_ip(container: str, distro: str = "kali-linux") -> str | None:
+def _docker_container_ip(container: str) -> str | None:
     """Lab container'inin guncel IP'sini docker inspect ile al (None = bulunamadi).
     NEDEN IP: Docker embedded DNS (isimle cozme) WSL'de flaky olabilir; model zaten
     prompt'taki ACIK IP'yi arac blogunda birebir onurlandirir (hostname'i ise kacirir).
-    GUVENLIK: shell YOK — argv listesi (wsl.exe -> docker inspect ...) + container adi
+    GUVENLIK: shell YOK — argv listesi (docker inspect ...) + container adi
     allowlist ile dogrulanir (enjeksiyon kapali)."""
     import subprocess
     if not _CONTAINER_NAME_RE.match(container):     # gecersiz/kotucul ad -> hic komut kurma
         return None
     try:
         out = subprocess.run(
-            ["wsl.exe", "-d", distro, "--", "docker", "inspect", container,
+            ["docker", "inspect", container,
              "--format", "{{json .NetworkSettings.Networks}}"],
             capture_output=True, text=True, timeout=30).stdout
     except (subprocess.SubprocessError, FileNotFoundError):
