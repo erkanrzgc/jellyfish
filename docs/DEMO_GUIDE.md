@@ -48,7 +48,7 @@ An initial 2026-10-23 service check failed. The user subsequently started Ollama
 
 This is an optional live integration check, separate from the three offline checks. Prerequisites:
 
-- A functioning Docker engine reachable from the `kali-linux` WSL distribution.
+- A functioning Docker engine reachable with the plain `docker` CLI (Docker Desktop on Windows is enough; Kali WSL is not required for this path).
 - A prepared `jellyfish-lab` Docker network and an authorized target container named `jellyfish-target`, exposing a known service. The reference lab uses `bkimminich/juice-shop`, which listens on port 3000; pass `--port` to match your target:
 
   ```powershell
@@ -60,8 +60,8 @@ This is an optional live integration check, separate from the three offline chec
 Inspect your lab before running a scan:
 
 ```powershell
-wsl -d kali-linux -- docker network inspect jellyfish-lab
-wsl -d kali-linux -- docker inspect jellyfish-target
+docker network inspect jellyfish-lab
+docker inspect jellyfish-target
 ```
 
 Then run the scripted-model integration check:
