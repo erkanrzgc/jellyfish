@@ -18,14 +18,27 @@ from agent.toolcall import strip_dusunce
 from data.sft.persona import OCTOPUS_SYSTEM_PROMPT, OCTOPUS_TOOL_SYSTEM_PROMPT
 
 
-ADVISORY_PROMPT = OCTOPUS_SYSTEM_PROMPT + (
+_ADVISORY_RULE = (
     "\nBu oturum danisman modundadir. Yalniz aciklama, komut onerisi ve saglanan kanitin "
     "analizini yap. Hicbir aracin calistigini iddia etme. Gozlenen bulguyu, hipotezi ve "
     "onerilen sonraki kontrolu ayir. Kanit yoksa belirsizligi belirt."
 )
+ADVISORY_PROMPT = OCTOPUS_SYSTEM_PROMPT + _ADVISORY_RULE
 ASSIST_PROMPT = OCTOPUS_TOOL_SYSTEM_PROMPT.replace(
     "Araçları doğrudan çalıştırırsın;", "Arac cagrilari yalniz oneridir; gercek islemler kullanici onayi bekler;"
 ) + "\nGozlenen bulgu, hipotez ve onerilen sonraki kontrolu ayir. Reddedilen/hata veren islemi tamamlandi sayma."
+
+
+def prompts_for(profile: str) -> tuple[str, str]:
+    """(advise, assist) system prompts: Jellyfish for native stock models, the trained v1.0 text otherwise."""
+    from agent.config import is_native
+    if not is_native(profile):
+        return ADVISORY_PROMPT, ASSIST_PROMPT
+    from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT
+    from agent.persona import JELLYFISH_SYSTEM_PROMPT
+    return JELLYFISH_SYSTEM_PROMPT + _ADVISORY_RULE, NATIVE_SYSTEM_PROMPT + (
+        "\nArac cagrilari yalniz oneridir; gercek islemler kullanici onayi bekler. Gozlenen bulgu, hipotez ve "
+        "onerilen sonraki kontrolu ayir. Reddedilen/hata veren islemi tamamlandi sayma.")
 
 
 def approval_prompt(registry: ToolRegistry, *, read=input, write=print):
@@ -110,8 +123,9 @@ def main() -> int:
     args = parser.parse_args()
     try:
         messages = load_session(args.session, args.profile) if args.session and args.session.exists() else []
-        model = create_model(args.profile, system_prompt=ADVISORY_PROMPT if args.mode == "advise" else ASSIST_PROMPT,
-                             num_ctx=4096, num_predict=1024)
+        advise_prompt, assist_prompt = prompts_for(args.profile)
+        model = create_model(args.profile, system_prompt=advise_prompt if args.mode == "advise" else assist_prompt,
+                             num_ctx=4096, num_predict=1024, tools_enabled=args.mode == "assist")
     except (ValueError, OSError, json.JSONDecodeError) as error:
         print(f"HATA: {error}")
         return 2

@@ -26,3 +26,19 @@ def test_factory_copies_profile_and_accepts_generation_overrides():
     assert model.bos_token is None and model.native_tool_roles
     assert model.stop_tokens == ("<|im_end|>",)
     assert model.seed == 3407 and model.num_ctx == 4096
+
+
+def test_default_product_model_is_native_gemma4():
+    from agent.backends.native_chat import NativeChatModel
+    from agent.config import DEFAULT_MODEL
+    from agent.profiles import create_model
+    model = create_model(DEFAULT_MODEL, num_ctx=4096, tools_enabled=False, system_prompt="S")
+    assert isinstance(model, NativeChatModel) and model.model == "gemma4:e4b"
+    assert model.num_ctx == 16384 and model.tools_enabled is False and model.system_prompt == "S"
+
+
+def test_legacy_profile_still_builds_the_gguf_model():
+    from agent.backends.gguf_model import GgufModel
+    from agent.profiles import create_model
+    model = create_model("octopus-v10", tools_enabled=True)
+    assert isinstance(model, GgufModel) and model.model == "octopus-v10"

@@ -8,7 +8,7 @@ import argparse
 import re
 import sys
 from agent.backends.mock_model import ScriptedModel
-from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR
+from agent.config import DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR, is_native
 from agent.display import render_transcript
 from agent.loop import run_tool_loop
 from agent.messages import Message
@@ -120,6 +120,7 @@ def run_gguf_demo(scope: list[str] | None = None, model: str = DEFAULT_MODEL,
     if skills is not None:
         from agent.catalog import extension_augmented_system_prompt
         base = extension_augmented_system_prompt(base)
+    native_model = native_model or (model if is_native(model) else None)
     if native_model:
         # Hazir talimat modeli (or. gemma4:e4b) yerel arac-cagirma ile: tum katalog (eklentiler dahil)
         # native tool olarak gider -> manifest gereksiz; RCA olay kurali ayni sekilde kosullu eklenir.
@@ -225,7 +226,7 @@ def main() -> int:
     ap.add_argument("--scope", nargs="*", default=None, help="izinli IP/CIDR (mod varsayilanini ezer)")
     ap.add_argument("--real", action="store_true", help="RealExecutor: Kali WSL'de gercek nmap")
     ap.add_argument("--docker", action="store_true", help="DockerExecutor: lab docker aginda gercek nmap")
-    ap.add_argument("--gguf", action="store_true", help=f"GgufModel: Ollama'da {DEFAULT_MODEL}")
+    ap.add_argument("--gguf", action="store_true", help=f"gercek model (Ollama): varsayilan {DEFAULT_MODEL}; eski v1.0 icin --model octopus-v10")
     ap.add_argument("--assistant", action="store_true", help="Asistan araclari demo (jailed file + policy)")
     ap.add_argument("--real-cmd", action="store_true", help="run_cmd'yi GERCEK docker sandbox'ta "
                     "calistir (alpine, --network none, --rm; Docker gerekir). --assistant ile.")

@@ -85,3 +85,11 @@ def test_native_persona_is_jellyfish_and_v10_training_prompt_is_untouched():
     assert "Jellyfish" in NATIVE_SYSTEM_PROMPT and "Octópus" not in NATIVE_SYSTEM_PROMPT
     assert "yalnızca" in JELLYFISH_SYSTEM_PROMPT          # introduce only when asked
     assert OCTOPUS_SYSTEM_PROMPT.startswith("Sen Octópus'sun")  # v10 was trained on this exact text
+
+
+def test_advisory_mode_offers_no_tools(monkeypatch):
+    bodies = []
+    monkeypatch.setattr(urllib.request, "urlopen", _urlopen(
+        [{"message": {"content": "Aciklama."}, "done_reason": "stop"}], bodies))
+    NativeChatModel(tools_enabled=False)([Message("user", "u")])
+    assert "tools" not in bodies[0]

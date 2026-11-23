@@ -19,26 +19,24 @@ The product and training examples prioritize Turkish. Repository documentation i
 
 ## Current status
 
-**The evaluated default is v1.0 (`octopus-v10`).** v1.1 and v1.2 remain experiments: their recorded tool-selection regressions prevented promotion. The v1.2 findings and trade-offs are recorded in the [experiment report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md).
+**Default model (since 2026-11-22): stock Gemma 4 E4B (`gemma4:e4b`) with native tool calling.** On 212 held-out cases it passed 177 vs 137 for the fine-tuned `octopus-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM. It is weaker at investigating open-ended server incidents on its own; `run_tool_loop(evidence_push=True)` is an opt-in harness fix with a measured trade-off. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md).
 
 Runtime defaults live in [`agent/config.py`](agent/config.py):
 
 | Setting | Default |
 |---|---|
-| Ollama model | `octopus-v10` |
-| Training chat template | `models/octopus-v8-tokenizer` |
-| Ollama import recipe | `models/Modelfile.v10` |
-
-The v0.8 tokenizer directory is intentional: it is the template used in the recorded v1.0 evaluations. The backend renders it itself and calls Ollama in raw mode. Explicit model and tokenizer overrides are supported.
-
-**Candidate base (2026-11-22): stock Gemma 4 E4B with native tool calling.** On 212 held-out cases it passed 177 vs 137 for `octopus-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM; it is weaker at investigating open-ended server incidents on its own. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md). It is not the configured default yet. Try it with:
+| Ollama model | `gemma4:e4b` (native tools via `agent/backends/native_chat.py`) |
+| Legacy model | `octopus-v10` (raw-prompt path, `--model octopus-v10`) |
+| Legacy chat template | `models/octopus-v8-tokenizer` |
+| Legacy import recipe | `models/Modelfile.v10` |
 
 ```powershell
 ollama pull gemma4:e4b
-uv run python -m agent.cli --gguf --native gemma4:e4b
+uv run python -m agent.chat --ask "Kimsin sen?"
+uv run python -m agent.cli --gguf
 ```
 
-Artifact names such as `octopus-v10` and the `octopus-lab` Docker network keep their original names.
+The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). Artifact names such as `octopus-v10` and the `octopus-lab` Docker network keep their original names.
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 

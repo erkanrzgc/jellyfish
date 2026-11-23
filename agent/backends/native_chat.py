@@ -97,6 +97,7 @@ class NativeChatModel:
     num_ctx: int = 16384  # the 130-tool schema alone is ~6.7k tokens
     num_predict: int = 1024
     timeout: int = 600
+    tools_enabled: bool = True  # False = advisory mode: no tool schemas are offered
 
     def __call__(self, messages: list[Message]) -> str:
         return self.generate_result(messages).display_text()
@@ -107,8 +108,10 @@ class NativeChatModel:
 
     def generate_result(self, messages: list[Message]) -> GenerationResult:
         started = time.perf_counter()
-        body = {"model": self.model, "stream": False, "think": False, "tools": native_tools(),
+        body = {"model": self.model, "stream": False, "think": False,
                 "messages": to_chat_messages(messages, self.system_prompt), "options": self.generation_settings()}
+        if self.tools_enabled:
+            body["tools"] = native_tools()
         encoded = json.dumps(body, ensure_ascii=False).encode("utf-8")
         metadata = {"settings": self.generation_settings(), "model": self.model, "host": self.host,
                     "request_sha256": hashlib.sha256(encoded).hexdigest()}

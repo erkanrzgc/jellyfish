@@ -14,7 +14,7 @@ from collections.abc import Callable
 from dataclasses import dataclass, field
 
 from agent.messages import Message
-from agent.config import DEFAULT_MODEL, DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR
+from agent.config import DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR, LEGACY_MODEL as DEFAULT_MODEL
 from agent.toolcall import render_for_model
 from data.sft.normalize import ensure_system
 from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT

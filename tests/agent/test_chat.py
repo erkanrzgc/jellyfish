@@ -82,3 +82,9 @@ def test_truncated_model_output_is_an_unfinished_turn(monkeypatch, mode):
     result = chat.run_turn([Message("user", "explain")], model, None, mode=mode)
     assert result.status == "failed" and result.calls == []
     assert "Partial answer" in result.final and "kesildi" in result.final
+
+
+def test_native_profile_gets_jellyfish_prompts_and_legacy_keeps_trained_text():
+    advise, assist = chat.prompts_for("gemma4:e4b")
+    assert "Jellyfish" in advise and "Jellyfish" in assist and "Octópus" not in advise
+    assert chat.prompts_for("octopus-v10") == (chat.ADVISORY_PROMPT, chat.ASSIST_PROMPT)
