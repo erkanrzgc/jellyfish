@@ -36,9 +36,10 @@
 | `uv run python -m agent.smoke` | 3/3 offline checks passed |
 | `docker run --rm --network jellyfish-lab instrumentisto/nmap -Pn -p 3000 jellyfish-target` (executor argv without the `wsl` prefix) | 1 host up, `3000/tcp open` |
 | `echo evet \| uv run python -m agent.cli --docker --target jellyfish-target --port 3000 --scope jellyfish-target` | approval prompt shown; real `docker run ... instrumentisto/nmap -Pn -sV -p3000 jellyfish-target`; `3000/tcp open`, host 172.25.0.2; `durum=completed` |
+| `uv run python -m agent.cli --gguf --docker --target jellyfish-target` (gemma4:e4b native, Ollama 0.40.16) | IP resolved to 172.25.0.2; model called `nmap -sV -sC`, the nmap skill guide was injected, model re-called `-sV -sC -Pn -p-`; policy denied `-sC` (`agent/arguments.py`) before approval; `durum=denied`, 0 tools executed, 17 s. Persona line printed unprompted |
 | `ollama list` | `jellyfish-v10`, `gemma4:e4b`, `gemma4:12b`, `qwen3:8b`, `qwen3:4b` present |
 
-The `agent.cli --docker` row uses the scripted model with real nmap. No live model run was performed in these sessions. No training, pod, or spending happened.
+The `agent.cli --docker` row uses the scripted model with real nmap. The `--gguf --docker` row is the only live-model run in these sessions. No training, pod, or spending happened.
 
 ## Resume commands
 
@@ -61,10 +62,10 @@ For a live check follow `models/README.md` and `docs/DEMO_GUIDE.md`. Review actu
 
 ## Next steps, in order
 
-1. **Real-model + real-tool demo:** `uv run python -m agent.cli --gguf --docker --target jellyfish-target` (combined path; not yet run). Record the resolved IP, the emitted call, and the model's interpretation.
+1. **nmap skill vs policy mismatch (blocks the live demo):** `agent/skills/tools/nmap.md` recommends `-sV -sC -Pn -p-`, but `agent/arguments.py::nmap_flags` allows only `-sV -sT -sS -sU -Pn -n --open --version-light -v`, `-p <list>` and `--top-ports`; it rejects `-sC` (scripts are excluded by design) and also `-p-`. The model follows the skill and gets denied. Decide: align the skill text with the allowlist, and/or allow `-p-` (= 1-65535). Then rerun `agent.cli --gguf --docker --target jellyfish-target`.
 2. **Persona and evidence push (from the 2026-11-22 plan):** make gemma4 introduce itself only when asked; decide the default for the opt-in `evidence_push` (gemma4 RCA 0/5 base, 5/5 with push, but push costs 3 no-tool val cases).
 3. **DPO training decision:** the 758 pairs target v1.0's ```` ```arac``` ```` format. Since stock gemma4 is now the default, training would need either a converter to gemma4's native tool format or a decision to train v1.0. Any run needs explicit user approval; cap $3 (plan `docs/superpowers/plans/2026-11-22-harness-and-base-bakeoff.md`, task 7). Free EVREN inference ends **2026-12-01**; any extra teacher data must be generated before then.
-4. **Real nmap integration:** scripted-model/real-tool passes; the real-model/real-tool path is step 1. Scan only the local authorized lab.
+4. **Real nmap integration:** scripted-model/real-tool passes; real-model/real-tool reaches the policy gate (step 1). Scan only the local authorized lab.
 5. **Per-tool CLI adapters and eval depth:** lab-test a few tools before claiming broad execution support; extend the held-out set to argument correctness, all emitted calls, and varied refusal probes.
 6. **Artifact reproducibility:** any future training must keep the adapter, tokenizer, pinned environment, data manifest/split, and eval outputs before the pod is deleted.
 
