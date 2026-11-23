@@ -72,7 +72,7 @@ def test_gguf_demo_activates_skills_by_default(monkeypatch):
         return ToolLoopResult(final="ok", steps=1, calls=[])
 
     monkeypatch.setattr(cli, "run_tool_loop", _fake_loop)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10")
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10")
     assert isinstance(captured["skills"], SkillLibrary)
     assert captured["skills"].tools                        # 13 arac-skill yuklendi
 
@@ -90,7 +90,7 @@ def test_gguf_demo_skills_can_be_disabled(monkeypatch):
         return ToolLoopResult(final="ok", steps=1, calls=[])
 
     monkeypatch.setattr(cli, "run_tool_loop", _fake_loop)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10", skills=None)
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10", skills=None)
     assert captured["skills"] is None
 
 
@@ -116,7 +116,7 @@ def test_gguf_demo_augments_system_prompt_with_extension_tools(monkeypatch):
     """Skills aktifken sistem promptu 3 egitim-disi araci TANITIR (kesif manifesti)."""
     from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
     captured = _capture_gguf_kwargs(monkeypatch)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10")
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10")
     sp = captured["system_prompt"]
     assert sp.startswith(OCTOPUS_TOOL_SYSTEM_PROMPT)         # egitim-birebir taban KORUNUR
     for name in ("trufflehog", "magika", "ghunt"):
@@ -128,7 +128,7 @@ def test_gguf_demo_prompt_unchanged_when_skills_off(monkeypatch):
     """skills=None + normal tarama -> sistem promptu egitim-birebir tabana ESIT (hic ek yok)."""
     from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
     captured = _capture_gguf_kwargs(monkeypatch)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10", skills=None)
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10", skills=None)
     # system_prompt hic gecilmedi -> GgufModel kendi varsayilanini kullanir (taban).
     assert captured.get("system_prompt", OCTOPUS_TOOL_SYSTEM_PROMPT) == OCTOPUS_TOOL_SYSTEM_PROMPT
 
@@ -137,7 +137,7 @@ def test_gguf_demo_adds_rca_rule_for_incident_task(monkeypatch):
     """Gorev sunucu-OLAYI dili icerirse RCA kanit-once-sonuc kurali sistem-promptuna eklenir."""
     from agent.incident import RCA_INCIDENT_RULE
     captured = _capture_gguf_kwargs(monkeypatch)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10", skills=None,
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10", skills=None,
                       target="sunucuda 'fork: retry: resource temporarily unavailable' hatasi var")
     assert RCA_INCIDENT_RULE in captured["system_prompt"]
 
@@ -146,7 +146,7 @@ def test_gguf_demo_no_rca_rule_for_scan_task(monkeypatch):
     """Normal tarama gorevi -> RCA kurali EKLENMEZ (scoping: yalniz olay diline atesler)."""
     from agent.incident import RCA_INCIDENT_RULE
     captured = _capture_gguf_kwargs(monkeypatch)
-    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="octopus-v10", skills=None)  # default target = tarama
+    cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10", skills=None)  # default target = tarama
     assert RCA_INCIDENT_RULE not in captured.get("system_prompt", "")
 
 
@@ -204,8 +204,8 @@ def test_main_docker_passes_explicit_tokenizer(monkeypatch):
 
 def test_gguf_demo_uses_evaluated_model_and_tokenizer(monkeypatch):
     captured = _capture_gguf_kwargs(monkeypatch)
-    cli.run_gguf_demo(skills=None, model="octopus-v10")
-    assert captured["model"] == "octopus-v10"
+    cli.run_gguf_demo(skills=None, model="jellyfish-v10")
+    assert captured["model"] == "jellyfish-v10"
     assert captured["tokenizer_dir"] == "models/jellyfish-v8-tokenizer"
 
 

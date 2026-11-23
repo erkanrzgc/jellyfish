@@ -1,7 +1,7 @@
 """Sunucu-olayi (incident) tespiti + kosullu RCA "kanit-once-sonuc" kurali.
 
 NEDEN KOSULLU: RCA kurali sistem-promptuna GLOBAL eklenince genel arac-secimini bozar
-(olcum 2026-08-25, yerel octopus-v10: 24 toolcall istemi, dogru-arac 75%->54%, katalog 88->75).
+(olcum 2026-08-25, yerel jellyfish-v10: 24 toolcall istemi, dogru-arac 75%->54%, katalog 88->75).
 Bu yuzden kural YALNIZCA bir sunucu arizasi/olayi bildirildiginde eklenir; saldiri/recon
 istemine (nmap/sqlmap/hashcat...) ASLA dokunmaz. Etki (yerel v10, temp=0, np=640):
 RCA kanit-once-sonuc 3/5 -> 4/5 (session-drop + disk-freeze hedefleri duzelir), toolcall 75=75.

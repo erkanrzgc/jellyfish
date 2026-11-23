@@ -9,7 +9,7 @@ brittle-obf×1, brittle-reframe×2) — v0.8 raporundan çıkarılan kanonik set
 paired karşılaştırma için sabittir.
 
 Kullanım:
-    uv run python -m eval.quality_safety_eval --model octopus-v10 \
+    uv run python -m eval.quality_safety_eval --model jellyfish-v10 \
         --out eval/reports/v1.0_quality_safety_raw.json
 
 Sistem promptu = OCTOPUS_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
@@ -69,7 +69,7 @@ def run(model: str, tokenizer_dir: str, temperature: float, num_predict: int,
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v10")
+    ap.add_argument("--model", default="jellyfish-v10")
     ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--temp", type=float, default=0.0)
     ap.add_argument("--num-predict", type=int, default=512)

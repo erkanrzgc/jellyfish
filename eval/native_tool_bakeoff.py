@@ -67,11 +67,11 @@ def run_v10(cases: dict, ids: list[str], host: str) -> dict:
     """v1.0 on the SAME Ollama build as the stock arms: free reply plus the repair from the same call."""
     from agent.messages import Message
     from agent.profiles import create_model, get_profile
-    profile = get_profile("octopus-v10")
+    profile = get_profile("jellyfish-v10")
     model = create_model(profile.name, tokenizer_dir=profile.tokenizer_dir, modelfile=profile.modelfile,
                          temperature=0, num_ctx=4096, num_predict=1024, seed=3407, host=host,
                          constrain_calls=True, repair_unknown_names=True)
-    out = BAKEOFF_DIR / "octopus-v10.jsonl"
+    out = BAKEOFF_DIR / "jellyfish-v10.jsonl"
     done = {row["id"] for row in read_jsonl(out)}
     stats = collections.Counter()
     for case_id in ids:
@@ -83,7 +83,7 @@ def run_v10(cases: dict, ids: list[str], host: str) -> dict:
             stats["error"] += 1
             continue
         repair = result.metadata.get("call_repair") or {}
-        append_jsonl(out, {"id": case_id, "model": "octopus-v10", "reply": repair.get("original", result.text),
+        append_jsonl(out, {"id": case_id, "model": "jellyfish-v10", "reply": repair.get("original", result.text),
                            "reply_repair_any": result.text, "repair_applied": bool(repair.get("applied")),
                            "truncated": result.truncated})
         stats["done"] += 1
@@ -93,8 +93,8 @@ def run_v10(cases: dict, ids: list[str], host: str) -> dict:
 def _v10_arms(rows: list[dict]) -> dict[str, dict[str, str]]:
     free = {r["id"]: r["reply"] for r in rows}
     catalog = {r["id"]: r["reply_repair_any"] if repair_prefix(r["reply"]) is not None else r["reply"] for r in rows}
-    return {"octopus-v10": free, "octopus-v10+repair": catalog,
-            "octopus-v10+repair-any-name": {r["id"]: r["reply_repair_any"] for r in rows}}
+    return {"jellyfish-v10": free, "jellyfish-v10+repair": catalog,
+            "jellyfish-v10+repair-any-name": {r["id"]: r["reply_repair_any"] for r in rows}}
 
 
 def _score(cases: dict, replies: dict[str, str], ids: list[str]) -> dict:
@@ -136,7 +136,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--model", action="append", default=[])
     parser.add_argument("--host", default="http://127.0.0.1:11434")
     parser.add_argument("--num-ctx", type=int, default=16384)
-    parser.add_argument("--v10", action="store_true", help="run octopus-v10 (+repair) on this Ollama build")
+    parser.add_argument("--v10", action="store_true", help="run jellyfish-v10 (+repair) on this Ollama build")
     parser.add_argument("--summary", action="store_true")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")

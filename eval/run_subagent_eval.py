@@ -8,7 +8,7 @@ rol-dışını reddedip self-correct ettirmek, araç-seçim doğruluğunu (flat 
              self-correction SONRASI) skorlanır. Prompt DEĞİŞMEZ (on-distribution).
 
 Kullanım (pod ya da yerel GGUF):
-  uv run python -m eval.run_subagent_eval --model octopus-v10 --tokenizer-dir models/jellyfish-v8-tokenizer
+  uv run python -m eval.run_subagent_eval --model jellyfish-v10 --tokenizer-dir models/jellyfish-v8-tokenizer
 """
 from __future__ import annotations
 

@@ -226,7 +226,7 @@ def main() -> int:
     ap.add_argument("--scope", nargs="*", default=None, help="izinli IP/CIDR (mod varsayilanini ezer)")
     ap.add_argument("--real", action="store_true", help="RealExecutor: Kali WSL'de gercek nmap")
     ap.add_argument("--docker", action="store_true", help="DockerExecutor: lab docker aginda gercek nmap")
-    ap.add_argument("--gguf", action="store_true", help=f"gercek model (Ollama): varsayilan {DEFAULT_MODEL}; eski v1.0 icin --model octopus-v10")
+    ap.add_argument("--gguf", action="store_true", help=f"gercek model (Ollama): varsayilan {DEFAULT_MODEL}; eski v1.0 icin --model jellyfish-v10")
     ap.add_argument("--assistant", action="store_true", help="Asistan araclari demo (jailed file + policy)")
     ap.add_argument("--real-cmd", action="store_true", help="run_cmd'yi GERCEK docker sandbox'ta "
                     "calistir (alpine, --network none, --rm; Docker gerekir). --assistant ile.")

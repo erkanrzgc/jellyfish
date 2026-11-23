@@ -46,6 +46,6 @@ def test_v10_arms_apply_catalog_repair_only_to_catalog_named_calls():
     rows = [{"id": "a", "reply": bad_key, "reply_repair_any": fixed},
             {"id": "b", "reply": invented, "reply_repair_any": fixed}]
     arms = _v10_arms(rows)
-    assert arms["octopus-v10"] == {"a": bad_key, "b": invented}
-    assert arms["octopus-v10+repair"] == {"a": fixed, "b": invented}
-    assert arms["octopus-v10+repair-any-name"] == {"a": fixed, "b": fixed}
+    assert arms["jellyfish-v10"] == {"a": bad_key, "b": invented}
+    assert arms["jellyfish-v10+repair"] == {"a": fixed, "b": invented}
+    assert arms["jellyfish-v10+repair-any-name"] == {"a": fixed, "b": fixed}

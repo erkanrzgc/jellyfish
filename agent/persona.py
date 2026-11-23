@@ -2,7 +2,7 @@
 
 Same guardrail as data/sft/persona.py, but identity comes only from this prompt, so the model introduces
 itself only when asked (gemma4 prefixed every answer otherwise). data/sft/persona.py stays byte-identical:
-octopus-v10 was trained on it.
+jellyfish-v10 was trained on it.
 """
 from __future__ import annotations
 

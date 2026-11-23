@@ -88,7 +88,7 @@ def main(argv: list[str] | None = None) -> int:
     rows = [row for row in read_jsonl(args.rejected) if row["id"] in cases]
     if not args.summary:
         from agent.profiles import create_model, get_profile
-        profile = get_profile("octopus-v10")
+        profile = get_profile("jellyfish-v10")
         model = create_model(profile.name, tokenizer_dir=profile.tokenizer_dir, modelfile=profile.modelfile,
                              temperature=0, num_ctx=4096, num_predict=1024, seed=3407, host=args.host,
                              constrain_calls=True)

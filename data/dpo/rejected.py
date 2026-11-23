@@ -1,6 +1,6 @@
 """Stage 2: local v1.0 replies (on-policy) labelled with structural failures.
 
-Needs a running Ollama with `octopus-v10`. Resumable: finished case ids are skipped.
+Needs a running Ollama with `jellyfish-v10`. Resumable: finished case ids are skipped.
 
     uv run python -m data.dpo.rejected
 """
@@ -74,7 +74,7 @@ def main(argv: list[str] | None = None) -> int:
     if args.relabel:
         print(json.dumps(relabel(args.cases, args.out), ensure_ascii=False))
         return 0
-    profile = get_profile("octopus-v10")
+    profile = get_profile("jellyfish-v10")
     # Same generation settings as eval/reliability_eval.py so rejected replies are on-policy.
     model = create_model(profile.name, tokenizer_dir=profile.tokenizer_dir, modelfile=profile.modelfile,
                          temperature=0, num_ctx=4096, num_predict=1024, seed=3407, host=args.host)

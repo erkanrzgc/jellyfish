@@ -19,8 +19,8 @@ class ModelProfile:
 
 
 _PROFILES = {
-    "octopus-v10": ModelProfile(
-        "octopus-v10", DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR, DEFAULT_MODELFILE,
+    "jellyfish-v10": ModelProfile(
+        "jellyfish-v10", DEFAULT_MODEL, DEFAULT_TOKENIZER_DIR, DEFAULT_MODELFILE,
         "models/jellyfish-v10-Q4_K_M.gguf", "<eos>", ("<end_of_turn>",), "<bos>", False,
         "ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"),
     "qwen3-4b-instruct-2507": ModelProfile(

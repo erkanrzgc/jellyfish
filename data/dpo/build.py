@@ -99,7 +99,7 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--dir", type=Path, default=OUT_DIR)
     args = parser.parse_args(argv)
-    weights = ROOT / get_profile("octopus-v10").weights_path
+    weights = ROOT / get_profile("jellyfish-v10").weights_path
     manifest = build(args.dir / "cases.jsonl", args.dir / "rejected.jsonl", args.dir / "chosen.jsonl",
                      args.dir / "pairs", gguf_sha256=_sha256(weights) if weights.exists() else None)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))

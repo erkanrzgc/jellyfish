@@ -27,7 +27,7 @@ def local(tmp_path):
          "allow_tools": True, "expected_tools": ["nmap"], "expected_params": {"hedef": "10.0.0.1"}},
         {"id": "T2", "prompt": "SECOND", "critical": False, "category": "fundamentals",
          "allow_tools": False, "expected_tools": [], "expected_params": {}}]}))
-    profile = replace(get_profile("octopus-v10"), weights_path=str(weights),
+    profile = replace(get_profile("jellyfish-v10"), weights_path=str(weights),
                       tokenizer_dir=str(tokenizer), modelfile=str(modelfile))
     return profile, suite, tmp_path / "report.json"
 
@@ -132,7 +132,7 @@ def test_actual_service_model_weight_mismatch_blocks(monkeypatch, local):
     profile, _, _ = local
     responses = iter([
         {"version": "0.test"},
-        {"models": [{"name": "octopus-v10:latest", "digest": "manifest-sha"}]},
+        {"models": [{"name": "jellyfish-v10:latest", "digest": "manifest-sha"}]},
         {"modelfile": "FROM /blobs/sha256-" + "a" * 64, "parameters": "", "template": ""},
     ])
     monkeypatch.setattr(runner, "get_ollama_json", lambda *args: next(responses))
@@ -161,7 +161,7 @@ def test_service_binding_success_retains_actual_server_manifest(monkeypatch, loc
     profile, _, _ = local
     digest = "b" * 64
     responses = iter([{"version": "0.test"},
-                      {"models": [{"name": "octopus-v10:latest", "digest": "tag-manifest"}]},
+                      {"models": [{"name": "jellyfish-v10:latest", "digest": "tag-manifest"}]},
                       {"modelfile": f'# generated\nFROM "C:\\blobs\\sha256-{digest}"\n'}])
     monkeypatch.setattr(runner, "get_ollama_json", lambda *args: next(responses))
     record = runner.check_service("http://localhost:11434", profile, digest)

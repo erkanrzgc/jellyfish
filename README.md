@@ -19,14 +19,14 @@ The product and training examples prioritize Turkish. Repository documentation i
 
 ## Current status
 
-**Default model (since 2026-11-22): stock Gemma 4 E4B (`gemma4:e4b`) with native tool calling.** On 212 held-out cases it passed 177 vs 137 for the fine-tuned `octopus-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM. It is weaker at investigating open-ended server incidents on its own; `run_tool_loop(evidence_push=True)` is an opt-in harness fix with a measured trade-off. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md).
+**Default model (since 2026-11-22): stock Gemma 4 E4B (`gemma4:e4b`) with native tool calling.** On 212 held-out cases it passed 177 vs 137 for the fine-tuned `jellyfish-v10`, refused unauthorized targeting as reliably, and fits 8 GB VRAM. It is weaker at investigating open-ended server incidents on its own; `run_tool_loop(evidence_push=True)` is an opt-in harness fix with a measured trade-off. See the [bake-off report](eval/reports/gemma4_e4b_bakeoff_2026-11-22.md).
 
 Runtime defaults live in [`agent/config.py`](agent/config.py):
 
 | Setting | Default |
 |---|---|
 | Ollama model | `gemma4:e4b` (native tools via `agent/backends/native_chat.py`) |
-| Legacy model | `octopus-v10` (raw-prompt path, `--model octopus-v10`) |
+| Legacy model | `jellyfish-v10` (raw-prompt path, `--model jellyfish-v10`) |
 | Legacy chat template | `models/jellyfish-v8-tokenizer` |
 | Legacy import recipe | `models/Modelfile.v10` |
 
@@ -36,7 +36,7 @@ uv run python -m agent.chat --ask "Kimsin sen?"
 uv run python -m agent.cli --gguf
 ```
 
-The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). Artifact names such as `octopus-v10` and the `octopus-lab` Docker network keep their original names.
+The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `octopus-v10` before the rename (same weights); the `octopus-lab` Docker network keeps its original name.
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 
@@ -79,7 +79,7 @@ Prepare the existing v1.0 Q4 GGUF and the evaluated tokenizer files as described
 With Ollama running and the artifacts present:
 
 ```powershell
-ollama create octopus-v10 -f models/Modelfile.v10
+ollama create jellyfish-v10 -f models/Modelfile.v10
 uv run python -m agent.cli --gguf
 ```
 
@@ -96,7 +96,7 @@ The normal CLI is a single lab-scan demo, not a general chat interface. `--targe
 The separate conversation entry point supports advisory answers and approved tool work:
 
 ```powershell
-uv run python -m agent.chat --mode advise --profile octopus-v10
+uv run python -m agent.chat --mode advise --profile jellyfish-v10
 uv run python -m agent.chat --mode assist --executor mock --scope 10.10.10.0/24 --session lab/logs/chat.json
 ```
 
@@ -105,7 +105,7 @@ Advisory mode executes no tools. In assist mode, mock security results are label
 The model-only baseline runner records raw responses, every emitted call, settings, timings, errors, truncation, and artifact hashes without executing security tools:
 
 ```powershell
-uv run python -m eval.reliability_eval --profile octopus-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/my-v10-dev60.json --host http://127.0.0.1:11434
+uv run python -m eval.reliability_eval --profile jellyfish-v10 --suite eval/suites/reliability-dev-v1.json --out eval/reports/my-v10-dev60.json --host http://127.0.0.1:11434
 ```
 
 Use a new report path for each run. Automatic checks cover output structure and selected tool/parameter expectations; semantic scores remain pending human review. The alternate `qwen3-4b-instruct-2507` profile has its own template configuration but its artifacts have not been provisioned or evaluated. An installed `qwen3:4b` alias is not evidence of that exact model.

@@ -1,6 +1,6 @@
 # Repeatable runtime demos
 
-Run every command from the repository root. The default model is `octopus-v10`; the evaluated tokenizer is `models/jellyfish-v8-tokenizer`. Runtime defaults are defined in `agent/config.py`.
+Run every command from the repository root. The default model is `jellyfish-v10`; the evaluated tokenizer is `models/jellyfish-v8-tokenizer`. Runtime defaults are defined in `agent/config.py`.
 
 ## 1. Offline acceptance checks
 
@@ -30,7 +30,7 @@ The normal CLI logs to ignored `lab/logs/audit.jsonl`. Its default scan uses sim
 Prerequisites: local Ollama service, the v1.0 Q4 GGUF, and the evaluated tokenizer files. See [`models/README.md`](../models/README.md).
 
 ```powershell
-ollama create octopus-v10 -f models/Modelfile.v10
+ollama create jellyfish-v10 -f models/Modelfile.v10
 uv run python -m agent.cli --gguf --target 10.10.10.5 --scope 10.10.10.0/24
 ```
 

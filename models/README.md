@@ -1,6 +1,6 @@
 # Local model artifacts
 
-The evaluated runtime default is **v1.0 / `octopus-v10`**, with the v0.8 training chat template. Defaults are centralized in [`agent/config.py`](../agent/config.py).
+The evaluated runtime default is **v1.0 / `jellyfish-v10`**, with the v0.8 training chat template. Defaults are centralized in [`agent/config.py`](../agent/config.py).
 
 ## Required local files
 
@@ -24,7 +24,7 @@ The existing v1.0 evaluation used `jellyfish-v8-tokenizer`; see the [quality/saf
 From the repository root, with Ollama installed and running:
 
 ```powershell
-ollama create octopus-v10 -f models/Modelfile.v10
+ollama create jellyfish-v10 -f models/Modelfile.v10
 uv run python -m agent.cli --gguf
 ```
 
@@ -34,9 +34,9 @@ The backend applies the tokenizer's chat template and sends a raw prompt to Olla
 
 ## Experiments and overrides
 
-v1.1 and v1.2 were not promoted. Keep them separate from `octopus-v10`. The unversioned `Modelfile` and `Modelfile.v8`, `.v81`, `.v9`, `.v12` are historical/version-specific recipes, not the current default.
+v1.1 and v1.2 were not promoted. Keep them separate from `jellyfish-v10`. The unversioned `Modelfile` and `Modelfile.v8`, `.v81`, `.v9`, `.v12` are historical/version-specific recipes, not the current default.
 
-Only `octopus-v10` and its GGUF are kept locally. Older GGUFs (v0.8.1, v0.9, v1.1) live in the project's Hugging Face archive; download one into `models/` and run `ollama create` with its Modelfile before using it as an override. v0.7, v0.8 and v1.2 have no GGUF, only local bf16 adapters.
+Only `jellyfish-v10` and its GGUF are kept locally. Older GGUFs (v0.8.1, v0.9, v1.1) live in the project's Hugging Face archive; download one into `models/` and run `ollama create` with its Modelfile before using it as an override. v0.7, v0.8 and v1.2 have no GGUF, only local bf16 adapters.
 
 ```powershell
 uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer

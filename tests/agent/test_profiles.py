@@ -4,9 +4,9 @@ from agent import profiles
 
 
 def test_profiles_keep_default_and_separate_templates():
-    gemma = profiles.get_profile("octopus-v10")
+    gemma = profiles.get_profile("jellyfish-v10")
     qwen = profiles.get_profile("qwen3-4b-instruct-2507")
-    assert gemma.model == "octopus-v10"
+    assert gemma.model == "jellyfish-v10"
     assert gemma.tokenizer_dir == "models/jellyfish-v8-tokenizer"
     assert gemma.bos_token == "<bos>" and not gemma.native_tool_roles
     assert gemma.eos_token == "<eos>"
@@ -40,5 +40,5 @@ def test_default_product_model_is_native_gemma4():
 def test_legacy_profile_still_builds_the_gguf_model():
     from agent.backends.gguf_model import GgufModel
     from agent.profiles import create_model
-    model = create_model("octopus-v10", tools_enabled=True)
-    assert isinstance(model, GgufModel) and model.model == "octopus-v10"
+    model = create_model("jellyfish-v10", tools_enabled=True)
+    assert isinstance(model, GgufModel) and model.model == "jellyfish-v10"
