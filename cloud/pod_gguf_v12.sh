@@ -1,5 +1,5 @@
 #!/bin/bash
-# Octopus v1.2 GGUF — pod_gguf_v10'un v12 uyarlamasi. TEK quant: Q4_K_M (dagitilan quant).
+# Jellyfish v1.2 GGUF — pod_gguf_v10'un v12 uyarlamasi. TEK quant: Q4_K_M (dagitilan quant).
 # HF PUSH YOK: pod sadece Q4 uretir; yerele scp indirilir, sha dogrulanir, ollama'ya verilir.
 # HF'e yukleme SADECE eval GECERSE + kullanici promote-onayindan SONRA yerelden yapilir
 # (token komut-metnine asla girmesin). f16 CONTAINER-DISK'e (/root) yazilir (v8/v9 dersi).

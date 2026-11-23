@@ -39,7 +39,7 @@ Expected: the actual model generates a valid `nmap` call for the allowed target,
 Explicit model/template selection remains available (the override model must already be imported into Ollama; see [models/README.md](../models/README.md)):
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
+uv run python -m agent.cli --gguf --model jellyfish-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 An initial 2026-10-23 service check failed. The user subsequently started Ollama and live v1.0 inference was recorded. See `PROJECT_HANDOFF.md` for current report paths and results; service availability remains a per-run prerequisite.
@@ -49,20 +49,20 @@ An initial 2026-10-23 service check failed. The user subsequently started Ollama
 This is an optional live integration check, separate from the three offline checks. Prerequisites:
 
 - A functioning Docker engine reachable from the `kali-linux` WSL distribution.
-- A prepared `octopus-lab` Docker network and an authorized target container named `octopus-target`, exposing a known service on port 80.
+- A prepared `jellyfish-lab` Docker network and an authorized target container named `jellyfish-target`, exposing a known service on port 80.
 - The executor's `instrumentisto/nmap` image available to that engine.
 
 Inspect your lab before running a scan:
 
 ```powershell
-wsl -d kali-linux -- docker network inspect octopus-lab
-wsl -d kali-linux -- docker inspect octopus-target
+wsl -d kali-linux -- docker network inspect jellyfish-lab
+wsl -d kali-linux -- docker inspect jellyfish-target
 ```
 
 Then run the scripted-model integration check:
 
 ```powershell
-uv run python -m agent.cli --docker --target octopus-target --port 80 --scope octopus-target
+uv run python -m agent.cli --docker --target jellyfish-target --port 80 --scope jellyfish-target
 ```
 
 Expected: a target/command preview and approval prompt. Enter `evet` or `yes` to approve that exact call, then inspect actual nmap output for the known target. Declining or an engine error leaves the task unfinished. Inspect the audit log for the target, decision, and actual execution. The Docker executor's built-in image map currently covers only nmap; the larger catalog does not imply Docker support for all tools.
@@ -70,7 +70,7 @@ Expected: a target/command preview and approval prompt. Enter `evet` or `yes` to
 After both the real-model/mock-tool check and the scripted-model/real-tool check pass, the combined path can be evaluated:
 
 ```powershell
-uv run python -m agent.cli --gguf --docker --target octopus-target
+uv run python -m agent.cli --gguf --docker --target jellyfish-target
 ```
 
 The combined demo resolves the container IP and uses the existing lab scope defaults. Record its concrete IP and ensure it belongs to your intended lab before interpreting results. No Docker lab was created or scanned in the 2026-10-23 session.

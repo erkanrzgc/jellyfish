@@ -15,15 +15,15 @@ except Exception:
 
 import torch
 
-from model.config import OctopusConfig
-from model.transformer import OctopusLM
+from model.config import JellyfishConfig
+from model.transformer import JellyfishLM
 
 
 def main() -> None:
     torch.manual_seed(0)
-    cfg = OctopusConfig()
+    cfg = JellyfishConfig()
     device = "cuda" if torch.cuda.is_available() else "cpu"
-    model = OctopusLM(cfg).to(device)
+    model = JellyfishLM(cfg).to(device)
 
     print(f"device = {device}")
     if device == "cuda":

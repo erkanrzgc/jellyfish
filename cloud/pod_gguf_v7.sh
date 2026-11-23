@@ -1,5 +1,5 @@
 #!/bin/bash
-# Octopus v0.7 GGUF — v6 tarifinin (pod_gguf_clean.sh) v7 uyarlamasi.
+# Jellyfish v0.7 GGUF — v6 tarifinin (pod_gguf_clean.sh) v7 uyarlamasi.
 # KOK SEBEP (onceki basarisizlik): llama.cpp requirements.txt transformers/torch'u degistirip
 # peft merge'i kiriyor. COZUM: ONCE merge (pinli env), SONRA llama.cpp deps. Sira kritik.
 # Onkosul: /workspace/v7-adapter (LoRA adapter) pod'da hazir olmali (scp/hf ile gonder).
@@ -7,7 +7,7 @@
 # (yerel backend apply_chat_template icin lazim; yerel adapter dizininde tokenizer.model YOK).
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v7-adapter"
-MERGED="/workspace/octopus-v7-merged"; OUT="/workspace/jellyfish-v7-gguf"
+MERGED="/workspace/jellyfish-v7-merged"; OUT="/workspace/jellyfish-v7-gguf"
 TOKOUT="/workspace/jellyfish-v7-tokenizer"; mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/5] Merge env (pinli) + MERGE (llama.cpp deps'ten ONCE!) ====="

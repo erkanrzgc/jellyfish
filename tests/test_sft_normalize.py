@@ -2,7 +2,7 @@
 from __future__ import annotations
 
 from data.sft.normalize import (
-    apply_octopus_system,
+    apply_jellyfish_system,
     ensure_system,
     fingerprint,
     is_valid,
@@ -11,7 +11,7 @@ from data.sft.normalize import (
     strip_system,
     to_messages,
 )
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
 
 def test_norm_role_maps_aliases_to_standard_roles():
@@ -55,11 +55,11 @@ def test_to_messages_returns_none_when_no_answer():
     assert to_messages({"instruction": "sadece soru"}) is None
 
 
-def test_ensure_system_prepends_octopus_persona_when_absent():
+def test_ensure_system_prepends_jellyfish_persona_when_absent():
     msgs = [{"role": "user", "content": "selam"}, {"role": "assistant", "content": "Ben Octópus."}]
     out = ensure_system(msgs)
     assert out[0]["role"] == "system"
-    assert out[0]["content"] == OCTOPUS_SYSTEM_PROMPT
+    assert out[0]["content"] == LEGACY_SYSTEM_PROMPT
 
 
 def test_ensure_system_keeps_existing_source_system_message():
@@ -68,16 +68,16 @@ def test_ensure_system_keeps_existing_source_system_message():
     assert out[0]["content"] == "kaynak talimati"  # ustune yazma
 
 
-def test_apply_octopus_system_replaces_source_system_with_persona():
-    # Fenrir gibi kendi (Ingilizce/jenerik) system'i olan kaynak -> Octopus persona kazanir
+def test_apply_jellyfish_system_replaces_source_system_with_persona():
+    # Fenrir gibi kendi (Ingilizce/jenerik) system'i olan kaynak -> Jellyfish persona kazanir
     msgs = [
         {"role": "system", "content": "You are an advanced cybersecurity AI."},
         {"role": "user", "content": "Log4Shell?"},
         {"role": "assistant", "content": "CVE-2021-44228 bir RCE zafiyetidir, uzun cevap."},
     ]
-    out = apply_octopus_system(msgs)
+    out = apply_jellyfish_system(msgs)
     assert out[0]["role"] == "system"
-    assert out[0]["content"] == OCTOPUS_SYSTEM_PROMPT       # kaynak system'i atildi
+    assert out[0]["content"] == LEGACY_SYSTEM_PROMPT       # kaynak system'i atildi
     assert [m["role"] for m in out[1:]] == ["user", "assistant"]
     assert all("advanced cybersecurity AI" not in m["content"] for m in out)
 

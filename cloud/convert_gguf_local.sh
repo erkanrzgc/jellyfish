@@ -1,16 +1,16 @@
 #!/bin/bash
-# Octopus v0.7 GGUF — YEREL build-free yol (WSL Ubuntu, py3.12 CPU). pod_gguf_v7.sh'in
+# Jellyfish v0.7 GGUF — YEREL build-free yol (WSL Ubuntu, py3.12 CPU). pod_gguf_v7.sh'in
 # RunPod'suz muadili: GPU gereksiz (merge device_map=cpu), llama.cpp DERLENMEZ.
 # Saf-Python: merge + convert_hf_to_gguf -> f16 GGUF. Niceleme (Q4_K_M) Windows'ta
 # 'ollama create -q q4_K_M' ile yapilir (cmake/build-essential gerekmez).
 # Cikti: models/jellyfish-v7-f16.gguf + models/jellyfish-v7-tokenizer/ (backend template icin).
 set -eo pipefail
-WORK="$HOME/octopus-gguf"
+WORK="$HOME/jellyfish-gguf"
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"
-ADP_SRC="/mnt/c/Users/erkanrzgc/Desktop/Octopus/checkpoints_sft/jellyfish-gemma-v7-adapter"
+ADP_SRC="/mnt/c/Users/erkanrzgc/Desktop/Jellyfish/checkpoints_sft/jellyfish-gemma-v7-adapter"
 ADP="$WORK/v7-adapter"
-MERGED="$WORK/octopus-v7-merged"
-OUTDIR="/mnt/c/Users/erkanrzgc/Desktop/Octopus/models"
+MERGED="$WORK/jellyfish-v7-merged"
+OUTDIR="/mnt/c/Users/erkanrzgc/Desktop/Jellyfish/models"
 VENV="$WORK/venv"
 mkdir -p "$WORK" "$OUTDIR/jellyfish-v7-tokenizer"
 
@@ -60,4 +60,4 @@ echo "===== [4/4] f16'yi Windows models/'a kopyala + merged sil ====="
 rm -rf "$MERGED"
 cp "$WORK/jellyfish-v7-f16.gguf" "$OUTDIR/jellyfish-v7-f16.gguf"
 ls -la "$OUTDIR"
-echo "F16_DONE — sonraki (Windows): ollama create octopus-v7 -q q4_K_M -f models/Modelfile.f16"
+echo "F16_DONE — sonraki (Windows): ollama create jellyfish-v7 -q q4_K_M -f models/Modelfile.f16"

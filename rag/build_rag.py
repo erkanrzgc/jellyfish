@@ -1,10 +1,10 @@
-"""Octopus RAG — Turkce bilgi tabani (MITRE/CVE/OWASP...) -> Chroma vektor DB.
+"""Jellyfish RAG — Turkce bilgi tabani (MITRE/CVE/OWASP...) -> Chroma vektor DB.
 
 Amac: modelin ezberden UYDURMASINI kesmek. rag/knowledge/*.md (Turkce, dogru ID'ler)
 parcalanir -> embedding -> Chroma. Sorguda ilgili parcalar getirilip cevaba baglam olur.
 cyberm4fia 06_build_rag.py deseninden uyarlandi (self-contained; cyberm4fia config'e bagli degil).
 
-ONEMLI: embedding icin torch gerekir -> Octopus .venv (3.14) DEGIL, cyberm4fia .venv (3.12) ile kosulur:
+ONEMLI: embedding icin torch gerekir -> Jellyfish .venv (3.14) DEGIL, cyberm4fia .venv (3.12) ile kosulur:
     CY=C:/Users/erkanrzgc/Desktop/cyberm4fiaModel/.venv/Scripts/python.exe
     "$CY" -m pip install chromadb sentence-transformers   # bir kez
     "$CY" rag/build_rag.py --build
@@ -16,10 +16,10 @@ import argparse
 import sys
 from pathlib import Path
 
-ROOT = Path(__file__).resolve().parent.parent          # .../Octopus
+ROOT = Path(__file__).resolve().parent.parent          # .../Jellyfish
 KNOWLEDGE_DIR = ROOT / "rag" / "knowledge"
 CHROMA_DIR = ROOT / "rag" / "chroma"
-COLLECTION = "octopus_kb"
+COLLECTION = "jellyfish_kb"
 EMBED_MODEL = "sentence-transformers/all-MiniLM-L6-v2"  # hafif, hizli, coklu-dil makul
 
 

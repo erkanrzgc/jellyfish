@@ -2,7 +2,7 @@
 
 **Tarih:** 2026-07-11
 **Durum:** Onaylandı (kullanıcı), plan aşamasına hazır
-**Bağlam:** [[octopus-dataset-expansion]] büyük-hamle B dalgası. B1 (asistan araçları + fail-closed
+**Bağlam:** [[jellyfish-dataset-expansion]] büyük-hamle B dalgası. B1 (asistan araçları + fail-closed
 güvenlik) bitti+merge. Bu spec **B2 = bu araçları modele öğreten SFT verisi**. Tek büyük retrain'e gider.
 
 ---
@@ -27,12 +27,12 @@ B2 örnekleri anlamayı zorlar.
 ## 2. Bağlam kararı
 
 **Siber/sysadmin ağırlıklı** (kullanıcı onayı). Asistan araçları pentest/sunucu iş akışında geçer;
-saf-dev örnekler yalnızca denge için azınlıkta. Octópus kimliğiyle tutarlı.
+saf-dev örnekler yalnızca denge için azınlıkta. Jellyfish kimliğiyle tutarlı.
 
 ## 3. Kapsam-dışı (YAGNI)
 
 - Deep-research döngüsü (ara→oku→sentezle→tekrar) = **B3**, ayrı.
-- Harness Claude-Code-tarzı gösterim = **B4**, ayrı ([[octopus-harness-tool-display]]).
+- Harness Claude-Code-tarzı gösterim = **B4**, ayrı ([[jellyfish-harness-tool-display]]).
 - Gerçek Docker/WSL sandbox veya canlı web_search backend = B1'de default mock; B2 sadece VERİ.
 - Loss-masking / signal-balance = ayrı eğitim-config işi (retrain öncesi pilot).
 
@@ -73,7 +73,7 @@ Kullanıcı ister → model doğru arac blogu → kısa çıktı → kısa doğr
 - **Tek anormal satır:** uzun log/çıktı içinden (auditd/ss/grep çıktısı) tek kritik satırı seçme.
 - **Negatif/boş:** tool çıktısı boş/başarısız → model "bulunamadı/erişilemedi" der, HAYAL KURMAZ.
 - **CVE okuma:** web_fetch/web_search gerçekçi CVE metni (siberadar/watchstack tarzı) → model
-  etkilenen sürümü + POC/exploit varlığını doğru çıkarır. Bkz. [[octopus-cve-sources]].
+  etkilenen sürümü + POC/exploit varlığını doğru çıkarır. Bkz. [[jellyfish-cve-sources]].
 - **Çok-kaynak sentez:** 2 web_search sonucu → tek tutarlı Türkçe cevap.
 
 **C. Zincir (çok-adımlı) — ELLE (~35):**

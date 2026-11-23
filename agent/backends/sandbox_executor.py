@@ -46,9 +46,9 @@ _HARDENING: tuple[str, ...] = (
 def _wrap(komut: str) -> str:
     """Komutu alt-kabukta sarmala + çıktıyı (stdout+stderr) konteyner içinde kırp.
     Alt-kabuk `( ... )` metakarakterlere `{ ...; }`'den toleranslı (';;' hatası yok)."""
-    return (f'octopus_output="${{TMPDIR:-/work}}/.octopus-output"; '
-            f'( {komut} ) > "$octopus_output" 2>&1; octopus_status=$?; '
-            f'head -c {_MAX_OUTPUT} "$octopus_output"; exit "$octopus_status"')
+    return (f'jellyfish_output="${{TMPDIR:-/work}}/.jellyfish-output"; '
+            f'( {komut} ) > "$jellyfish_output" 2>&1; jellyfish_status=$?; '
+            f'head -c {_MAX_OUTPUT} "$jellyfish_output"; exit "$jellyfish_status"')
 
 
 def build_argv(komut: str, image: str = _DEFAULT_IMAGE,
@@ -82,7 +82,7 @@ class DockerSandboxExecutor:
         if not dec.allowed:
             return f"HATA: {dec.reason}"
         komut = str(params["komut"])
-        name = f"octopus-sbx-{uuid.uuid4().hex[:12]}"
+        name = f"jellyfish-sbx-{uuid.uuid4().hex[:12]}"
         argv = build_argv(komut, self.image, self.docker_prefix, name)
         try:
             proc = self.runner(argv, capture_output=True, text=True, timeout=self.timeout)

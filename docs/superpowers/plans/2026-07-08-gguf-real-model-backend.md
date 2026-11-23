@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Connect the real Octópus v0.7 model to the agent harness as an Ollama-backed `GgufModel` so the fine-tuned model — not a mock — drives the tool loop.
+**Goal:** Connect the real Jellyfish v0.7 model to the agent harness as an Ollama-backed `GgufModel` so the fine-tuned model — not a mock — drives the tool loop.
 
 **Architecture:** Two decoupled parts. Part B (the runtime backend + CLI flag + tests) is written first, TDD, with Ollama mocked — zero spend, no pod dependency. Part A (a RunPod conversion script the user runs) comes last. The backend reproduces the exact training prompt via the saved tokenizer's `apply_chat_template` and calls Ollama in raw mode over stdlib `urllib`.
 
@@ -10,13 +10,13 @@
 
 ## Global Constraints
 
-- File paths are plain ASCII `octopus`; the brand `ó` appears only in speech/docs, never in paths. (CLAUDE.md)
-- The inference prompt must be training-identical: single leading `<bos>`, `OCTOPUS_SYSTEM_PROMPT` injected as the system message, `add_generation_prompt=True`, stop on `<end_of_turn>`. (spec §Prompt fidelity)
+- File paths are plain ASCII `jellyfish`; the brand `ó` appears only in speech/docs, never in paths. (CLAUDE.md)
+- The inference prompt must be training-identical: single leading `<bos>`, `LEGACY_SYSTEM_PROMPT` injected as the system message, `add_generation_prompt=True`, stop on `<end_of_turn>`. (spec §Prompt fidelity)
 - The backend never raises out of `__call__` — every error path returns a string the loop appends and continues. (spec §Error handling)
 - Tests must pass without Ollama and without the pod outputs (HTTP + tokenizer mocked). (spec §Test strategy)
 - No new runtime dependency: use stdlib `urllib.request`. Lazy-import `transformers` only inside the `--gguf` render path. (spec §Component contract)
 - Python: PEP 8, type hints on signatures. Turkish code comments (mirrors the rest of `agent/`). (repo convention)
-- `OCTOPUS_SYSTEM_PROMPT` has a single source: `data/sft/persona.py` — import it, never copy the text. (persona.py DRY note)
+- `LEGACY_SYSTEM_PROMPT` has a single source: `data/sft/persona.py` — import it, never copy the text. (persona.py DRY note)
 
 ---
 
@@ -74,7 +74,7 @@ Expected: FAIL with `ModuleNotFoundError: No module named 'agent.backends.gguf_m
 
 ```python
 # agent/backends/gguf_model.py
-"""GgufModel: gercek Octópus v0.7'yi Ollama uzerinden harness'e baglar (mock yerine).
+"""GgufModel: gercek Jellyfish v0.7'yi Ollama uzerinden harness'e baglar (mock yerine).
 
 Prompt EGITIMLE BIREBIR: kaydedilmis tokenizer'in kendi chat template'i (system rolu +
 enable_thinking'i destekler) uygulanir, bastaki cift <bos> siyrilir (ADR 0003 tuzagi),
@@ -122,8 +122,8 @@ git commit -m "feat(agent): GgufModel prompt rendering (training-identical apply
 - Test: `tests/agent/test_gguf_model.py` (append)
 
 **Interfaces:**
-- Consumes: `render_prompt`, `load_tokenizer` (Task 1); `render_for_model` (`agent/toolcall.py`); `ensure_system` (`data/sft/normalize.py`); `OCTOPUS_SYSTEM_PROMPT` (`data/sft/persona.py`); `Message` (`agent/messages.py`).
-- Produces: `GgufModel(model="octopus-v7", host="http://localhost:11434", tokenizer_dir="models/octopus-v7-tokenizer", renderer=None, ...)` with `__call__(messages: list[Message]) -> str` — Task 3's `run_gguf_demo` passes it to `run_tool_loop`. `renderer: Callable[[list[dict]], str] | None` lets tests inject a prompt builder and skip transformers.
+- Consumes: `render_prompt`, `load_tokenizer` (Task 1); `render_for_model` (`agent/toolcall.py`); `ensure_system` (`data/sft/normalize.py`); `LEGACY_SYSTEM_PROMPT` (`data/sft/persona.py`); `Message` (`agent/messages.py`).
+- Produces: `GgufModel(model="jellyfish-v7", host="http://localhost:11434", tokenizer_dir="models/jellyfish-v7-tokenizer", renderer=None, ...)` with `__call__(messages: list[Message]) -> str` — Task 3's `run_gguf_demo` passes it to `run_tool_loop`. `renderer: Callable[[list[dict]], str] | None` lets tests inject a prompt builder and skip transformers.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -227,7 +227,7 @@ from dataclasses import dataclass, field
 from agent.messages import Message
 from agent.toolcall import render_for_model
 from data.sft.normalize import ensure_system
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
 _EOT = "<end_of_turn>"
 ```
@@ -238,10 +238,10 @@ Append the dataclass at the end of the file:
 @dataclass
 class GgufModel:
     """Ollama uzerinden gercek v0.7. __call__ mock ScriptedModel ile ayni arayuz."""
-    model: str = "octopus-v7"
+    model: str = "jellyfish-v7"
     host: str = "http://localhost:11434"
-    tokenizer_dir: str = "models/octopus-v7-tokenizer"
-    system_prompt: str = OCTOPUS_SYSTEM_PROMPT
+    tokenizer_dir: str = "models/jellyfish-v7-tokenizer"
+    system_prompt: str = LEGACY_SYSTEM_PROMPT
     temperature: float = 0.6
     top_p: float = 0.95
     top_k: int = 20
@@ -316,7 +316,7 @@ git commit -m "feat(agent): GgufModel Ollama raw backend (__call__ + error paths
 
 **Interfaces:**
 - Consumes: `GgufModel` (Task 2); existing `ToolRegistry`, `LabPolicy`, `AuditLog`, `MockExecutor`, `run_tool_loop`, `Message`.
-- Produces: `run_gguf_demo(scope: list[str] | None = None, model: str = "octopus-v7") -> str`; `main()` routes `--gguf` to it.
+- Produces: `run_gguf_demo(scope: list[str] | None = None, model: str = "jellyfish-v7") -> str`; `main()` routes `--gguf` to it.
 
 - [ ] **Step 1: Write the failing test**
 
@@ -330,7 +330,7 @@ import agent.cli as cli
 def test_main_routes_gguf(monkeypatch, capsys):
     called: dict = {}
 
-    def _fake(scope, model="octopus-v7"):
+    def _fake(scope, model="jellyfish-v7"):
         called["args"] = (scope, model)
         return "GGUF_DEMO_OUT"
 
@@ -339,7 +339,7 @@ def test_main_routes_gguf(monkeypatch, capsys):
     cli.main()
     out = capsys.readouterr().out
     assert "GGUF_DEMO_OUT" in out
-    assert called["args"][1] == "octopus-v7"
+    assert called["args"][1] == "jellyfish-v7"
 ```
 
 - [ ] **Step 2: Run test to verify it fails**
@@ -352,7 +352,7 @@ Expected: FAIL with `AttributeError: <module 'agent.cli'> has no attribute 'run_
 Add `run_gguf_demo` after `run_docker_demo` in `agent/cli.py`:
 
 ```python
-def run_gguf_demo(scope: list[str] | None = None, model: str = "octopus-v7") -> str:
+def run_gguf_demo(scope: list[str] | None = None, model: str = "jellyfish-v7") -> str:
     """GERCEK BEYIN: GgufModel (Ollama'da v0.7) dongüyü sürer, MockExecutor eller.
     Ollama yoksa GgufModel net HATA stringi döner -> döngü çökmez, onu nihai cevap alir."""
     from agent.backends.gguf_model import GgufModel
@@ -372,16 +372,16 @@ In `main()`, add the args (next to `--real`/`--docker`):
 
 ```python
     ap.add_argument("--gguf", action="store_true", help="GgufModel: Ollama'da gercek v0.7")
-    ap.add_argument("--model", default=None, help="Ollama model adi (varsayilan octopus-v7)")
+    ap.add_argument("--model", default=None, help="Ollama model adi (varsayilan jellyfish-v7)")
 ```
 
 And route it **first** in the dispatch chain:
 
 ```python
     if args.gguf:
-        print(run_gguf_demo(args.scope, args.model or "octopus-v7"))
+        print(run_gguf_demo(args.scope, args.model or "jellyfish-v7"))
     elif args.docker:
-        print(run_docker_demo(args.target or "octopus-target", args.scope, port=args.port or 80))
+        print(run_docker_demo(args.target or "jellyfish-target", args.scope, port=args.port or 80))
     elif args.real:
         print(run_real_demo(args.target or "127.0.0.1", args.scope, port=args.port or 8000))
     else:
@@ -411,23 +411,23 @@ git commit -m "feat(agent): cli --gguf flag routes real GgufModel through the lo
 - Modify: `.gitignore` (ignore the big GGUF + tokenizer dir, keep Modelfile/README tracked)
 
 **Interfaces:**
-- Consumes: nothing in-repo (runs on the pod). Produces two artifacts the user downloads to `models/`: `octopus-v7-Q4_K_M.gguf` and `octopus-v7-tokenizer/`. `GgufModel` defaults (`model="octopus-v7"`, `tokenizer_dir="models/octopus-v7-tokenizer"`) match this.
+- Consumes: nothing in-repo (runs on the pod). Produces two artifacts the user downloads to `models/`: `jellyfish-v7-Q4_K_M.gguf` and `jellyfish-v7-tokenizer/`. `GgufModel` defaults (`model="jellyfish-v7"`, `tokenizer_dir="models/jellyfish-v7-tokenizer"`) match this.
 
 - [ ] **Step 1: Write the conversion script**
 
 ```bash
 # cloud/pod_gguf_v7.sh
 #!/bin/bash
-# Octopus v0.7 GGUF — v6 tarifinin (pod_gguf_clean.sh) v7 uyarlamasi.
+# Jellyfish v0.7 GGUF — v6 tarifinin (pod_gguf_clean.sh) v7 uyarlamasi.
 # KOK SEBEP (onceki basarisizlik): llama.cpp requirements.txt transformers/torch'u degistirip
 # peft merge'i kiriyor. COZUM: ONCE merge (pinli env), SONRA llama.cpp deps. Sira kritik.
 # Onkosul: /workspace/v7-adapter (LoRA adapter) pod'da hazir olmali (scp/hf ile gonder).
-# YENI (v6'dan farki): merge tokenizer'i ayri /workspace/octopus-v7-tokenizer dizinine de kaydeder
+# YENI (v6'dan farki): merge tokenizer'i ayri /workspace/jellyfish-v7-tokenizer dizinine de kaydeder
 # (yerel backend apply_chat_template icin lazim; yerel adapter dizininde tokenizer.model YOK).
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v7-adapter"
-MERGED="/workspace/octopus-v7-merged"; OUT="/workspace/octopus-v7-gguf"
-TOKOUT="/workspace/octopus-v7-tokenizer"; mkdir -p "$OUT" "$TOKOUT"
+MERGED="/workspace/jellyfish-v7-merged"; OUT="/workspace/jellyfish-v7-gguf"
+TOKOUT="/workspace/jellyfish-v7-tokenizer"; mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/5] Merge env (pinli) + MERGE (llama.cpp deps'ten ONCE!) ====="
 pip install -q "transformers==4.49.0" "peft==0.14.0" "accelerate==1.4.0" "torch==2.4.1" 2>&1 | tail -1
@@ -462,14 +462,14 @@ cmake -B build -DGGML_CUDA=OFF -DLLAMA_CURL=OFF 2>&1 | tail -1
 cmake --build build --config Release -j --target llama-quantize 2>&1 | tail -2
 
 echo "===== [4/5] HF -> GGUF f16 ====="
-python convert_hf_to_gguf.py "$MERGED" --outfile "$OUT/octopus-v7-f16.gguf" --outtype f16
+python convert_hf_to_gguf.py "$MERGED" --outfile "$OUT/jellyfish-v7-f16.gguf" --outtype f16
 
 echo "===== [5/5] Quantize -> Q4_K_M ====="
-[ -f "$OUT/octopus-v7-f16.gguf" ] && rm -rf "$MERGED" ~/.cache/huggingface/hub/models--ytu-ce-cosmos*
-./build/bin/llama-quantize "$OUT/octopus-v7-f16.gguf" "$OUT/octopus-v7-Q4_K_M.gguf" Q4_K_M
-rm -f "$OUT/octopus-v7-f16.gguf"
-ls -la "$OUT" "$TOKOUT"; sha256sum "$OUT/octopus-v7-Q4_K_M.gguf"
-echo "GGUF_DONE — indir: $OUT/octopus-v7-Q4_K_M.gguf + $TOKOUT/  -> yerelde models/"
+[ -f "$OUT/jellyfish-v7-f16.gguf" ] && rm -rf "$MERGED" ~/.cache/huggingface/hub/models--ytu-ce-cosmos*
+./build/bin/llama-quantize "$OUT/jellyfish-v7-f16.gguf" "$OUT/jellyfish-v7-Q4_K_M.gguf" Q4_K_M
+rm -f "$OUT/jellyfish-v7-f16.gguf"
+ls -la "$OUT" "$TOKOUT"; sha256sum "$OUT/jellyfish-v7-Q4_K_M.gguf"
+echo "GGUF_DONE — indir: $OUT/jellyfish-v7-Q4_K_M.gguf + $TOKOUT/  -> yerelde models/"
 ```
 
 - [ ] **Step 2: Syntax-check the script (we cannot run it — no pod/base model)**
@@ -482,12 +482,12 @@ Expected: no output, exit 0 (valid bash syntax).
 ```dockerfile
 # models/Modelfile
 # Backend prompt'u RAW modda kendisi uygular (template/system BURADA YOK) -> yalniz import + emniyet stop.
-FROM ./octopus-v7-Q4_K_M.gguf
+FROM ./jellyfish-v7-Q4_K_M.gguf
 PARAMETER stop "<end_of_turn>"
 ```
 
 ```markdown
-# models/ — local Octópus v0.7 GGUF (git-ignored artifacts)
+# models/ — local Jellyfish v0.7 GGUF (git-ignored artifacts)
 
 The Q4 GGUF and the tokenizer dir are produced by `cloud/pod_gguf_v7.sh` on RunPod and are **not**
 committed (too large). Only `Modelfile` and this README are tracked.
@@ -495,12 +495,12 @@ committed (too large). Only `Modelfile` and this README are tracked.
 ## One-off local setup (after downloading the pod outputs into this folder)
 
     models/
-      octopus-v7-Q4_K_M.gguf      # ~5.5 GB, from the pod
-      octopus-v7-tokenizer/       # tokenizer_config.json + tokenizer.model + special_tokens_map.json
+      jellyfish-v7-Q4_K_M.gguf      # ~5.5 GB, from the pod
+      jellyfish-v7-tokenizer/       # tokenizer_config.json + tokenizer.model + special_tokens_map.json
       Modelfile                   # tracked
 
-    ollama create octopus-v7 -f models/Modelfile
-    python -m agent.cli --gguf     # real Octópus drives the loop (mock nmap hands)
+    ollama create jellyfish-v7 -f models/Modelfile
+    python -m agent.cli --gguf     # real Jellyfish drives the loop (mock nmap hands)
 
 The backend applies the training chat template itself and calls Ollama in raw mode, so the Modelfile
 carries no TEMPLATE/SYSTEM directive.
@@ -513,13 +513,13 @@ Add to `.gitignore`:
 ```gitignore
 # Local GGUF model artifacts (produced on the pod, downloaded locally)
 models/*.gguf
-models/octopus-v7-tokenizer/
+models/jellyfish-v7-tokenizer/
 ```
 
 Then verify only the intended files are staged:
 
 Run: `git add -A && git status --short`
-Expected: shows `cloud/pod_gguf_v7.sh`, `models/Modelfile`, `models/README.md`, `.gitignore` — and **no** `.gguf` or `octopus-v7-tokenizer/`.
+Expected: shows `cloud/pod_gguf_v7.sh`, `models/Modelfile`, `models/README.md`, `.gitignore` — and **no** `.gguf` or `jellyfish-v7-tokenizer/`.
 
 - [ ] **Step 5: Commit**
 

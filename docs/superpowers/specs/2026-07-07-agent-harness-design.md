@@ -1,4 +1,4 @@
-# Octópus Agent Harness — Design (Spec)
+# Jellyfish Agent Harness — Design (Spec)
 
 - **Date:** 2026-07-07
 - **Status:** Approved (the user approved it section by section during brainstorming)
@@ -8,7 +8,7 @@
 
 ## Context
 
-Octópus v0.7 (Turkish-Gemma-9b bf16 LoRA) has learned tool use over a 117-tool catalog. The model produces a
+Jellyfish v0.7 (Turkish-Gemma-9b bf16 LoRA) has learned tool use over a 117-tool catalog. The model produces a
 tool call **as text**, in this format:
 
 ```arac
@@ -16,7 +16,7 @@ tool call **as text**, in this format:
 ```
 
 But the repo has NO runtime that parses this block and **actually runs it**. This spec defines that runtime.
-Reference (port/adaptation, not a copy): `Desktop\agentic-model\src\octopus\agent` (Hermes tool-loop pattern,
+Reference (port/adaptation, not a copy): `Desktop\agentic-model\src\jellyfish\agent` (Hermes tool-loop pattern,
 `ToolRegistry`, `LabPolicy`, `AuditLog`).
 
 ## Scope (two phases, incremental)
@@ -104,4 +104,4 @@ USER "scan 10.10.10.5" → generate() → ASSISTANT (reasoning + ```arac nmap```
 ## Related
 
 - `data/sft/tools/build_tools.py` (MASTER_TOOLS = the canonical 117 list) · `data/sft/normalize.py` (flatten reuse)
-- `docs/v0.7-tools-catalog.md` · `Desktop\agentic-model\src\octopus\agent\*` (reference pattern)
+- `docs/v0.7-tools-catalog.md` · `Desktop\agentic-model\src\jellyfish\agent\*` (reference pattern)

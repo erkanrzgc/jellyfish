@@ -14,7 +14,7 @@ from dataclasses import dataclass, field
 from agent.catalog import get_spec, positional_args, target_value
 
 _DEFAULT_TIMEOUT = 180
-_DEFAULT_NETWORK = "octopus-lab"
+_DEFAULT_NETWORK = "jellyfish-lab"
 
 # Arac -> docker imaji (entrypoint = arac). Genisletilir; haritada olmayan icin
 # ileride tek kali-tools imaji (kali-linux-default) fallback'i eklenecek.

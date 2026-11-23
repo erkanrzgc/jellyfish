@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""FineWeb-2 Türkçe'yi streaming çek → temizle → octopus-tr ile tokenize → uint16 shard'lar.
+"""FineWeb-2 Türkçe'yi streaming çek → temizle → jellyfish-tr ile tokenize → uint16 shard'lar.
 
 Ölçek pipeline'ı: `clean.py` + `tokenize_corpus.py`'nin bellek-içi sürümünün yerine geçer.
 Tüm korpusu RAM'e/diske yığmadan akıtır; token tamponu `--shard-tokens`'a ulaşınca

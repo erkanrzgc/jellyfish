@@ -1,4 +1,4 @@
-"""GgufModel: gercek Octópus'u Ollama uzerinden harness'e baglar (mock yerine).
+"""GgufModel: gercek Jellyfish'u Ollama uzerinden harness'e baglar (mock yerine).
 
 Prompt EGITIMLE BIREBIR: kaydedilmis tokenizer'in kendi chat template'i (system rolu +
 enable_thinking'i destekler) uygulanir, bastaki cift <bos> siyrilir (ADR 0003 tuzagi),
@@ -17,7 +17,7 @@ from agent.messages import Message
 from agent.config import DEFAULT_MODELFILE, DEFAULT_TOKENIZER_DIR, LEGACY_MODEL as DEFAULT_MODEL
 from agent.toolcall import render_for_model
 from data.sft.normalize import ensure_system
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 _EOT = "<end_of_turn>"
 
@@ -63,7 +63,7 @@ class GgufModel:
     model: str = DEFAULT_MODEL
     host: str = "http://localhost:11434"
     tokenizer_dir: str = DEFAULT_TOKENIZER_DIR
-    system_prompt: str = OCTOPUS_TOOL_SYSTEM_PROMPT  # araç-farkında: model ```arac``` bloğu basar
+    system_prompt: str = LEGACY_TOOL_SYSTEM_PROMPT  # araç-farkında: model ```arac``` bloğu basar
     temperature: float = 0.6
     top_p: float = 0.95
     top_k: int = 20

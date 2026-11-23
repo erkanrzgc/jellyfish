@@ -13,7 +13,7 @@
 
 </div>
 
-Jellyfish (formerly Octópus) pairs a local language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
+Jellyfish (formerly Jellyfish) pairs a local language model with an inspectable agent runtime for cybersecurity and Linux/server tasks. The model produces structured tool calls; the runtime parses them, checks policy, executes allowed calls, and returns results to the model.
 
 The product and training examples prioritize Turkish. Repository documentation is in English. This is a research prototype for authorized testing, labs, and defensive work.
 
@@ -36,7 +36,7 @@ uv run python -m agent.chat --ask "Kimsin sen?"
 uv run python -m agent.cli --gguf
 ```
 
-The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `octopus-v10` before the rename (same weights); the `octopus-lab` Docker network keeps its original name.
+The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `jellyfish-v10` before the rename (same weights); the `jellyfish-lab` Docker network keeps its original name.
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 
@@ -86,7 +86,7 @@ uv run python -m agent.cli --gguf
 This runs the real model with **mock security-tool output**. It does not scan a network. To choose another compatible model/template pair (already imported into Ollama; see [models/README.md](models/README.md)):
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
+uv run python -m agent.cli --gguf --model jellyfish-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 The normal CLI is a single lab-scan demo, not a general chat interface. `--target` selects the demo target and `--scope` supplies the allowlist. Real execution uses `--real` or `--docker`; follow the demo guide before selecting those modes.

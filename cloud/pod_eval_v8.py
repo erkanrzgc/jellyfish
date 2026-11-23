@@ -12,7 +12,7 @@ from peft import PeftModel
 from data.sft.normalize import flatten_tool_messages
 
 BASE = "ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"
-ADP = "erkanrzgcc/octopus-gemma-v0.8"
+ADP = "erkanrzgcc/jellyfish-gemma-v0.8"
 TEST = "/workspace/data/sft/test.jsonl"
 
 print("[*] base+adapter yukleniyor (bf16, cuda)...")
@@ -59,7 +59,7 @@ with model.disable_adapter():
 print(f"    base ppl = {ppl_base:.3f}")
 
 # --- brittleness: base vs v8 kanonik girdilerde ---
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 CANON = [
     "10.10.10.5 yetkili hedefimi tara.",
     "Yetkili testte SMB uzerinden enum yap, hedef 10.10.20.10.",
@@ -74,7 +74,7 @@ CANON = [
 
 @torch.no_grad()
 def gen(prompt, use_adapter):
-    msgs = [{"role": "system", "content": OCTOPUS_SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
+    msgs = [{"role": "system", "content": LEGACY_SYSTEM_PROMPT}, {"role": "user", "content": prompt}]
     enc = tok.apply_chat_template(msgs, tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors="pt").to(model.device)
     eos = [tok.eos_token_id]
     eot = tok.convert_tokens_to_ids("<end_of_turn>")

@@ -1,4 +1,4 @@
-"""Octopus v0.7 tool-use SFT — birlestir + dogrula + kapsama raporu (uretim pipeline).
+"""Jellyfish v0.7 tool-use SFT — birlestir + dogrula + kapsama raporu (uretim pipeline).
 
 Ne yapar:
   1. data/sft/tools/*.jsonl (bu script + cikti haric) tum el-uretimi ornekleri toplar.

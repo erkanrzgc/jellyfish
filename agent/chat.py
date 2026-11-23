@@ -15,7 +15,7 @@ from agent.messages import Message
 from agent.policy import LabPolicy
 from agent.registry import ToolRegistry
 from agent.toolcall import strip_dusunce
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT, OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT, LEGACY_TOOL_SYSTEM_PROMPT
 
 
 _ADVISORY_RULE = (
@@ -23,8 +23,8 @@ _ADVISORY_RULE = (
     "analizini yap. Hicbir aracin calistigini iddia etme. Gozlenen bulguyu, hipotezi ve "
     "onerilen sonraki kontrolu ayir. Kanit yoksa belirsizligi belirt."
 )
-ADVISORY_PROMPT = OCTOPUS_SYSTEM_PROMPT + _ADVISORY_RULE
-ASSIST_PROMPT = OCTOPUS_TOOL_SYSTEM_PROMPT.replace(
+ADVISORY_PROMPT = LEGACY_SYSTEM_PROMPT + _ADVISORY_RULE
+ASSIST_PROMPT = LEGACY_TOOL_SYSTEM_PROMPT.replace(
     "Araçları doğrudan çalıştırırsın;", "Arac cagrilari yalniz oneridir; gercek islemler kullanici onayi bekler;"
 ) + "\nGozlenen bulgu, hipotez ve onerilen sonraki kontrolu ayir. Reddedilen/hata veren islemi tamamlandi sayma."
 
@@ -97,7 +97,7 @@ def save_session(path: Path, profile: str, messages: list[Message]) -> None:
     payload = {"schema_version": 1, "profile": profile,
                "messages": [m.to_dict() for m in messages]}
     with tempfile.NamedTemporaryFile("w", encoding="utf-8", dir=path.parent,
-                                     prefix=".octopus-session-", suffix=".tmp", delete=False) as handle:
+                                     prefix=".jellyfish-session-", suffix=".tmp", delete=False) as handle:
         json.dump(payload, handle, ensure_ascii=False, indent=2)
         temporary = Path(handle.name)
     try:

@@ -1,6 +1,6 @@
-"""Octopus SFT veri hazirlayici — kaynaklari 'messages' JSONL'e cevirir.
+"""Jellyfish SFT veri hazirlayici — kaynaklari 'messages' JSONL'e cevirir.
 
-HF + yerel kaynaklari okur, normalize eder (data/sft/normalize.py), Octopus
+HF + yerel kaynaklari okur, normalize eder (data/sft/normalize.py), Jellyfish
 persona/guardrail'ini system olarak koyar (kaynagin system'ini atar), dedup +
 kalite filtresi uygular, train/val/test boler, `data/sft/` altina yazar + manifest.
 
@@ -22,10 +22,10 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 
-from data.sft.normalize import apply_octopus_system, ensure_system, fingerprint, is_valid, to_messages
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.normalize import apply_jellyfish_system, ensure_system, fingerprint, is_valid, to_messages
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
-ROOT = Path(__file__).resolve().parent.parent.parent  # .../Octopus
+ROOT = Path(__file__).resolve().parent.parent.parent  # .../Jellyfish
 OUT_DIR = ROOT / "data" / "sft"
 SEED = 3407
 VAL_RATIO = 0.02
@@ -44,18 +44,18 @@ SOURCES: dict[str, dict] = {
         "field_map": {"user": "Input", "assistant": "Output"}, "max_rows": 10000,
     },
     "seed_tr": {
-        "kind": "local", "path": "data/sft/seed_tr", "license": "octopus-authored",
+        "kind": "local", "path": "data/sft/seed_tr", "license": "jellyfish-authored",
         "lang": "tr", "max_rows": 0,
     },
     "distill": {  # v0.5+v0.7: teacher-uretimi CESITLI Turkce cyber. distilled/ altindaki TUM
         # *.jsonl'i glob'lar -> jellyfish_distill_tr.jsonl (918) + jellyfish_distill_v07.jsonl (111) otomatik dahil.
-        "kind": "local", "path": "data/sft/distilled", "license": "distilled+octopus-authored",
+        "kind": "local", "path": "data/sft/distilled", "license": "distilled+jellyfish-authored",
         "lang": "tr", "max_rows": 0,
     },
     "tools": {  # v0.7: agentic tool-use (```arac``` blok formatiyla arac cagirma). keep_system=True:
-        # her ornegin ozel system'i (arac spec) KORUNUR (apply_octopus_system ile EZILMEZ).
+        # her ornegin ozel system'i (arac spec) KORUNUR (apply_jellyfish_system ile EZILMEZ).
         # tools_dist/ = build_tools.py'nin birlesik ciktisi (per-domain dosyalarla cift-sayim olmaz).
-        "kind": "local", "path": "data/sft/tools_dist", "license": "octopus-authored",
+        "kind": "local", "path": "data/sft/tools_dist", "license": "jellyfish-authored",
         "lang": "tr", "max_rows": 0, "keep_system": True,
     },
     "tr_native": {  # v0.6: NATIVE Turkce instruction (makine-cevirisi DEGIL) — akicilik/edebi Turkce
@@ -66,7 +66,7 @@ SOURCES: dict[str, dict] = {
     # "phishsoc": {"kind":"hf","hf_id":"ErenAta00/turkish-phishsoc-50k", ...}
 }
 DEFAULT_SOURCES = ["fenrir", "instructurca", "seed_tr"]
-# Elle-yazilmis, yuksek-degerli AMA az sayida Octopus kaynaklari: buyuk karisimda iğne
+# Elle-yazilmis, yuksek-degerli AMA az sayida Jellyfish kaynaklari: buyuk karisimda iğne
 # kalmasin diye train'de upsample edilir (--seed-repeat). tool-use + persona/sunucu seed'i.
 UPSAMPLE_SOURCES = {"seed_tr", "tools"}
 
@@ -122,7 +122,7 @@ def load_rows(name: str, cli_limit: int, stream: bool):
 def build(names: list[str], cli_limit: int, stream: bool, out_dir: Path, seed_repeat: int = 1) -> None:
     seen: set[str] = set()
     out: list[dict] = []
-    upsample_examples: list[dict] = []   # UPSAMPLING icin: az-sayida Octopus kaynaklarini ayri tut
+    upsample_examples: list[dict] = []   # UPSAMPLING icin: az-sayida Jellyfish kaynaklarini ayri tut
     per_source: dict[str, int] = {}
     skipped = 0
 
@@ -135,7 +135,7 @@ def build(names: list[str], cli_limit: int, stream: bool, out_dir: Path, seed_re
                 skipped += 1
                 continue
             # tool-use kaynagi: ozel system'i (arac spec) KORU; digerleri: persona enjekte et.
-            msgs = ensure_system(msgs) if keep_system else apply_octopus_system(msgs)
+            msgs = ensure_system(msgs) if keep_system else apply_jellyfish_system(msgs)
             fp = fingerprint(msgs)
             if fp in seen:
                 skipped += 1
@@ -158,7 +158,7 @@ def build(names: list[str], cli_limit: int, stream: bool, out_dir: Path, seed_re
     n_val = max(1, int(len(out) * VAL_RATIO))
     test, val, train = out[:n_test], out[n_test:n_test + n_val], out[n_test + n_val:]
 
-    # UPSAMPLING: az-sayidaki Octopus kaynaklarini (seed_tr + tools) train'de N kez tekrarla
+    # UPSAMPLING: az-sayidaki Jellyfish kaynaklarini (seed_tr + tools) train'de N kez tekrarla
     # (persona/kimlik/yetkili-saldiri + arac-kullanim bagini guclendir — buyuk karisimda
     # iğne kalmasin). Sadece TRAIN'de kopyalanan ornekler; val/test etkilenmez (sizinti yok,
     # cunku split kopyalamadan ONCE yapildi -> ayni ornek hem train hem test'te olmaz).
@@ -180,7 +180,7 @@ def build(names: list[str], cli_limit: int, stream: bool, out_dir: Path, seed_re
 
     print("=" * 60)
     print(f"[OK] train={len(train):,}  val={len(val):,}  test={len(test):,}  -> {out_dir}")
-    print("Sonraki adim: octopus-finetune skill (yerel duman turu, para-oncesi).")
+    print("Sonraki adim: jellyfish-finetune skill (yerel duman turu, para-oncesi).")
     print("=" * 60)
 
 
@@ -199,14 +199,14 @@ def _write_manifest(path, per_source, n_train, n_val, n_test, cli_limit, stream)
         "splits": {"train": n_train, "val": n_val, "test": n_test},
         "per_source_kept": per_source,
         "sources": {n: SOURCES[n] for n in per_source},
-        "persona_prompt": OCTOPUS_SYSTEM_PROMPT,
+        "persona_prompt": LEGACY_SYSTEM_PROMPT,
     }
     with path.open("w", encoding="utf-8") as f:
         json.dump(manifest, f, ensure_ascii=False, indent=2)
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Octopus SFT veri hazirlayici (hibrit)")
+    ap = argparse.ArgumentParser(description="Jellyfish SFT veri hazirlayici (hibrit)")
     ap.add_argument("--source", nargs="+", default=DEFAULT_SOURCES,
                     choices=list(SOURCES.keys()), help="Kaynak(lar)")
     ap.add_argument("--limit", type=int, default=0,

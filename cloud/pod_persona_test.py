@@ -4,7 +4,7 @@ sys.path.insert(0, "/workspace")
 import torch
 from transformers import AutoModelForCausalLM, AutoTokenizer
 from peft import PeftModel
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_SYSTEM_PROMPT
 
 BASE = "ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"
 tok = AutoTokenizer.from_pretrained(BASE)
@@ -22,7 +22,7 @@ TESTS = [
 
 @torch.no_grad()
 def gen(p):
-    msgs = [{"role": "system", "content": OCTOPUS_SYSTEM_PROMPT}, {"role": "user", "content": p}]
+    msgs = [{"role": "system", "content": LEGACY_SYSTEM_PROMPT}, {"role": "user", "content": p}]
     enc = tok.apply_chat_template(msgs, tokenize=True, add_generation_prompt=True, return_dict=True, return_tensors="pt").to(model.device)
     eos = [tok.eos_token_id]
     eot = tok.convert_tokens_to_ids("<end_of_turn>")

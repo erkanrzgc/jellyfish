@@ -1,1 +1,1 @@
-"""octopus eğitim paketi — veri loader + pretraining döngüsü."""
+"""jellyfish eğitim paketi — veri loader + pretraining döngüsü."""

@@ -1,6 +1,6 @@
 {
-  "name": "octopus-v3",
-  "description": "Octópus v3 PRODUCTION — Türkçe-önce 62% / siber 32% (secdata güvenlik kodu dahil) / reasoning 6%. weight = HEDEF token-payı. Kod ayrı katman yok (gated/script-based) → güvenlik kodu secdata'da. Primus sonra eklenebilir.",
+  "name": "jellyfish-v3",
+  "description": "Jellyfish v3 PRODUCTION — Türkçe-önce 62% / siber 32% (secdata güvenlik kodu dahil) / reasoning 6%. weight = HEDEF token-payı. Kod ayrı katman yok (gated/script-based) → güvenlik kodu secdata'da. Primus sonra eklenebilir.",
   "sources": [
     {"name": "lumees-tr",      "dataset": "lumees/turkish-corpus-100b",   "config": "pretrain",      "text_field": "text", "weight": 0.38},
     {"name": "bella-ozenli",   "dataset": "turkish-nlp-suite/BellaTurca",  "config": "OzenliDerlem",   "text_field": "text", "weight": 0.09},

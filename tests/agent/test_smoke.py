@@ -8,7 +8,7 @@ def test_smoke_exercises_scan_scope_and_real_files(tmp_path):
     results = smoke.run_checks(tmp_path)
     assert [r.name for r in results] == ["mock-scan", "scope-denial", "workspace-files"]
     assert all(r.passed for r in results)
-    assert (tmp_path / "workspace" / "note.txt").read_text(encoding="utf-8") == "Octopus lab note"
+    assert (tmp_path / "workspace" / "note.txt").read_text(encoding="utf-8") == "Jellyfish lab note"
     assert not (tmp_path / "escaped.txt").exists()
 
 

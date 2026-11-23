@@ -4,7 +4,7 @@
 - **Status:** Accepted and **implemented** (v0.6 + v0.7 were trained this way)
 - **Supersedes:** the base+method choice of [ADR 0002](0002-pivot-to-finetuning.md) — **superseded**
   (ADR 0002's "pivot to fine-tuning" decision is STILL VALID; only the base model and quantization method changed)
-- **Directory:** `C:\Users\erkanrzgc\Desktop\Octopus` (ASCII)
+- **Directory:** `C:\Users\erkanrzgc\Desktop\Jellyfish` (ASCII)
 
 ## Context
 
@@ -42,8 +42,8 @@ Unsloth-general.)
 ## Results
 
 - **v0.6** (Turkish-only, 918 distilled + seed): final loss **0.22**, token accuracy 97%. Fluent/literary
-  Turkish, NO Qwen rough edges. HF `erkanrzgcc/octopus-gemma-v0.6`.
-- **v0.7** (+cyber knowledge 1,029 Q&A + 117-tool use): final loss **0.048**, 98.7%. HF `erkanrzgcc/octopus-gemma-v0.7`.
+  Turkish, NO Qwen rough edges. HF `erkanrzgcc/jellyfish-gemma-v0.6`.
+- **v0.7** (+cyber knowledge 1,029 Q&A + 117-tool use): final loss **0.048**, 98.7%. HF `erkanrzgcc/jellyfish-gemma-v0.7`.
 - **Script:** `train/sft_bf16.py` (canonical). The old Unsloth/Qwen path is kept in `archive/train/sft_smoke.py`.
 
 ## Known traps (future runs)

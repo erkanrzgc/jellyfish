@@ -31,7 +31,7 @@ Bu belge **D1'i detaylı** tasarlar, D2/D3'ü ana hatlarıyla eskizler (ayrı sp
 ## D1 — Reasoning (```dusunce``` bloğu) DETAYLI TASARIM
 
 ### Amaç
-Octópus, araç çağırmadan veya cevap vermeden önce **kısa, göreve-özgü** bir muhakeme adımı
+Jellyfish, araç çağırmadan veya cevap vermeden önce **kısa, göreve-özgü** bir muhakeme adımı
 üretsin: problemi çöz, hangi aracın/bilginin gerektiğine karar ver, sonra `arac` bloğu veya
 nihai cevap gelsin. Bu, "agentic LLM" konumlandırmasının çekirdeği (orkestrasyon zekâsı).
 
@@ -110,7 +110,7 @@ v0.8-pilot eğitildikten sonra, ölçekleme/D2/D3'e geçmeden ÖNCE:
 
 ## D3 — Skill katmanı — ESKİZ (ayrı spec alacak)
 - **Amaç:** modelin "bu görev için X skill'i çağırılmalı" davranışı — reuse hazinesi
-  ([[octopus-skill-layer-reference]], [[octopus-cyberm4fia-repos]] core/ai_skills).
+  ([[jellyfish-skill-layer-reference]], [[jellyfish-cyberm4fia-repos]] core/ai_skills).
 - **Veri:** görev → doğru skill/araç-zinciri routing; "Use when…" terse eşleme örnekleri.
 - **Risk:** DÜŞÜK — arac desenine yönlendirme verisi.
 - Referans: steipete/agent-scripts + openclaw/agent-skills, rules↔skills ayrımı.
@@ -129,5 +129,5 @@ v0.8-pilot eğitildikten sonra, ölçekleme/D2/D3'e geçmeden ÖNCE:
 D1 pilot verisi → v0.8-pilot retrain (💰) → ölçüm kapısı → sonuca göre D1 ölçekle veya ertele →
 D2 spec+veri → D3 spec+veri → nihai v0.8 retrain (💰).
 
-İlgili: [[octopus-dataset-expansion]] · [[octopus-agent-harness]] · [[octopus-finetune-state]] ·
-[[octopus-skill-layer-reference]] · [[octopus-v08-assistant-tools]].
+İlgili: [[jellyfish-dataset-expansion]] · [[jellyfish-agent-harness]] · [[jellyfish-finetune-state]] ·
+[[jellyfish-skill-layer-reference]] · [[jellyfish-v08-assistant-tools]].

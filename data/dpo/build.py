@@ -13,7 +13,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 from data.dpo.common import OUT_DIR, ROOT, classify_failures, read_jsonl
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 VAL_PERCENT = 10
 
@@ -45,7 +45,7 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
 
 
 def build(cases_path: Path, rejected_path: Path, chosen_path: Path, out_dir: Path, *,
-          gguf_sha256: str | None = None, system_prompt: str = OCTOPUS_TOOL_SYSTEM_PROMPT) -> dict:
+          gguf_sha256: str | None = None, system_prompt: str = LEGACY_TOOL_SYSTEM_PROMPT) -> dict:
     cases = {row["id"]: row for row in read_jsonl(cases_path)}
     chosen = {row["id"]: row for row in read_jsonl(chosen_path)}
     pairs: dict[str, list[dict]] = {"train": [], "val": []}

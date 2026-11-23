@@ -2,7 +2,7 @@
 
 > **For agentic workers:** REQUIRED SUB-SKILL: Use superpowers:subagent-driven-development (recommended) or superpowers:executing-plans to implement this plan task-by-task. Steps use checkbox (`- [ ]`) syntax for tracking.
 
-**Goal:** Octópus'a araç/cevap öncesi kısa, göreve-özgü bir ```dusunce``` muhakeme bloğu üretmeyi öğreten KÜÇÜK pilot SFT verisi + bu bloğu kullanıcıdan gizleyen harness strip'i + format testleri.
+**Goal:** Jellyfish'a araç/cevap öncesi kısa, göreve-özgü bir ```dusunce``` muhakeme bloğu üretmeyi öğreten KÜÇÜK pilot SFT verisi + bu bloğu kullanıcıdan gizleyen harness strip'i + format testleri.
 
 **Architecture:** `dusunce` bloğu `arac` ile simetrik fenced ASCII bloktur; assistant metninin en başında gelir. Veri tarafında build_sft değişmez (blok sadece assistant içeriğidir; çok-turlu Tip B zaten `to_messages`+`flatten_tool_messages` ile desteklenir). Tek harness değişikliği: `dusunce` bloğunu kullanıcıya giden nihai cevaptan (`ToolLoopResult.final`) söken bir regex-strip. Pilot ölçek küçük (~40 örnek) — amaç "reasoning'i tam öğret" değil, retrain sonrası **araç güvenilirliği bozuluyor mu ölç**.
 
@@ -399,7 +399,7 @@ git commit -m "feat(d1): reasoning pilot Tip B (agentic zincir, ~25 ornek) + zin
 **Files:**
 - Create (scratchpad): `<scratchpad>/d1_signal_report.py` (oran ölçümü — repoya girmez)
 - Modify: `docs/superpowers/plans/2026-07-18-d1-reasoning-pilot.md` (ölçüm-kapısı sonucu notu — retrain sonrası doldurulur)
-- Modify: memory `octopus-dataset-expansion.md` + `MEMORY.md` (D1 pilot durumu)
+- Modify: memory `jellyfish-dataset-expansion.md` + `MEMORY.md` (D1 pilot durumu)
 
 **Interfaces:**
 - Consumes: Task 3+4 verisi
@@ -431,7 +431,7 @@ Expected: reasoning ~%2-4, dusunce ort <90 kelime. Oran yüksekse örnek çıkar
 
 - [ ] **Step 3: Memory güncelle**
 
-`octopus-dataset-expansion.md`'ye D1 pilot durumu (dosya, örnek sayısı, harness strip commit'leri, ölçüm kapısı beklemede) + `MEMORY.md` index satırı. `[[octopus-finetune-state]]` bağla.
+`jellyfish-dataset-expansion.md`'ye D1 pilot durumu (dosya, örnek sayısı, harness strip commit'leri, ölçüm kapısı beklemede) + `MEMORY.md` index satırı. `[[jellyfish-finetune-state]]` bağla.
 
 - [ ] **Step 4: Commit**
 
@@ -459,7 +459,7 @@ retrain'le ölçülür. **DUR — kullanıcı onayı olmadan retrain yapma.** Re
 
 **⚠️ ÖNKOŞUL (advisor buldu — retrain parası HARCANMADAN önce, BEDAVA):** Bu kıyas bir ENSTRÜMAN
 gerektirir ve şu an YOK. `parse_arac_calls` + testler yalnız PARSER'ı test eder, modelin geçerli
-çağrı ÜRETME eğilimini değil. Yapılacak (bedava, retrain öncesi): (a) `octopus-eval` skill'iyle
+çağrı ÜRETME eğilimini değil. Yapılacak (bedava, retrain öncesi): (a) `jellyfish-eval` skill'iyle
 tutulmuş bir araç-çağrı eval seti kur (held-out istem → beklenen arac/param), skorlama = geçerli
 arac oranı + JSON geçerliliği + doğru araç + katalog-geçerliliği. (b) Yerel Ollama GGUF v0.7 ile
 **baseline'ı ŞİMDİ yakala**. Yoksa: ya retrain parası harcanıp v0.8 sayısıyla kıyaslanacak temel
@@ -482,7 +482,7 @@ diye tam bitmiş sayılMAZ. Primitif + birim testi var; entegrasyon #3'te.
 | expected_tool (doğru araç) | **46%** | _(ölç)_ |
 
 Bulgu: v0.7 ~%29 katalog-DIŞI araç adı uyduruyor (ssh_brute, kiterunner, volatility↔volatility3).
-Kıyas komutu (retrain sonrası): `uv run python -m eval.run_toolcall_eval --model octopus-v8 --label v0.8-pilot`.
+Kıyas komutu (retrain sonrası): `uv run python -m eval.run_toolcall_eval --model jellyfish-v8 --label v0.8-pilot`.
 
 1. Kıyas: v0.7 baseline vs v0.8-pilot **araç-çağrı güvenilirliği** (yukarıdaki 4 metrik). Kritik izlenen:
    **in_catalog** ve **expected_tool** — reasoning bunları DÜŞÜRMEMELİ (ideal: sabit/artış).

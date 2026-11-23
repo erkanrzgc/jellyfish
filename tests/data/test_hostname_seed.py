@@ -15,7 +15,7 @@ def test_at_least_15_examples():
 
 
 def test_user_hostname_appears_verbatim_in_arac_hedef():
-    host_re = re.compile(r"[a-z0-9][a-z0-9.-]*\.(?:local|internal)|octopus-target")
+    host_re = re.compile(r"[a-z0-9][a-z0-9.-]*\.(?:local|internal)|jellyfish-target")
     for row in _rows():
         user = next(m["content"] for m in row["messages"] if m["role"] == "user")
         hosts = set(host_re.findall(user))

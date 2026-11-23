@@ -1,12 +1,12 @@
 #!/bin/bash
-# Octopus v0.6 GGUF — TEMIZ tarif (bagimlilik cakismasi cozulmus).
+# Jellyfish v0.6 GGUF — TEMIZ tarif (bagimlilik cakismasi cozulmus).
 # KOK SEBEP (onceki basarisizlik): llama.cpp requirements.txt, transformers/torch'u degistirip
 # peft merge'i kiriyordu (BloomPreTrainedModel / torchvision::nms). COZUM: ONCE merge (pinli env
 # saglamken), SONRA llama.cpp deps. Sira kritik.
 # Onkosul: /workspace/v6-adapter (LoRA adapter) pod'da hazir olmali (scp ile gonder).
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v6-adapter"
-MERGED="/workspace/octopus-v6-merged"; OUT="/workspace/jellyfish-v6-gguf"; mkdir -p "$OUT"
+MERGED="/workspace/jellyfish-v6-merged"; OUT="/workspace/jellyfish-v6-gguf"; mkdir -p "$OUT"
 
 echo "===== [1/5] Merge env (pinli) + MERGE (llama.cpp deps'ten ONCE!) ====="
 pip install -q "transformers==4.49.0" "peft==0.14.0" "accelerate==1.4.0" "torch==2.4.1" 2>&1 | tail -1

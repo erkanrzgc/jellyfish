@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""octopus-tr tokenizer round-trip + Türkçe sağlık testi.
+"""jellyfish-tr tokenizer round-trip + Türkçe sağlık testi.
 
 Kontrol eder:
   1. encode→decode kayıpsız mı (diakritik, Türkçe-i İ/ı, sayı, komut korunuyor mu)

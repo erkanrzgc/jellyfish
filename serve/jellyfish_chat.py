@@ -1,4 +1,4 @@
-"""Octopus serving — adapter + RAG grounding + tuned generation ile yerel sohbet.
+"""Jellyfish serving — adapter + RAG grounding + tuned generation ile yerel sohbet.
 
 'Ship' yolu: eğitilmiş LoRA adapter'i (v0.2/v0.5) tabana bindir, faktüel sorularda RAG
 bilgi tabanindan (rag/chroma) baglam ekle, iyi generation ayariyla (thinking-off,
@@ -26,7 +26,7 @@ import torch  # noqa: E402
 
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
-from data.sft.persona import OCTOPUS_SYSTEM_PROMPT  # noqa: E402
+from data.sft.persona import LEGACY_SYSTEM_PROMPT  # noqa: E402
 
 BASE = "unsloth/Qwen3-8B"
 
@@ -46,7 +46,7 @@ def _rag_context(question: str, k: int = 3) -> str:
 
 
 def _generate(model, tok, question: str, use_rag: bool) -> str:
-    system = OCTOPUS_SYSTEM_PROMPT + (_rag_context(question) if use_rag else "")
+    system = LEGACY_SYSTEM_PROMPT + (_rag_context(question) if use_rag else "")
     msgs = [{"role": "system", "content": system}, {"role": "user", "content": question}]
     enc = tok.apply_chat_template(msgs, tokenize=True, add_generation_prompt=True,
                                   enable_thinking=False, return_dict=True,
@@ -73,10 +73,10 @@ def main() -> None:
     print(f"[*] Hazir. RAG={'acik' if args.rag else 'kapali'}\n")
 
     if args.ask:
-        print(f"### SEN: {args.ask}\n### OCTOPUS: {_generate(model, tok, args.ask, args.rag)}")
+        print(f"### SEN: {args.ask}\n### JELLYFISH: {_generate(model, tok, args.ask, args.rag)}")
         return
 
-    print("Octopus'la sohbet (cikis: bos satir / Ctrl+C)")
+    print("Jellyfish'la sohbet (cikis: bos satir / Ctrl+C)")
     while True:
         try:
             q = input("### SEN: ").strip()
@@ -84,7 +84,7 @@ def main() -> None:
             break
         if not q:
             break
-        print(f"### OCTOPUS: {_generate(model, tok, q, args.rag)}\n")
+        print(f"### JELLYFISH: {_generate(model, tok, q, args.rag)}\n")
 
 
 if __name__ == "__main__":

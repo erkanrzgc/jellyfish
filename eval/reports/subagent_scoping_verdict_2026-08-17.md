@@ -1,7 +1,7 @@
 # Subagent role-scoping — measurement verdict (Task 5)
 
 - **Date:** 2026-08-17
-- **Model:** octopus-v10 (current default), A6000 pod, paired same-run.
+- **Model:** jellyfish-v10 (current default), A6000 pod, paired same-run.
 - **Instrument:** `eval/run_subagent_eval.py` on the 24 held-out toolcall cases.
 - **Verdict:** ❌ **Role-scoping (B) does NOT improve tool-selection. Do NOT wire it as the default.**
   The subagent runtime is sound infrastructure (committed), but the hypothesis it targeted is not
@@ -34,7 +34,7 @@ Data table: `subagent_scoping_v10_2026-08-17.md`.
 Yes. Paired on the same pod/model/cases; the flat leg reproduced v10's known ~75–83% range
 (temp=0.6 default, single run — the 83% here vs 75% in the 2026-08-17 paired eval is within
 temp-0.6 noise, and irrelevant: the verdict is the **within-run flat-vs-scoped delta = 0**).
-jinja2 present (sanity generations were real Octópus output). No truncation/instrument bug.
+jinja2 present (sanity generations were real Jellyfish output). No truncation/instrument bug.
 
 ## Options (user's call)
 1. **Keep the infra, don't default it** _(recommended)_. The role-scoped subagent runtime exists as

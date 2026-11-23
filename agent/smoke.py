@@ -71,7 +71,7 @@ def run_checks(root: Path) -> list[CheckResult]:
         CompositeExecutor(security, AssistantExecutor(str(workspace))),
         AuditLog(root / "files.jsonl"),
     )
-    content = "Octopus lab note"
+    content = "Jellyfish lab note"
     def approved_file_call(call):
         result = files.invoke_result(call)
         if result.status == "awaiting_approval":
@@ -94,7 +94,7 @@ def run_checks(root: Path) -> list[CheckResult]:
 
 
 def main() -> int:
-    with tempfile.TemporaryDirectory(prefix="octopus-smoke-") as directory:
+    with tempfile.TemporaryDirectory(prefix="jellyfish-smoke-") as directory:
         results = run_checks(Path(directory))
     for result in results:
         status = "PASS" if result.passed else "FAIL"

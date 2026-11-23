@@ -865,11 +865,11 @@ def run_assistant_demo(workspace: str | None = None) -> str:
     from agent.composite_executor import CompositeExecutor
     from agent.executor import MockExecutor
     from agent.policy import LabPolicy
-    ws = workspace or tempfile.mkdtemp(prefix="octopus-ws-")
+    ws = workspace or tempfile.mkdtemp(prefix="jellyfish-ws-")
     execu = CompositeExecutor(security=MockExecutor(), assistant=AssistantExecutor(ws))
     registry = ToolRegistry(LabPolicy(scope=[], workspace_root=ws), execu, AuditLog.default())
     steps = [
-        ToolCall(name="write_file", params={"yol": "not.txt", "icerik": "Octópus lab notu"}),
+        ToolCall(name="write_file", params={"yol": "not.txt", "icerik": "Jellyfish lab notu"}),
         ToolCall(name="read_file", params={"yol": "not.txt"}),
         ToolCall(name="write_file", params={"yol": "../kacis.txt", "icerik": "x"}),  # reddedilmeli
     ]

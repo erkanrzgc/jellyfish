@@ -1,4 +1,4 @@
-# Base-model bake-off: stock Gemma 4 E4B vs octopus-v10 (2026-11-22)
+# Base-model bake-off: stock Gemma 4 E4B vs jellyfish-v10 (2026-11-22)
 
 All arms ran locally on Ollama 0.40.16 at temperature 0, seed 3407. $0 spent.
 
@@ -11,9 +11,9 @@ The cases are the held-out DPO val families (`eval/native_tool_bakeoff.py`). Eve
 |---|---|---|---|
 | **gemma4:e4b (stock, native tools)** | **177** | **105/139** | **72/73** |
 | qwen3:8b (stock, native tools) | 155 | 88/139 | 67/73 |
-| octopus-v10 + repair (invented names allowed) | 152 | 90/139 | 62/73 |
-| octopus-v10 + repair (catalog names only) | 148 | 86/139 | 62/73 |
-| octopus-v10 | 137 | 75/139 | 62/73 |
+| jellyfish-v10 + repair (invented names allowed) | 152 | 90/139 | 62/73 |
+| jellyfish-v10 + repair (catalog names only) | 148 | 86/139 | 62/73 |
+| jellyfish-v10 | 137 | 75/139 | 62/73 |
 | gemma4:12b | stopped at 70/212 | — | — |
 
 gemma4:12b was stopped at 70/212 because it does not fit in 8 GB VRAM: about 2 minutes per case, and it
@@ -26,7 +26,7 @@ above was rerun on 0.40.16.
 
 | Setup | Evidence gathered |
 |---|---|
-| octopus-v10 (historical) | 3/5, or 4/5 with the conditional nudge |
+| jellyfish-v10 (historical) | 3/5, or 4/5 with the conditional nudge |
 | gemma4:e4b, base native prompt | 0/5 |
 | gemma4:e4b + nudge / + "run it yourself" rule | 0/5 |
 | gemma4:e4b + agentic system prompt | 1/5 |

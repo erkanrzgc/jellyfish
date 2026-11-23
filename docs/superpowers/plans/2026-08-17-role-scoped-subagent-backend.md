@@ -416,8 +416,8 @@ Report both `expected_tool` rates side by side on the same cases/model (v10, tem
 
 ```python
 """Flat vs scoped-B arac-secim kiyasi. Ayni tutulmus istemler, ayni model; scoped = route->subagent.
-Kullanim (pod ya da yerel GGUF): uv run python -m eval.run_subagent_eval --model octopus-v10 \
-    --tokenizer-dir models/octopus-v8-tokenizer"""
+Kullanim (pod ya da yerel GGUF): uv run python -m eval.run_subagent_eval --model jellyfish-v10 \
+    --tokenizer-dir models/jellyfish-v8-tokenizer"""
 from __future__ import annotations
 import argparse
 from agent.backends.gguf_model import GgufModel
@@ -434,8 +434,8 @@ def _first_tool(reply: str):
 
 def main() -> None:
     ap = argparse.ArgumentParser()
-    ap.add_argument("--model", default="octopus-v10")
-    ap.add_argument("--tokenizer-dir", default="models/octopus-v8-tokenizer")
+    ap.add_argument("--model", default="jellyfish-v10")
+    ap.add_argument("--tokenizer-dir", default="models/jellyfish-v8-tokenizer")
     ap.add_argument("--cases", default=CASES)
     args = ap.parse_args()
 
@@ -470,7 +470,7 @@ Expected: prints usage (imports resolve, no runtime error).
 
 - [ ] **Step 3: Run on a served model (money/availability checkpoint FIRST)**
 
-Options: (a) GPU pod — reuse the paired-eval recipe (`scratchpad/pod_eval_v11.sh` pattern), pull v10 GGUF from HF, install jinja2 (lesson!), `ollama create octopus-v10`, run this script; (b) local, once a v10 GGUF is downloaded. **Checkpoint with the user before spending.**
+Options: (a) GPU pod — reuse the paired-eval recipe (`scratchpad/pod_eval_v11.sh` pattern), pull v10 GGUF from HF, install jinja2 (lesson!), `ollama create jellyfish-v10`, run this script; (b) local, once a v10 GGUF is downloaded. **Checkpoint with the user before spending.**
 Expected: two side-by-side rates; scoped-B ≥ flat is the promote signal.
 
 - [ ] **Step 4: Write the comparison report**

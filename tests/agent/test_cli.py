@@ -52,7 +52,7 @@ def test_docker_container_ip_rejects_injection(monkeypatch):
         raise AssertionError("subprocess kotucul adla CAGRILMAMALI")
 
     monkeypatch.setattr(subprocess, "run", _boom)
-    assert cli._docker_container_ip("octopus-target; rm -rf /") is None
+    assert cli._docker_container_ip("jellyfish-target; rm -rf /") is None
     assert cli._docker_container_ip("$(whoami)") is None
     assert cli._docker_container_ip("a b") is None
     assert "ran" not in called                            # subprocess'e hic gidilmedi
@@ -114,11 +114,11 @@ def _capture_gguf_kwargs(monkeypatch):
 
 def test_gguf_demo_augments_system_prompt_with_extension_tools(monkeypatch):
     """Skills aktifken sistem promptu 3 egitim-disi araci TANITIR (kesif manifesti)."""
-    from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
     captured = _capture_gguf_kwargs(monkeypatch)
     cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10")
     sp = captured["system_prompt"]
-    assert sp.startswith(OCTOPUS_TOOL_SYSTEM_PROMPT)         # egitim-birebir taban KORUNUR
+    assert sp.startswith(LEGACY_TOOL_SYSTEM_PROMPT)         # egitim-birebir taban KORUNUR
     for name in ("trufflehog", "magika", "ghunt"):
         assert name in sp
     assert "nmap" not in sp                                  # 117 egitilmis DOKULMEZ
@@ -126,11 +126,11 @@ def test_gguf_demo_augments_system_prompt_with_extension_tools(monkeypatch):
 
 def test_gguf_demo_prompt_unchanged_when_skills_off(monkeypatch):
     """skills=None + normal tarama -> sistem promptu egitim-birebir tabana ESIT (hic ek yok)."""
-    from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
     captured = _capture_gguf_kwargs(monkeypatch)
     cli.run_gguf_demo(scope=["10.10.10.0/24"], model="jellyfish-v10", skills=None)
     # system_prompt hic gecilmedi -> GgufModel kendi varsayilanini kullanir (taban).
-    assert captured.get("system_prompt", OCTOPUS_TOOL_SYSTEM_PROMPT) == OCTOPUS_TOOL_SYSTEM_PROMPT
+    assert captured.get("system_prompt", LEGACY_TOOL_SYSTEM_PROMPT) == LEGACY_TOOL_SYSTEM_PROMPT
 
 
 def test_gguf_demo_adds_rca_rule_for_incident_task(monkeypatch):
@@ -154,7 +154,7 @@ def test_main_routes_gguf_docker_combo(monkeypatch, capsys):
     """--gguf --docker birlikte -> gercek beyin + gercek docker eli uctan uca."""
     called: dict = {}
 
-    def _fake(scope, model, target="octopus-target", **kwargs):
+    def _fake(scope, model, target="jellyfish-target", **kwargs):
         called["args"] = (scope, model, target)
         return "GGUF_DOCKER_OUT"
 

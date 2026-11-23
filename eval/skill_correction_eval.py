@@ -155,7 +155,7 @@ def _report(model: str, off: EvalResult, on: EvalResult) -> str:
     return "\n".join(lines)
 
 
-def run_against_ollama(model: str = "octopus-v9", scope: list[str] | None = None,
+def run_against_ollama(model: str = "jellyfish-v9", scope: list[str] | None = None,
                        cases: list[Case] | None = None) -> str:
     """GERCEK model ile skill OFF vs ON karsilastirmasi (temp=0, deterministik). Ollama+GGUF gerektirir.
     cases=None -> FABRICATION_CASES (uydurma-tetikleyen). Kullanim: uv run python -m eval.skill_correction_eval."""

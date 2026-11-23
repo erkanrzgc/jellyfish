@@ -56,8 +56,8 @@ def test_nonzero_sandbox_exit_is_failed(tmp_path):
 
 def test_sandbox_wrapper_preserves_inner_command_status():
     wrapped = _wrap("exit 7")
-    assert 'exit "$octopus_status"' in wrapped
-    assert "octopus_status=$?" in wrapped
+    assert 'exit "$jellyfish_status"' in wrapped
+    assert "jellyfish_status=$?" in wrapped
 
 
 def test_sandbox_wrapper_exit_status_with_local_posix_shell(tmp_path):

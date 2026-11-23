@@ -39,5 +39,5 @@ def test_public_domain_classification_keeps_osint_semantics():
     assert tp.is_public_domain("ornek-firma.com.tr") is True
     assert tp.is_public_domain("web01.lab.local") is False
     assert tp.is_public_domain("api-gw.internal") is False
-    assert tp.is_public_domain("octopus-target") is False
+    assert tp.is_public_domain("jellyfish-target") is False
     assert tp.sample_public_domain(random.Random(7)) in tp.PUBLIC_DOMAINS

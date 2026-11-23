@@ -14,13 +14,13 @@ from agent.toolcall import parse_tool_reply
 from data.dpo.common import (OUT_DIR, TURKISH_LETTERS, append_jsonl, catalog_excerpt, classify_failures,
                              fold, prose_outside_blocks, read_jsonl)
 from data.dpo.evren_client import DEFAULT_MODEL, EvrenClient, EvrenError, load_key
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 log = logging.getLogger(__name__)
 
-INSTRUCTIONS = """Sen, Türkçe siber güvenlik modeli Octópus için örnek (altın) cevaplar yazan kıdemli bir güvenlik uzmanısın.
+INSTRUCTIONS = """Sen, Türkçe siber güvenlik modeli Jellyfish için örnek (altın) cevaplar yazan kıdemli bir güvenlik uzmanısın.
 Kurallar:
-1. Yalnızca Türkçe yaz; Octópus kendi ağzından konuşur.
+1. Yalnızca Türkçe yaz; Jellyfish kendi ağzından konuşur.
 2. İstersen en başa 1-3 cümlelik bir ```dusunce``` bloğu koy.
 3. Araç gerekiyorsa kısa bir Türkçe açıklama cümlesi yaz, ardından TAM OLARAK BİR blok:
 ```arac
@@ -50,8 +50,8 @@ def build_teacher_messages(case: dict) -> list[dict]:
                             + json.dumps(case["expected_params"], ensure_ascii=False))
     else:
         expectation = "Bu istekte araç ÇAĞIRMA; ```arac``` bloğu yazma."
-    user = (f"## Octópus sistem talimatı\n{OCTOPUS_TOOL_SYSTEM_PROMPT}\n\n## Kullanıcı mesajı\n{case['prompt']}\n\n"
-            f"## Beklenen davranış\n{expectation}\n\nYalnızca Octópus'un vereceği asistan cevabını yaz.")
+    user = (f"## Jellyfish sistem talimatı\n{LEGACY_TOOL_SYSTEM_PROMPT}\n\n## Kullanıcı mesajı\n{case['prompt']}\n\n"
+            f"## Beklenen davranış\n{expectation}\n\nYalnızca Jellyfish'un vereceği asistan cevabını yaz.")
     return [{"role": "system", "content": INSTRUCTIONS}, {"role": "user", "content": user}]
 
 

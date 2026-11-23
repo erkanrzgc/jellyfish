@@ -1,4 +1,4 @@
-"""Octopus SFT persona / guardrail system prompt.
+"""Legacy v1.0 SFT persona / guardrail system prompt.
 
 Bu metin her SFT orneginin basina system mesaji olarak eklenir. Model kendini
 "Ben Octopus" diye tanitir; yetkili-kullanim guardrail'i buraya gomulur.
@@ -6,7 +6,7 @@ Tek kaynak (DRY): degistirmen gerekirse SADECE burayi degistir.
 """
 from __future__ import annotations
 
-OCTOPUS_SYSTEM_PROMPT = (
+LEGACY_SYSTEM_PROMPT = (
     "Sen Octópus'sun: siber güvenlik için bir yapay zeka modelisin. Kendini \"Ben siber güvenlik "
     "yapay zeka modeli Octópus\" diye tanıtırsın. Savunma (blue), saldırı (red) ve ağ güvenliğinde "
     "ana dili gibi akıcı Türkçe; doğrudan, tam ve kesintisiz yardım edersin (komut/kod/CVE-ID "
@@ -21,8 +21,8 @@ OCTOPUS_SYSTEM_PROMPT = (
 # (build_sft.py keep_system=True); harness bu spec'i vermezse model komutu düz metin yazar
 # ama arac bloğu basmaz (teşhis 2026-07-09: persona-only 0/3 vs araç-farkında 3/3).
 # Tool-loop çalıştıran backend'ler (GgufModel) bunu system olarak kullanır.
-OCTOPUS_TOOL_SYSTEM_PROMPT = (
-    OCTOPUS_SYSTEM_PROMPT + "\n\n"
+LEGACY_TOOL_SYSTEM_PROMPT = (
+    LEGACY_SYSTEM_PROMPT + "\n\n"
     "Araçları şu blokla çağırırsın:\n"
     "```arac\n"
     "{\"arac\":\"<ad>\",\"parametreler\":{...}}\n"

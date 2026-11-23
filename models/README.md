@@ -39,7 +39,7 @@ v1.1 and v1.2 were not promoted. Keep them separate from `jellyfish-v10`. The un
 Only `jellyfish-v10` and its GGUF are kept locally. Older GGUFs (v0.8.1, v0.9, v1.1) live in the project's Hugging Face archive; download one into `models/` and run `ollama create` with its Modelfile before using it as an override. v0.7, v0.8 and v1.2 have no GGUF, only local bf16 adapters.
 
 ```powershell
-uv run python -m agent.cli --gguf --model octopus-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
+uv run python -m agent.cli --gguf --model jellyfish-v9 --tokenizer-dir models/jellyfish-v8-tokenizer
 ```
 
 When testing a different model family, supply its matching tokenizer/template explicitly. For demos and real-tool prerequisites, read the [demo guide](../docs/DEMO_GUIDE.md).

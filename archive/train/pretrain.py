@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""octopus pretraining döngüsü — Faz 4.
+"""jellyfish pretraining döngüsü — Faz 4.
 
 bf16 autocast · decay-split AdamW · cosine LR + warmup · grad accumulation · grad clip ·
 checkpoint kaydet/resume · periyodik val eval · periyodik Türkçe örnekleme · jsonl log.
@@ -27,8 +27,8 @@ from contextlib import nullcontext
 
 import torch
 
-from model.config import OctopusConfig, config_from_preset
-from model.transformer import OctopusLM
+from model.config import JellyfishConfig, config_from_preset
+from model.transformer import JellyfishLM
 from train.dataset import BinDataset, ShardedBinDataset
 
 DTYPES = {"bf16": torch.bfloat16, "fp16": torch.float16, "fp32": torch.float32}
@@ -45,7 +45,7 @@ def get_lr(step: int, warmup: int, max_steps: int, lr: float, min_lr: float) -> 
     return min_lr + coeff * (lr - min_lr)
 
 
-def make_optimizer(model: OctopusLM, lr: float, weight_decay: float,
+def make_optimizer(model: JellyfishLM, lr: float, weight_decay: float,
                    betas: tuple[float, float], device: str, use_8bit: bool = False):
     """nanoGPT-tarzı: 2D+ tensörlere (matmul ağırlıkları) weight decay, norm/bias'a yok.
 
@@ -75,7 +75,7 @@ def make_optimizer(model: OctopusLM, lr: float, weight_decay: float,
 
 
 @torch.no_grad()
-def estimate_loss(model: OctopusLM, ds_map: dict[str, BinDataset], eval_iters: int,
+def estimate_loss(model: JellyfishLM, ds_map: dict[str, BinDataset], eval_iters: int,
                   batch_size: int, device: str, ctx) -> dict[str, float]:
     model.eval()
     out: dict[str, float] = {}
@@ -92,7 +92,7 @@ def estimate_loss(model: OctopusLM, ds_map: dict[str, BinDataset], eval_iters: i
 
 
 @torch.no_grad()
-def sample(model: OctopusLM, sp, prompt: str, device: str,
+def sample(model: JellyfishLM, sp, prompt: str, device: str,
            max_new_tokens: int, top_k: int, temperature: float) -> str:
     model.eval()
     ids = sp.encode(prompt, out_type=int)
@@ -102,8 +102,8 @@ def sample(model: OctopusLM, sp, prompt: str, device: str,
     return sp.decode(out[0].tolist())
 
 
-def save_ckpt(path: str, model: OctopusLM, opt, step: int, val_loss: float,
-              cfg: OctopusConfig, args: argparse.Namespace) -> None:
+def save_ckpt(path: str, model: JellyfishLM, opt, step: int, val_loss: float,
+              cfg: JellyfishConfig, args: argparse.Namespace) -> None:
     torch.save({
         "model": model.state_dict(),
         "optimizer": opt.state_dict(),
@@ -141,8 +141,8 @@ def setup_ddp(device_pref: str):
 
 
 def main() -> None:
-    p = argparse.ArgumentParser(description="octopus pretraining")
-    p.add_argument("--preset", default="", help="model boyutu: octopus-100m/200m/500m/1b (boş=100m default)")
+    p = argparse.ArgumentParser(description="jellyfish pretraining")
+    p.add_argument("--preset", default="", help="model boyutu: jellyfish-100m/200m/500m/1b (boş=100m default)")
     p.add_argument("--data-dir", default="", help="çok-shard dizini (manifest.json) — verilirse train-bin yerine")
     p.add_argument("--train-bin", default="data/bin/train.bin")
     p.add_argument("--val-bin", default="data/bin/val.bin")
@@ -187,11 +187,11 @@ def main() -> None:
     scaler = torch.amp.GradScaler(enabled=(args.dtype == "fp16"))
 
     base = config_from_preset(args.preset, max_seq_len=max(1024, args.seq_len)) if args.preset \
-        else OctopusConfig(max_seq_len=max(1024, args.seq_len))
+        else JellyfishConfig(max_seq_len=max(1024, args.seq_len))
     if args.seq_len > base.max_seq_len:
         raise SystemExit(f"seq_len {args.seq_len} > max_seq_len {base.max_seq_len}")
     cfg = base
-    raw_model = OctopusLM(cfg).to(device)
+    raw_model = JellyfishLM(cfg).to(device)
     raw_model.set_grad_checkpoint(args.grad_checkpoint)
     opt = make_optimizer(raw_model, args.lr, args.weight_decay, (args.beta1, args.beta2), device,
                          use_8bit=(args.optim == "adamw8bit"))

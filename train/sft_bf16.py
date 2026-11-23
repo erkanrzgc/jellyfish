@@ -1,4 +1,4 @@
-"""Octopus v0.6 SFT — bf16 LoRA (unsloth 4bit YOK).
+"""Jellyfish v0.6 SFT — bf16 LoRA (unsloth 4bit YOK).
 
 NEDEN: Turkish-Gemma-9b-v0.1 continual-pt+SFT+DPO+merge gecmis; unsloth'un 4bit NF4
 kuantizasyonu bu merge'li agirliklari BOZUYOR -> uretim cok-dilli cop. Kanit: ayni model
@@ -29,7 +29,7 @@ from pathlib import Path  # noqa: E402
 
 import torch  # noqa: E402
 
-ROOT = Path(__file__).resolve().parent.parent  # .../Octopus
+ROOT = Path(__file__).resolve().parent.parent  # .../Jellyfish
 sys.path.insert(0, str(ROOT))  # data.sft.* importu icin
 SFT_DIR = ROOT / "data" / "sft"
 
@@ -51,7 +51,7 @@ SMOKE_PROMPTS = [
 
 
 def main() -> None:
-    ap = argparse.ArgumentParser(description="Octopus v0.6 bf16 LoRA SFT")
+    ap = argparse.ArgumentParser(description="Jellyfish v0.6 bf16 LoRA SFT")
     ap.add_argument("--base", default="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1",
                     help="bf16 yuklenecek taban (dil #1: Turkish-Gemma)")
     ap.add_argument("--max-steps", type=int, default=40)
@@ -156,7 +156,7 @@ def main() -> None:
 
 def _generate_smoke(model, tokenizer) -> None:
     """Egitim sonrasi persona/Turkce/ret davranisini gozle dogrula."""
-    from data.sft.persona import OCTOPUS_SYSTEM_PROMPT
+    from data.sft.persona import LEGACY_SYSTEM_PROMPT
     # Gemma2 generate torch._dynamo ile derlenir; egitimden kalan input-require-grads hook'u
     # 'Tensor.requires_grad_' derlenemez op'una carpar. (1) dynamo hatasini eager'a dusur (garanti),
     # (2) hook'u hem PEFT sarmalinda hem TABAN modelde kaldir (sarmal delege etmezse diye).
@@ -184,7 +184,7 @@ def _generate_smoke(model, tokenizer) -> None:
         eos_ids.append(eot)
     print("\n" + "=" * 60 + "\n[*] URETIM TESTI (persona/Turkce/ret):\n" + "=" * 60)
     for prompt in SMOKE_PROMPTS:
-        msgs = [{"role": "system", "content": OCTOPUS_SYSTEM_PROMPT},
+        msgs = [{"role": "system", "content": LEGACY_SYSTEM_PROMPT},
                 {"role": "user", "content": prompt}]
         try:
             enc = tokenizer.apply_chat_template(
@@ -200,7 +200,7 @@ def _generate_smoke(model, tokenizer) -> None:
                 repetition_penalty=1.15, no_repeat_ngram_size=4,
                 eos_token_id=eos_ids, pad_token_id=tokenizer.eos_token_id)
         text = tokenizer.decode(out[0][enc["input_ids"].shape[1]:], skip_special_tokens=True)
-        print(f"\n### KULLANICI: {prompt}\n### OCTOPUS: {text.strip()[:700]}\n{'-'*60}")
+        print(f"\n### KULLANICI: {prompt}\n### JELLYFISH: {text.strip()[:700]}\n{'-'*60}")
 
 
 if __name__ == "__main__":

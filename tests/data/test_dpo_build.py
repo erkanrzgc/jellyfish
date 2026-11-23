@@ -4,7 +4,7 @@ from __future__ import annotations
 import json
 
 from data.dpo.build import build, split_of
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 
 def _jsonl(path, rows):
@@ -42,7 +42,7 @@ def test_build_writes_preference_records_sft_view_and_manifest(tmp_path):
              for l in (out / f).read_text(encoding="utf-8").splitlines()]
     assert len(pairs) == 28  # 30 minus one dropped chosen, minus one passing rejected
     record = pairs[0]
-    assert record["prompt"][0] == {"role": "system", "content": OCTOPUS_TOOL_SYSTEM_PROMPT}
+    assert record["prompt"][0] == {"role": "system", "content": LEGACY_TOOL_SYSTEM_PROMPT}
     assert record["prompt"][1]["role"] == "user"
     assert record["chosen"][0]["role"] == "assistant" and record["rejected"][0]["role"] == "assistant"
     assert record["chosen"][0]["content"] != record["rejected"][0]["content"]

@@ -1,11 +1,11 @@
 #!/bin/bash
-# Octopus v0.9 GGUF — pod_gguf_v81'in v9 uyarlamasi. IKI quant: Q4_K_M + Q8_0 (niceleme eksenini
+# Jellyfish v0.9 GGUF — pod_gguf_v81'in v9 uyarlamasi. IKI quant: Q4_K_M + Q8_0 (niceleme eksenini
 # eval'de olcmek icin). f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi). Adapter zaten pod'da:
 # /workspace/v9-adapter (egitim ciktisi). Sonunda GGUF'lar + tokenizer HF'e yuklenir.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v9-adapter"
 MERGED="/workspace/v9-merged"; OUT="/workspace/jellyfish-v9-gguf"; TOKOUT="/workspace/jellyfish-v9-tokenizer"
-REPO="erkanrzgcc/octopus-gemma-v0.9"
+REPO="erkanrzgcc/jellyfish-gemma-v0.9"
 mkdir -p "$OUT" "$TOKOUT"
 
 echo "===== [1/6] MERGE ====="

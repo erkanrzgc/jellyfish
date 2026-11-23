@@ -1,4 +1,4 @@
-# 🪼 Jellyfish (formerly Octópus) — North Star
+# 🪼 Jellyfish (formerly Jellyfish) — North Star
 
 > The project's **vision, story, and goal** — so a new session can understand what this project is for.
 > Current strategy: fine-tuning ([ADR 0002](docs/decisions/0002-pivot-to-finetuning.md)), base
@@ -6,7 +6,7 @@
 > Rules: `CLAUDE.md`.
 
 ## In one sentence
-Octópus is a **Turkish-speaking**, autonomous AI — expert in cybersecurity (red + blue + network) and
+Jellyfish is a **Turkish-speaking**, autonomous AI — expert in cybersecurity (red + blue + network) and
 **server/system administration** — meant to run on your own server. Not a bot that memorizes theory: an
 expert that knows, does, and uses tools — **only within the operator's authorization.** In conversation the
 model says **“Ben Octópus.”**
@@ -43,16 +43,16 @@ system prompt is baked into the SFT data.
 
 ## Brand & paths
 **Renamed 2026-11-22: the product is now Jellyfish** (stock-model path: “Ben siber güvenlik yapay zeka modeli Jellyfish”).
-Historical note: the v1.0 model says **“Ben Octópus”** (dotted ó). Code/paths/repo are plain ASCII `octopus`
-(Windows-native libraries break on non-ASCII paths). Folder: `Desktop\Octopus`.
+Historical note: the v1.0 model says **“Ben Octópus”** (dotted ó). Code/paths/repo are plain ASCII `jellyfish`
+(Windows-native libraries break on non-ASCII paths). Folder: `Desktop\Jellyfish`.
 
 ## Roadmap (fine-tuning)
 1. **Choose base** ✅ Turkish-Gemma-9b-v0.1, bf16 LoRA (ADR 0003; Qwen3-8B tried → dropped).
 2. **SFT data** ✅ Turkish distilled knowledge (1,029 Q&A) + 117-tool use (125 examples) + persona seed →
-   normalize to `messages`, dedup, split (skill `octopus-data`, `data/sft/build_sft.py`).
+   normalize to `messages`, dedup, split (skill `jellyfish-data`, `data/sft/build_sft.py`).
 3. **bf16 LoRA training** ✅ plain `transformers` + `peft` + TRL (not Unsloth), r=32, seq 1024, lr 2e-4,
-   RunPod RTX 4090 (skill `octopus-finetune`, `train/sft_bf16.py`).
-4. **Eval + safety** ✅ persona/Turkish/knowledge/refusal gen-test passed (skill `octopus-eval`);
+   RunPod RTX 4090 (skill `jellyfish-finetune`, `train/sft_bf16.py`).
+4. **Eval + safety** ✅ persona/Turkish/knowledge/refusal gen-test passed (skill `jellyfish-eval`);
    brittleness ongoing.
 5. **Agent harness** ✅ tool-call parser + policy gate + mock/real/docker executors (`agent/`, 39 tests).
 6. **Merge + deploy** ⏳ LoRA merge → GGUF Q4 → local RTX 5060 8GB (Ollama/llama.cpp); cloud later.
@@ -66,6 +66,6 @@ path. No knowledge lost; kept for reference/experiments. Details:
 
 ## Status (2026-07)
 The fine-tuning path is complete: **v0.6** (fluent Turkish + persona, loss 0.22) ✅ · **v0.7** (cyber
-knowledge + 117-tool use, loss 0.048, 98.7%) ✅. Adapter on HF (`erkanrzgcc/octopus-gemma-v0.7`) + local.
+knowledge + 117-tool use, loss 0.048, 98.7%) ✅. Adapter on HF (`erkanrzgcc/jellyfish-gemma-v0.7`) + local.
 The **agent harness** runs the model's tool calls (mock/real/docker). Next: GGUF Q4 (local) · v0.7.1
 (structured ```arac``` block). Single source of truth: `docs/v0.7-loop-queue.md`.

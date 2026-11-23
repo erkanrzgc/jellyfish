@@ -1,5 +1,5 @@
 #!/usr/bin/env python
-"""Temiz korpusu octopus-tr ile tokenize edip uint16 .bin'e yaz (nanoGPT-tarzı).
+"""Temiz korpusu jellyfish-tr ile tokenize edip uint16 .bin'e yaz (nanoGPT-tarzı).
 
 Her satır sonuna EOS eklenir. Eğitim loader'ı .bin'i memory-map'leyip rastgele
 seq_len pencereler örnekler. vocab 32k < 65536 → uint16 yeterli.

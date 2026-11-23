@@ -22,20 +22,20 @@ import argparse
 
 import torch
 
-from model.config import OctopusConfig
-from model.transformer import OctopusLM
+from model.config import JellyfishConfig
+from model.transformer import JellyfishLM
 
 
-def load_model(ckpt_path: str, device: str) -> tuple[OctopusLM, dict]:
+def load_model(ckpt_path: str, device: str) -> tuple[JellyfishLM, dict]:
     state = torch.load(ckpt_path, map_location=device, weights_only=True)
-    cfg = OctopusConfig(**state["config"])
-    model = OctopusLM(cfg).to(device)
+    cfg = JellyfishConfig(**state["config"])
+    model = JellyfishLM(cfg).to(device)
     model.load_state_dict(state["model"])
     model.eval()
     return model, state
 
 
-def generate(model: OctopusLM, sp, prompt: str, device: str,
+def generate(model: JellyfishLM, sp, prompt: str, device: str,
              max_new_tokens: int, temperature: float, top_k: int) -> str:
     ids = sp.encode(prompt, out_type=int)
     idx = torch.tensor([ids], dtype=torch.long, device=device)
@@ -63,7 +63,7 @@ def main() -> None:
     device = "cuda" if torch.cuda.is_available() else "cpu"
     model, state = load_model(args.ckpt, device)
     n = model.num_params() / 1e6
-    print(f"[octopus] {args.ckpt}  ({n:.0f}M param, step {state.get('step','?')}, "
+    print(f"[jellyfish] {args.ckpt}  ({n:.0f}M param, step {state.get('step','?')}, "
           f"val {state.get('val_loss', float('nan')):.3f})  device={device}")
     print(f"[ayar] temp={args.temperature} top_k={args.top_k} max_new={args.max_new_tokens}\n")
 
@@ -85,7 +85,7 @@ def main() -> None:
             break
         txt = generate(model, sp, prompt, device, args.max_new_tokens,
                        args.temperature, args.top_k)
-        print(f"octópus> {txt}\n")
+        print(f"jellyfish> {txt}\n")
 
 
 if __name__ == "__main__":

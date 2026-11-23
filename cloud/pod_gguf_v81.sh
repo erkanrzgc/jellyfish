@@ -1,5 +1,5 @@
 #!/bin/bash
-# Octopus v0.8.1 GGUF — pod_gguf_v8'in v81 uyarlamasi. f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi:
+# Jellyfish v0.8.1 GGUF — pod_gguf_v8'in v81 uyarlamasi. f16 CONTAINER-DISK'e (/root) yazilir (v8 dersi:
 # network-volume yazimi ~%55'te oldu). Merge env zaten kurulu (egitim pod'u). Adapter: /workspace/v81-adapter.
 set -eo pipefail
 BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"; ADP="/workspace/v81-adapter"

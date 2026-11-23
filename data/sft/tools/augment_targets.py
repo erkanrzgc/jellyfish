@@ -29,7 +29,7 @@ _HOST_RE = re.compile(
     r"\b(?:[a-z0-9][a-z0-9-]*\.)+"
     r"(?:local|internal|com|net|org|io|dev|tr|gov|edu|co)\b"
 )
-_BARE_HOSTS = ("octopus-target", "kali-victim")
+_BARE_HOSTS = ("jellyfish-target", "kali-victim")
 
 
 @dataclass

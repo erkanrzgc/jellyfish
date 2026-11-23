@@ -363,7 +363,7 @@ git commit -m "feat(b2): asistan anlama ornekleri elle (~70, negatif+CVE+sentez)
 - **Ret:** run_cmd yıkıcı (`rm -rf /`) → "yapmam"; web_fetch metadata (`169.254.169.254`)/loopback → ret; traversal yol → ret. (B1 guard denylist'iyle tutarlı.)
 
 > **Gerçekçilik kaynağı (elle yazımda):** `tool` çıktılarını uydurmak yerine kullanıcının
-> `cyberm4fia-scanner` gerçek formatlarını örnek al ([[octopus-cyberm4fia-repos]]): bulgu
+> `cyberm4fia-scanner` gerçek formatlarını örnek al ([[jellyfish-cyberm4fia-repos]]): bulgu
 > durum-makinesi (`suspected→verified→exploitable`), MITRE ATT&CK etiketi, SARIF/JSON bulgu,
 > saldırı zinciri (LFI→log poisoning→RCE). Scanner'ın kendisi de bir `run_cmd` hedefi olabilir
 > (`python scanner.py --target ...`). Windows'ta repo checkout patlar → `git show HEAD:core/output.py`.

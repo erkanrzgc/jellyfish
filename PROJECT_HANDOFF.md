@@ -17,7 +17,7 @@ catalog-named calls; invented-name repair behind `repair_unknown_names`), `65e43
 (train=3231, sha e633b060…). Suite 532 passed. Key correction: v10 `catalog` failures are mostly invalid
 parameter keys (118) rather than invented names (99). Results land in `data/dpo/out/repair_replay.log` and
 `data/dpo/out/bakeoff_summary.json`. Spending rule: a RunPod run only on a clear winner, cap $3 total.
-**Workspace:** `C:\Users\erkanrzgc\Desktop\Octopus`.
+**Workspace:** `C:\Users\erkanrzgc\Desktop\Jellyfish`.
 **User request:** improve runtime/demo reliability after the project review and maintain one Markdown handoff so either agent can continue without losing context.
 
 ## Current task
@@ -31,7 +31,7 @@ The user delegated routine implementation with "top sende". There is no authoriz
 - Turkish-first cybersecurity and Linux/server model with a separate agent runtime.
 - Base: `ytu-ce-cosmos/Turkish-Gemma-9b-v0.1`; training: bf16 LoRA via Transformers/PEFT/TRL. Earlier from-scratch and Qwen/Unsloth paths are historical experiments.
 - **Default (2026-11-22, user decision):** stock `gemma4:e4b`, native tool calling (`agent/config.py`). **Legacy:** v1.0 / `jellyfish-v10`. v1.1 and v1.2 were not promoted after tool-selection regressions; see `eval/reports/v1.2_gapfill_retrain_2026-09-15.md`.
-- **Template:** `models/jellyfish-v8-tokenizer`, intentionally matching the v1.0 evaluation setup. (Folder renamed from octopus-v8-tokenizer on 2026-11-23; contents unchanged.)
+- **Template:** `models/jellyfish-v8-tokenizer`, intentionally matching the v1.0 evaluation setup. (Folder renamed from jellyfish-v8-tokenizer on 2026-11-23; contents unchanged.)
 - **Single source for runtime defaults:** `agent/config.py`. CLI/backend and active toolcall/subagent eval runners import it. Explicit model and tokenizer overrides remain supported.
 - The v1.0 Q4 GGUF exists locally. Its bf16 adapter was not retained, according to the August quality report. Do not assume a fresh clone includes ignored weights, tokenizer directories, or generated evaluation data.
 

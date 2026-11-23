@@ -2,13 +2,13 @@
 
 - **Date:** 2026-08-25
 - **Branch:** feat/b2-assistant-sft-data
-- **Model:** octopus-v10 (current production default) — **unchanged** (no retrain).
+- **Model:** jellyfish-v10 (current production default) — **unchanged** (no retrain).
 - **Verdict:** ✅ **Ship.** RCA evidence-gathering **3/5 → 4/5** with **toolcall unchanged (75%)** and no
   weight change. Fixes the exact two held-out targets (`session-drop`, `disk-freeze`) that the paid
   v1.1 retrain (RCA 3→2, −$0.45) failed to fix.
 
 ## The problem
-On a vague server incident, Octópus sometimes writes a prose root-cause conclusion instead of first
+On a vague server incident, Jellyfish sometimes writes a prose root-cause conclusion instead of first
 emitting a ```arac``` call to gather evidence. v1.0 = 3/5 on the held-out RCA gate; v1.1 tried to fix
 this with 24 upsampled RCA examples and **regressed to 2/5** (the narrow data pushed the model toward
 prose-RCA and collaterally hurt tool selection — see `v1.1_rca_depth_2026-08-17.md`).
@@ -55,7 +55,7 @@ role/context-scoping infrastructure (the subagent backend that measured Δ0 on a
   2 cli wiring tests. **Full suite 295 green.**
 
 ## End-to-end verification (shipped diacritic'd rule, not the ASCII probe)
-`assemble_incident_aware_prompt(base, olay)` per held-out case, real octopus-v10, temp=0, np=640:
+`assemble_incident_aware_prompt(base, olay)` per held-out case, real jellyfish-v10, temp=0, np=640:
 `fork KANIT · web-slow KANIT · nginx yok · session KANIT · disk KANIT = **4/5**`.
 Toolcall is unchanged **by construction**: the detector returns False for all 24 offensive prompts
 (unit-locked), so those queries receive a byte-identical prompt → 75% = 75%.

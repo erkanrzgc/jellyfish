@@ -1,11 +1,11 @@
-"""octopus taban model konfigürasyonu."""
+"""jellyfish taban model konfigürasyonu."""
 from __future__ import annotations
 
 from dataclasses import dataclass
 
 
 @dataclass(frozen=True)
-class OctopusConfig:
+class JellyfishConfig:
     """nanoGPT-tarzı modern Llama konfigürasyonu.
 
     Varsayılan ≈ 100M param (dim 768 · 12 layer · 12 head · 4 kv-head/GQA · vocab 32k).
@@ -36,14 +36,14 @@ class OctopusConfig:
 
 # Boyut ladder'ı — yerel (≤200M) → RunPod (0.5B-1B). Tümü head_dim 64, GQA.
 PRESETS: dict[str, dict] = {
-    "octopus-100m": dict(dim=768, n_layers=12, n_heads=12, n_kv_heads=4),    # ~100M (mevcut)
-    "octopus-200m": dict(dim=1024, n_layers=16, n_heads=16, n_kv_heads=4),   # ~210M — yerel tavan
-    "octopus-500m": dict(dim=1280, n_layers=24, n_heads=20, n_kv_heads=4),   # ~470M — RunPod A5000
-    "octopus-1b":   dict(dim=2048, n_layers=22, n_heads=32, n_kv_heads=4),   # ~1.1B — RunPod çok-GPU
+    "jellyfish-100m": dict(dim=768, n_layers=12, n_heads=12, n_kv_heads=4),    # ~100M (mevcut)
+    "jellyfish-200m": dict(dim=1024, n_layers=16, n_heads=16, n_kv_heads=4),   # ~210M — yerel tavan
+    "jellyfish-500m": dict(dim=1280, n_layers=24, n_heads=20, n_kv_heads=4),   # ~470M — RunPod A5000
+    "jellyfish-1b":   dict(dim=2048, n_layers=22, n_heads=32, n_kv_heads=4),   # ~1.1B — RunPod çok-GPU
 }
 
 
-def config_from_preset(name: str, **overrides) -> "OctopusConfig":
+def config_from_preset(name: str, **overrides) -> "JellyfishConfig":
     if name not in PRESETS:
         raise ValueError(f"bilinmeyen preset: {name} (seçenekler: {list(PRESETS)})")
-    return OctopusConfig(**{**PRESETS[name], **overrides})
+    return JellyfishConfig(**{**PRESETS[name], **overrides})

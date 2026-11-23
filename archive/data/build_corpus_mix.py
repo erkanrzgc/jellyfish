@@ -1,8 +1,8 @@
 #!/usr/bin/env python
-"""Çok-kaynaklı ağırlıklı korpus derleyici — recipe JSON'dan Octópus veri karışımı.
+"""Çok-kaynaklı ağırlıklı korpus derleyici — recipe JSON'dan Jellyfish veri karışımı.
 
 Birden çok HF dataset'ini streaming çeker, ağırlıklı round-robin ile karıştırır,
-her belgeyi temizle (NFC + kalite) → octopus-tr tokenize (belge-sonu EOS) → uint16 shard.
+her belgeyi temizle (NFC + kalite) → jellyfish-tr tokenize (belge-sonu EOS) → uint16 shard.
 Tek-kaynak `build_pretrain_data.py`'ın genel hali; mantık/yardımcılar oradan reuse.
 
 Recipe (data/recipes/*.json):

@@ -1,7 +1,7 @@
 #!/bin/bash
-# Octopus v1.3 = v1.0 SFT repro + DPO, one pod session, Q4_K_M GGUF out. No HF token on the pod:
+# Jellyfish v1.3 = v1.0 SFT repro + DPO, one pod session, Q4_K_M GGUF out. No HF token on the pod:
 # adapters + GGUF are staged in $OUT and pulled with scp; HF upload happens locally afterwards.
-# Prerequisites staged under /workspace/octopus (scp, no git push):
+# Prerequisites staged under /workspace/jellyfish (scp, no git push):
 #   train/sft_bf16.py train/dpo_bf16.py data/__init__.py data/sft/{__init__,normalize,persona}.py
 #   data/sft/train.jsonl   (fb2e0c9 repro: build_sft --source distill seed_tr tools --seed-repeat 3,
 #                           train=3231 sha e633b060...)
@@ -9,9 +9,9 @@
 # Self-stop watchdog: the pod stops itself after MAX_HOURS even if this script hangs.
 set -eo pipefail
 MAX_HOURS="${MAX_HOURS:-5}"
-REPO=/workspace/octopus; BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"
+REPO=/workspace/jellyfish; BASE="ytu-ce-cosmos/Turkish-Gemma-9b-v0.1"
 SFT=/workspace/v10-sft-adapter; DPO=/workspace/v13-dpo-adapter
-MERGED=/workspace/v13-merged; OUT=/workspace/octopus-v13-out
+MERGED=/workspace/v13-merged; OUT=/workspace/jellyfish-v13-out
 mkdir -p "$OUT"
 nohup sh -c "sleep $((MAX_HOURS * 3600)); runpodctl stop pod \$RUNPOD_POD_ID" > /workspace/watchdog.log 2>&1 &
 echo "watchdog: stop after ${MAX_HOURS}h"

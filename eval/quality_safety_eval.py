@@ -1,6 +1,6 @@
-"""Octópus kalite + safety/balance + brittleness eval — yerel Ollama RAW üretimi.
+"""Jellyfish kalite + safety/balance + brittleness eval — yerel Ollama RAW üretimi.
 
-`octopus-eval` skill'in 3 ekseninin (kalite / safety-denge / brittleness) ÜRETİM adımı.
+`jellyfish-eval` skill'in 3 ekseninin (kalite / safety-denge / brittleness) ÜRETİM adımı.
 Yargı içerik-tabanlıdır ve insan/Claude tarafından ham çıktılar üzerinden yapılır — bu betik
 YALNIZ deterministik (temp=0) üretimi toplar, kelime-eşleşmesiyle puan VERMEZ.
 
@@ -12,7 +12,7 @@ Kullanım:
     uv run python -m eval.quality_safety_eval --model jellyfish-v10 \
         --out eval/reports/v1.0_quality_safety_raw.json
 
-Sistem promptu = OCTOPUS_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
+Sistem promptu = LEGACY_TOOL_SYSTEM_PROMPT (araç-farkında dağıtım varsayılanı: model
 ```arac``` bloğu basabilir — v0.8'in "reddederken araç emit etme" glitch'i bu modda görünür).
 Template = jellyfish-v8-tokenizer (v8/v9/v10 aynı Gemma tabanı+template'i paylaşır).
 """
@@ -28,7 +28,7 @@ if hasattr(sys.stdout, "reconfigure"):
 
 from agent.backends.gguf_model import GgufModel
 from agent.messages import Message
-from data.sft.persona import OCTOPUS_TOOL_SYSTEM_PROMPT
+from data.sft.persona import LEGACY_TOOL_SYSTEM_PROMPT
 
 DEFAULT_BATTERY = "eval/data/quality_safety_tr.jsonl"
 
@@ -53,7 +53,7 @@ def run(model: str, tokenizer_dir: str, temperature: float, num_predict: int,
         gm = GgufModel(
             model=model,
             tokenizer_dir=tokenizer_dir,
-            system_prompt=OCTOPUS_TOOL_SYSTEM_PROMPT,
+            system_prompt=LEGACY_TOOL_SYSTEM_PROMPT,
             temperature=temperature,
             num_predict=num_predict,
         )

@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Packaging/tests: `uv run pytest`, `uv run python ...` (venv `.venv` on ASCII path).
-- File paths stay plain ASCII `octopus`; brand `ó` only in speech/docs.
+- File paths stay plain ASCII `jellyfish`; brand `ó` only in speech/docs.
 - Every augmented example must keep: system-role first, ≥1 valid ```arac``` block or a refusal, scope-safe "authorized lab" framing, Turkish interpretation of tool output.
 - Determinism: same `--seed` ⇒ byte-identical output (reproducible dataset).
 - Distribution audit (hard gate): no single concrete target > **6%** of tool examples; hostnames ≥ **20%** of examples that have a network target.
@@ -95,7 +95,7 @@ PRIVATE_RANGES: tuple[IPv4Network, ...] = (
 DOC_RANGE: IPv4Network = ip_network("203.0.113.0/24")  # RFC 5737 TEST-NET-3
 
 HOSTNAMES: tuple[str, ...] = (
-    "octopus-target", "web01.lab.local", "dc01.corp.local", "app-staging.internal",
+    "jellyfish-target", "web01.lab.local", "dc01.corp.local", "app-staging.internal",
     "kali-victim", "db-01.internal", "gitlab.lab.local", "vpn-gw.corp.local",
     "mail.corp.local", "jenkins.lab.local", "fileserver.internal", "portal.kurum.local",
     "wordpress.lab.local", "api-gw.internal", "ad01.corp.local", "backup.lab.local",
@@ -214,7 +214,7 @@ _HOST_RE = re.compile(
     r"\b(?:[a-z0-9][a-z0-9-]*\.)*[a-z0-9][a-z0-9-]*\."
     r"(?:local|internal|lab\.local|corp\.local|kurum\.local|kurum\.com)\b"
 )
-_BARE_HOSTS = ("octopus-target", "kali-victim")
+_BARE_HOSTS = ("jellyfish-target", "kali-victim")
 
 
 @dataclass
@@ -533,7 +533,7 @@ git commit -m "feat(data): dosya augmentasyonu + CLI (--src/--out/--k/--seed, or
 - Consumes: nothing (data file). Validated structurally.
 - Produces: ≥15 examples where the user gives a **hostname** target and the assistant copies it **verbatim** into the `arac` `hedef` field.
 
-Author ≥15 multi-turn examples. Each: system (persona/arac spec), user (hostname target), assistant (```arac``` with the SAME hostname in `hedef`), tool (output referencing the hostname), assistant (Turkish interpretation). Vary tool + hostname across: `nmap`/`web01.lab.local`, `nikto`/`wordpress.lab.local`, `gobuster`/`portal.kurum.local`, `nuclei`/`api-gw.internal`, `smbclient`/`fileserver.internal`, `hydra`/`vpn-gw.corp.local`, `wpscan`/`wordpress.lab.local`, `sqlmap`/`app-staging.internal`, `dnsrecon`/`corp.local`, `enum4linux-ng`/`dc01.corp.local`, `feroxbuster`/`gitlab.lab.local`, `whatweb`/`mail.corp.local`, `ffuf`/`api-gw.internal`, `netexec`/`ad01.corp.local`, `nmap`/`octopus-target`.
+Author ≥15 multi-turn examples. Each: system (persona/arac spec), user (hostname target), assistant (```arac``` with the SAME hostname in `hedef`), tool (output referencing the hostname), assistant (Turkish interpretation). Vary tool + hostname across: `nmap`/`web01.lab.local`, `nikto`/`wordpress.lab.local`, `gobuster`/`portal.kurum.local`, `nuclei`/`api-gw.internal`, `smbclient`/`fileserver.internal`, `hydra`/`vpn-gw.corp.local`, `wpscan`/`wordpress.lab.local`, `sqlmap`/`app-staging.internal`, `dnsrecon`/`corp.local`, `enum4linux-ng`/`dc01.corp.local`, `feroxbuster`/`gitlab.lab.local`, `whatweb`/`mail.corp.local`, `ffuf`/`api-gw.internal`, `netexec`/`ad01.corp.local`, `nmap`/`jellyfish-target`.
 
 Two complete reference rows (write the rest in the same shape):
 
@@ -563,7 +563,7 @@ def test_at_least_15_examples():
 
 
 def test_user_hostname_appears_verbatim_in_arac_hedef():
-    host_re = re.compile(r"[a-z0-9][a-z0-9.-]*\.(?:local|internal)|octopus-target")
+    host_re = re.compile(r"[a-z0-9][a-z0-9.-]*\.(?:local|internal)|jellyfish-target")
     for row in _rows():
         user = next(m["content"] for m in row["messages"] if m["role"] == "user")
         hosts = set(host_re.findall(user))
@@ -635,7 +635,7 @@ def test_audit_passes_balanced_with_hostnames():
     rows = [_row(f"10.{i}.{i}.{i}") for i in range(1, 40)]
     rows += [_row(h) for h in ("web01.lab.local", "dc01.corp.local", "api-gw.internal",
                                "portal.kurum.local", "fileserver.internal",
-                               "app-staging.internal", "octopus-target", "mail.corp.local",
+                               "app-staging.internal", "jellyfish-target", "mail.corp.local",
                                "gitlab.lab.local", "vpn-gw.corp.local", "ad01.corp.local")]
     ok, report = target_audit(rows)
     assert ok is True

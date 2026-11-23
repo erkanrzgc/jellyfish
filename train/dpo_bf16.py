@@ -1,4 +1,4 @@
-"""Octopus DPO on top of an SFT LoRA: bf16 base + merged SFT adapter + new LoRA trained with TRL DPO.
+"""Jellyfish DPO on top of an SFT LoRA: bf16 base + merged SFT adapter + new LoRA trained with TRL DPO.
 
 The SFT adapter is merged first, so with ref_model=None TRL's reference is the SFT model (adapter off).
 Pairs come from `data/dpo/out/pairs/` (TRL conversational records). They are rendered to text here with the
