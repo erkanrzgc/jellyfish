@@ -36,7 +36,7 @@ uv run python -m agent.chat --ask "Kimsin sen?"
 uv run python -m agent.cli --gguf
 ```
 
-The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `jellyfish-v10` before the rename (same weights); the `jellyfish-lab` Docker network keeps its original name.
+The legacy v1.0 path renders the v0.8 training template itself and calls Ollama in raw mode; v1.1 and v1.2 remain unpromoted experiments ([report](eval/reports/v1.2_gapfill_retrain_2026-09-15.md)). The legacy model was published as `octopus-v10` before the rename and is now tagged `jellyfish-v10` (same weights).
 
 For development continuity across Codex and Claude, start with [`AGENTS.md`](AGENTS.md) and [`PROJECT_HANDOFF.md`](PROJECT_HANDOFF.md).
 

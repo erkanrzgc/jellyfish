@@ -2,7 +2,7 @@
 
 > Read this first when switching between Codex and Claude. This file is the shared current state; it replaces reliance on chat history. Update it at the end of meaningful work.
 
-**Last updated:** 2026-11-24 (Europe/Istanbul), Claude. The Octopus → Jellyfish rename is complete, PR #11 and PR #12 are merged, CI is green again, and `main` is the only branch.
+**Last updated:** 2026-11-24 (Europe/Istanbul), Claude. The Octopus → Jellyfish rename is complete (including the local Docker lab), PR #11 and PR #12 are merged, CI is green again, and `main` is the only branch.
 
 **Workspace:** `C:\Users\erkanrzgc\Desktop\Jellyfish` (renamed from `Desktop\Octopus` on 2026-11-23; `.venv` rebuilt, Claude project memory moved).
 **GitHub:** `erkanrzgc/jellyfish`, branch `main` at `68c4a06`.
@@ -23,6 +23,7 @@
 | CI fix (`6a6f8b7`) | `.github/workflows/ci.yml` now installs `pyyaml` and `jinja2` besides pytest. `main` CI had been red since 2026-09 because `agent/skills.py` imports `yaml`. `tests/train/test_dpo_render.py` now skips the real-tokenizer test when `transformers` is absent |
 | PR #12 `fix/logo-icon` | Merged as `68c4a06`; restores the orange logo |
 | Branches | `feat/evren-preference-data` and `fix/logo-icon` deleted locally and on GitHub |
+| Docker lab renamed | Created network `jellyfish-lab` and container `jellyfish-target` (`bkimminich/juice-shop`, port 3000, no host port binding); removed old `octopus-target` and `octopus-lab`. `docs/DEMO_GUIDE.md` now shows the lab setup commands and `--port 3000` |
 
 ## Verification snapshot (2026-11-24)
 
@@ -32,9 +33,10 @@
 | Clean Python 3.12 venv with only `pytest`, `pyyaml`, `jinja2` (mirrors CI), `pytest -q` | 548 passed, 1 skipped |
 | GitHub Actions `test` on `6a6f8b7` | pass |
 | `uv run python -m agent.smoke` | 3/3 offline checks passed |
+| `docker run --rm --network jellyfish-lab instrumentisto/nmap -Pn -p 3000 jellyfish-target` (executor argv without the `wsl` prefix) | 1 host up, `3000/tcp open` |
 | `ollama list` | `jellyfish-v10`, `gemma4:e4b`, `gemma4:12b`, `qwen3:8b`, `qwen3:4b` present |
 
-No live model or real-tool run was performed in these sessions. No training, pod, or spending happened.
+The nmap row is a direct Docker run against the local lab, not a run through `agent.cli`. No live model run was performed in these sessions. No training, pod, or spending happened.
 
 ## Resume commands
 
@@ -57,10 +59,10 @@ For a live check follow `models/README.md` and `docs/DEMO_GUIDE.md`. Review actu
 
 ## Next steps, in order
 
-1. **Docker lab name mismatch (open bug):** code defaults are now `jellyfish-lab` / `jellyfish-target` (`agent/cli.py`, `agent/backends/docker_executor.py`), but this PC still has network `octopus-lab` and container `octopus-target` (`bkimminich/juice-shop`). Either recreate the lab under the new names or pass `--target`/network explicitly. Until then the real-tool Docker demo will not find its target.
+1. **Kali WSL missing (open bug):** `DockerExecutor` builds `wsl.exe -d kali-linux -- docker run ...` (`agent/backends/docker_executor.py`, default `distro="kali-linux"`), but this PC only has WSL distros `Ubuntu-24.04` and `docker-desktop`; `wsl -d kali-linux` fails with `WSL_E_DISTRO_NOT_FOUND`. Docker itself works from Windows. Fix by installing Kali WSL with Docker Desktop integration, or by letting the executor call `docker` directly / take a configurable distro. Until then `agent.cli --docker` cannot run real tools.
 2. **Persona and evidence push (from the 2026-11-22 plan):** make gemma4 introduce itself only when asked; decide the default for the opt-in `evidence_push` (gemma4 RCA 0/5 base, 5/5 with push, but push costs 3 no-tool val cases).
 3. **DPO training decision:** the 758 pairs target v1.0's ```` ```arac``` ```` format. Since stock gemma4 is now the default, training would need either a converter to gemma4's native tool format or a decision to train v1.0. Any run needs explicit user approval; cap $3 (plan `docs/superpowers/plans/2026-11-22-harness-and-base-bakeoff.md`, task 7). Free EVREN inference ends **2026-12-01**; any extra teacher data must be generated before then.
-4. **Real nmap integration:** after step 1, run the scripted-model/real-tool demo, then real-model/real-tool against the local authorized lab only.
+4. **Real nmap integration:** the lab is ready (`jellyfish-lab` / `jellyfish-target`, port 3000); after step 1, run the scripted-model/real-tool demo, then real-model/real-tool against the local authorized lab only.
 5. **Per-tool CLI adapters and eval depth:** lab-test a few tools before claiming broad execution support; extend the held-out set to argument correctness, all emitted calls, and varied refusal probes.
 6. **Artifact reproducibility:** any future training must keep the adapter, tokenizer, pinned environment, data manifest/split, and eval outputs before the pod is deleted.
 
