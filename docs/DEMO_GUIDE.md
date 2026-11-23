@@ -49,7 +49,12 @@ An initial 2026-10-23 service check failed. The user subsequently started Ollama
 This is an optional live integration check, separate from the three offline checks. Prerequisites:
 
 - A functioning Docker engine reachable from the `kali-linux` WSL distribution.
-- A prepared `jellyfish-lab` Docker network and an authorized target container named `jellyfish-target`, exposing a known service on port 80.
+- A prepared `jellyfish-lab` Docker network and an authorized target container named `jellyfish-target`, exposing a known service. The reference lab uses `bkimminich/juice-shop`, which listens on port 3000; pass `--port` to match your target:
+
+  ```powershell
+  docker network create jellyfish-lab
+  docker run -d --name jellyfish-target --network jellyfish-lab bkimminich/juice-shop
+  ```
 - The executor's `instrumentisto/nmap` image available to that engine.
 
 Inspect your lab before running a scan:
@@ -62,7 +67,7 @@ wsl -d kali-linux -- docker inspect jellyfish-target
 Then run the scripted-model integration check:
 
 ```powershell
-uv run python -m agent.cli --docker --target jellyfish-target --port 80 --scope jellyfish-target
+uv run python -m agent.cli --docker --target jellyfish-target --port 3000 --scope jellyfish-target
 ```
 
 Expected: a target/command preview and approval prompt. Enter `evet` or `yes` to approve that exact call, then inspect actual nmap output for the known target. Declining or an engine error leaves the task unfinished. Inspect the audit log for the target, decision, and actual execution. The Docker executor's built-in image map currently covers only nmap; the larger catalog does not imply Docker support for all tools.
