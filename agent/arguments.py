@@ -18,7 +18,8 @@ def nmap_flags(options: str) -> list[str]:
     if not isinstance(options, str):
         raise ValueError("secenekler metin olmali")
     tokens = shlex.split(options)
-    flags = {"-sV", "-sT", "-sS", "-sU", "-Pn", "-n", "--open", "--version-light", "-v"}
+    # "-p-" = all ports (1-65535): a port range only, no scripts or extra targets.
+    flags = {"-sV", "-sT", "-sS", "-sU", "-Pn", "-n", "--open", "--version-light", "-v", "-p-"}
     i = 0
     while i < len(tokens):
         token = tokens[i]
