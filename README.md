@@ -159,3 +159,5 @@ The retained v1.0 artifact is Q4 GGUF. Its bf16 adapter was not archived, which 
 Code is licensed under [MIT](LICENSE). Model weights and adapters remain subject to the base model's [Gemma terms](https://ai.google.dev/gemma/terms). Use real security tools only against systems within your authorized scope.
 
 Created by [Erkan](https://github.com/erkanrzgc).
+
+Logo icon: [Flaticon](https://www.flaticon.com/free-icons/jellyfish) (free license, attribution required).
