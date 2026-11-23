@@ -42,6 +42,7 @@ def test_real_gemma_tokenizer_gives_one_bos_and_sft_turn_ending():
     directory = Path("models/jellyfish-v8-tokenizer")
     if not directory.is_dir():
         pytest.skip("local tokenizer not present")
+    pytest.importorskip("transformers")
     from agent.backends.gguf_model import load_tokenizer
     tokenizer = load_tokenizer(str(directory))
     row = render_pair(RECORD, tokenizer)
