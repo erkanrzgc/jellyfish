@@ -6,7 +6,8 @@ import json
 from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT, native_tools, to_arac_reply
 from data.dpo.build import split_of
 from data.dpo.common import classify_failures
-from data.dpo.native_pairs import build, failed_rows, gap_rows, normalize_message, to_native_message
+from data.dpo.native_pairs import (build, failed_rows, gap_rows, is_command_quibble, normalize_message,
+                                   to_native_message, usable_chosen)
 
 DIG_CHOSEN = ('```dusunce\nA kaydı lazım.\n```\napp.local alan adının A kaydını sorguluyorum.\n\n'
               '```arac\n{"arac": "dig", "parametreler": {"domain": "app.local", "tip": "A"}}\n```')
@@ -56,7 +57,20 @@ def test_failed_and_gap_rows():
     assert [row["id"] for row in failed] == ["b", "c"]
     assert failed[0]["raw_reply"] == to_arac_reply(replies["b"])
     chosen = {"b": {"id": "b", "chosen": DIG_CHOSEN}, "c": {"id": "c", "chosen": None}}
-    assert [row["id"] for row in gap_rows(failed, chosen)] == ["c"]
+    assert [row["id"] for row in gap_rows(cases, failed, chosen)] == ["c"]
+
+
+def test_old_brand_or_broken_chosen_goes_back_to_the_teacher():
+    case = _case("a", "fam-1")
+    assert usable_chosen(case, DIG_CHOSEN) == to_native_message(DIG_CHOSEN)
+    assert usable_chosen(case, None) is None
+    assert usable_chosen(case, "Merhaba, ben Octópus. " + DIG_CHOSEN) is None
+    assert usable_chosen(case, "ben octopus'um. " + DIG_CHOSEN) is None
+    # Seen in a real teacher answer (DPO-TOOL-0337): a one-line reasoning fence that is never closed.
+    broken = DIG_CHOSEN.replace("```dusunce\nA kaydı lazım.\n```", "```dusunce```\nA kaydı lazım.")
+    assert usable_chosen(case, broken) is None
+    failed = [{"id": "a", "raw_reply": "", "failures": ["missing_call"]}]
+    assert gap_rows({"a": case}, failed, {"a": {"id": "a", "chosen": broken}}) == failed
 
 
 def test_build_writes_native_pairs_tools_and_manifest(tmp_path):
@@ -68,7 +82,10 @@ def test_build_writes_native_pairs_tools_and_manifest(tmp_path):
                "t2": _gemma_call("dig", {"alan": "app.local"}),
                "t3": _gemma_call("dig", {"alan": "app.local"}),  # no chosen
                "v1": _gemma_call("whois_lookup", {"domain": "app.local"})}
+    cases["t4"] = _case("t4", train_family)
+    replies["t4"] = _gemma_call("dig", {"alan": "app.local"})
     chosen = {"t2": {"id": "t2", "chosen": DIG_CHOSEN, "teacher_model": "glm"},
+              "t4": {"id": "t4", "chosen": "Ben Octópus. " + DIG_CHOSEN, "teacher_model": "glm"},
               "v1": {"id": "v1", "chosen": DIG_CHOSEN, "teacher_model": "glm"}}
     manifest = build(cases, replies, chosen, tmp_path / "out", model="gemma4:e4b")
     out = tmp_path / "out"
@@ -84,6 +101,30 @@ def test_build_writes_native_pairs_tools_and_manifest(tmp_path):
     tools = json.loads((out / "tools.json").read_text(encoding="utf-8"))
     assert tools == native_tools()
     assert manifest == json.loads((out / "manifest.json").read_text(encoding="utf-8"))
-    assert manifest["model"] == "gemma4:e4b" and manifest["scored"] == 4 and manifest["model_passed"] == 1
+    assert manifest["model"] == "gemma4:e4b" and manifest["scored"] == 5 and manifest["model_passed"] == 1
     assert manifest["pairs"] == 2 and manifest["train"] == 1 and manifest["val"] == 1
-    assert manifest["missing_chosen"] == 1 and manifest["tools"] == len(tools)
+    assert manifest["missing_chosen"] == 1 and manifest["unusable_chosen"] == 1
+    assert manifest["tools"] == len(tools)
+
+
+def _cmd(command: str) -> dict:
+    return {"role": "assistant", "content": "",
+            "tool_calls": [{"type": "function", "function": {"name": "run_cmd", "arguments": {"komut": command}}}]}
+
+
+def test_shell_command_string_differences_are_not_pairs():
+    assert is_command_quibble(["param_mismatch"], _cmd("free"), _cmd("free -h"))
+    assert not is_command_quibble(["param_mismatch", "catalog"], _cmd("free"), _cmd("free -h"))
+    assert not is_command_quibble(["wrong_first_tool"], _gemma_call("dig", {}), _cmd("free -h"))
+    dig = to_native_message(DIG_CHOSEN)
+    assert not is_command_quibble(["param_mismatch"], normalize_message(_gemma_call("dig", {"alan": "x"})), dig)
+
+
+def test_build_drops_command_quibbles(tmp_path):
+    family = next(f"fam-{i}" for i in range(100) if split_of(f"fam-{i}") == "train")
+    case = {"id": "c1", "family_id": family, "category": "incident", "prompt": "bellek",
+            "expected_tools": ["run_cmd"], "expected_params": {"komut": "free -h"}, "allow_tools": True}
+    chosen_text = 'Belleğe bakıyorum.\n\n```arac\n{"arac": "run_cmd", "parametreler": {"komut": "free -h"}}\n```'
+    manifest = build({"c1": case}, {"c1": _cmd("free")}, {"c1": {"id": "c1", "chosen": chosen_text}},
+                     tmp_path / "out")
+    assert manifest["pairs"] == 0 and manifest["dropped_command_quibbles"] == 1

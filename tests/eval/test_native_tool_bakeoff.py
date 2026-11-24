@@ -60,12 +60,12 @@ def test_train_split_is_disjoint_from_the_held_out_val_families():
     assert val == bakeoff_ids(cases)
 
 
-def test_train_replies_go_outside_the_bakeoff_dir():
-    """The summary globs BAKEOFF_DIR; train replies there would overwrite the val arm of the same model."""
-    from eval.native_tool_bakeoff import BAKEOFF_DIR, output_path
+def test_policy_replies_go_outside_the_bakeoff_dir():
+    """The summary globs BAKEOFF_DIR, and a bake-off file may predate the current prompt: DPO replies stay apart."""
+    from eval.native_tool_bakeoff import BAKEOFF_DIR, NATIVE_TRAIN_DIR, output_path
     assert output_path("gemma4:e4b", "val") == BAKEOFF_DIR / "gemma4_e4b.jsonl"
-    train = output_path("gemma4:e4b", "train")
-    assert train.name == "gemma4_e4b.jsonl" and train.parent != BAKEOFF_DIR
+    assert output_path("gemma4:e4b", "train") == NATIVE_TRAIN_DIR / "gemma4_e4b_train.jsonl"
+    assert output_path("gemma4:e4b", "val", policy=True) == NATIVE_TRAIN_DIR / "gemma4_e4b_val.jsonl"
 
 
 def test_run_model_writes_to_the_given_path_and_resumes(tmp_path, monkeypatch):

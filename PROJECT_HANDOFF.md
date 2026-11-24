@@ -2,10 +2,10 @@
 
 > Read this first when switching between Codex and Claude. This file is the shared current state; it replaces reliance on chat history. Update it at the end of meaningful work.
 
-**Last updated:** 2026-11-24 (Europe/Istanbul), Claude. The Octopus → Jellyfish rename is complete (including the local Docker lab), PR #11 and PR #12 are merged, CI is green again, and `main` is the only branch.
+**Last updated:** 2026-11-24 (Europe/Istanbul), Claude. The Octopus → Jellyfish rename is complete (including the local Docker lab), CI is green, and 339 on-policy gemma4 DPO pairs are built locally ($0); paid training has not started.
 
 **Workspace:** `C:\Users\erkanrzgc\Desktop\Jellyfish` (renamed from `Desktop\Octopus` on 2026-11-23; `.venv` rebuilt, Claude project memory moved).
-**GitHub:** `erkanrzgc/jellyfish`, branch `main` at `68c4a06`.
+**GitHub:** `erkanrzgc/jellyfish`, branch `main` at `c08342e` (before the `feat/gemma4-native-pairs` PR).
 
 ## Current state
 
@@ -14,6 +14,7 @@
 - **Default runtime:** stock `gemma4:e4b` with native tool calling (`agent/config.py`, user decision 2026-11-22). v1.0 / `jellyfish-v10` remains the legacy fine-tuned path; v1.1 and v1.2 were not promoted.
 - **Logo:** `assets/jellyfish.png` is the orange Flaticon jellyfish (sha256 prefix `981693fbaed8`), credited at the end of `README.md`. A pink icon was briefly merged in PR #11 by mistake and reverted in PR #12.
 - **DPO data (EVREN teacher):** finished 2026-11-23 02:45: 758 pairs (train 678 / val 80) in gitignored `data/dpo/out/`. Pairs use the v1.0 ```` ```arac``` ```` format, not gemma4's native tool format.
+- **On-policy gemma4 DPO pairs (2026-11-24, $0):** 339 pairs (train 305 / val 34) in gitignored `data/dpo/out/native_pairs/` (`pairs_train.jsonl`, `pairs_val.jsonl`, `tools.json`, `manifest.json`). `rejected` is gemma4:e4b's own failing reply under the current `NATIVE_SYSTEM_PROMPT` (native `tool_calls`); `chosen` is an EVREN/teacher answer converted to native `tool_calls` and re-checked by the same structural gate. Built by `data/dpo/native_pairs.py`.
 
 ## Changes in the 2026-11-23/24 sessions
 
@@ -25,13 +26,17 @@
 | Branches | `feat/evren-preference-data` and `fix/logo-icon` deleted locally and on GitHub |
 | Docker path without Kali (PR #15) | `DockerExecutor` and `_docker_container_ip` now call `docker` directly; optional `docker_prefix` (same pattern as `sandbox_executor`) can still route through a WSL distro. Kali WSL is no longer installed on this PC, so the old `wsl -d kali-linux` prefix failed with `WSL_E_DISTRO_NOT_FOUND`. `RealExecutor` (`--real`, tools run natively inside Kali) still requires Kali WSL |
 | nmap skill aligned with policy (PR #17) | `agent/arguments.py` now also allows `-p-` (all ports). `agent/skills/tools/nmap.md` recommends only allowlisted flags (typical `-sV -Pn -p-`) and lists the rejected ones (`-sC`/`--script`, `-A`, `-O`, `-T<n>`, `-oN`/`-oX`). New `tests/agent/test_arguments.py` locks the skill examples to the allowlist |
+| On-policy gemma4 pairs (branch `feat/gemma4-native-pairs`) | `eval/native_tool_bakeoff.py --split train` and `--split val --policy` write gemma4 replies to `data/dpo/out/native_train/gemma4_e4b_{train,val}.jsonl`, never to the bake-off file. `data/dpo/native_pairs.py` (`gaps`, `build`) pairs failures with teacher answers. A chosen answer is sent back to EVREN if it still says Octópus/Octopus or fails the gate after conversion. Pairs where both sides call `run_cmd` and only the command string differs (`free` vs `free -h`, quote style, `head` vs `head -n 10`; some labeled commands like `htop`/`watch` were worse than the rejected one) are dropped: 43 such pairs. EVREN filled 121 missing answers (1 dropped, 1 unusable after retry). |
 | Docker lab renamed | Created network `jellyfish-lab` and container `jellyfish-target` (`bkimminich/juice-shop`, port 3000, no host port binding); removed old `octopus-target` and `octopus-lab`. `docs/DEMO_GUIDE.md` now shows the lab setup commands and `--port 3000` |
 
 ## Verification snapshot (2026-11-24)
 
 | Command | Observed result |
 |---|---|
-| `uv run pytest -q` | 562 passed |
+| `uv run pytest -q` | 574 passed (on `feat/gemma4-native-pairs`) |
+| gemma4:e4b on the 1981 DPO train cases, current prompt (`--split train`) | 1634 passed; tool cases 952/1268, no-tool 682/713; missing_call 135, wrong_first_tool 102, param_mismatch 74, unnecessary_call 31, catalog 7 |
+| gemma4:e4b on the 212 val cases, current prompt (`--split val --policy`) | **175/212** (tool 106/139, no-tool 69/73). This is the pre-DPO baseline; the 177/212 in the 2026-11-22 bake-off was measured under an older prompt (every reply said "Octópus") |
+| `python -m data.dpo.native_pairs build` | 339 pairs (305/34), 0 Octópus in chosen or rejected, 1 missing + 1 unusable chosen, 43 command quibbles dropped |
 | Clean Python 3.12 venv with only `pytest`, `pyyaml`, `jinja2` (mirrors CI), `pytest -q` | 548 passed, 1 skipped |
 | GitHub Actions `test` on `6a6f8b7` | pass |
 | `uv run python -m agent.smoke` | 3/3 offline checks passed |
@@ -66,7 +71,7 @@ For a live check follow `models/README.md` and `docs/DEMO_GUIDE.md`. Review actu
 
 1. **Live demo follow-ups:** the real-model/real-tool path now completes. Two observations from that run: the model still starts with `-sC` and only drops it after the skill guide is injected (one wasted turn), and it repeated the identical nmap call twice. Consider a duplicate-call guard in `run_tool_loop` and measure on more than one prompt before changing defaults.
 2. **Persona and evidence push (from the 2026-11-22 plan):** make gemma4 introduce itself only when asked; decide the default for the opt-in `evidence_push` (gemma4 RCA 0/5 base, 5/5 with push, but push costs 3 no-tool val cases).
-3. **DPO training decision:** the 758 pairs target v1.0's ```` ```arac``` ```` format. Since stock gemma4 is now the default, training would need either a converter to gemma4's native tool format or a decision to train v1.0. Any run needs explicit user approval; cap $3 (plan `docs/superpowers/plans/2026-11-22-harness-and-base-bakeoff.md`, task 7). Free EVREN inference ends **2026-12-01**; any extra teacher data must be generated before then.
+3. **DPO stage 2 (paid, needs explicit user approval, cap $3):** the 339 on-policy gemma4 pairs are ready. Before any spend: (a) a new pod env, since the pinned one (tf 4.49 / trl 0.15.2) predates Gemma 4, and `train/dpo_bf16.py` must render native `tool_calls` plus `tools.json` (about 6.7k tokens of schema per prompt, which drives memory); (b) check that the HF `google/gemma-4-E4B-it` chat template matches Ollama's `RENDERER gemma4`; (c) a test Ollama import of a merged model with `RENDERER gemma4` / `PARSER gemma4` so native tools survive. Success bar: beat 175/212 on val without losing no-tool cases. Fallback: `cloud/pod_dpo_v13.sh` (~$1.4) trains the non-default v1.0 on the 758 legacy pairs. Free EVREN inference ends **2026-12-01**.
 4. **Real nmap integration:** scripted-model/real-tool and real-model/real-tool both pass in the local lab. Only nmap has a Docker image (`TOOL_IMAGES`); `whatweb`/`nuclei` suggested by the model would return "imaj yok". Scan only the local authorized lab.
 5. **Per-tool CLI adapters and eval depth:** lab-test a few tools before claiming broad execution support; extend the held-out set to argument correctness, all emitted calls, and varied refusal probes.
 6. **Artifact reproducibility:** any future training must keep the adapter, tokenizer, pinned environment, data manifest/split, and eval outputs before the pod is deleted.
