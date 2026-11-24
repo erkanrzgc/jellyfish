@@ -1,0 +1,10 @@
+# Control arm for the gemma4 DPO eval: the stock google/gemma-4-E4B-it weights through the same llama.cpp
+# convert + Q4_K_M quantize (no imatrix) as jellyfish-g4-dpo. Compare the two on the 212 val cases; the Ollama
+# gemma4:e4b (imatrix Q4_K_M, 175/212) stays the reference. Put the GGUF next to this file, then:
+# ollama create jellyfish-g4-requant -f models/Modelfile.g4-requant
+FROM ./gemma4-e4b-requant-Q4_K_M.gguf
+RENDERER gemma4
+PARSER gemma4
+PARAMETER temperature 1
+PARAMETER top_k 64
+PARAMETER top_p 0.95

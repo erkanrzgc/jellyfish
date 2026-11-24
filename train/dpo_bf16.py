@@ -28,12 +28,14 @@ MAX_PROMPT_LENGTH = 1024
 SEED = 3407
 
 
-def render_pair(record: dict, tokenizer) -> dict:
-    """Conversational record -> text prompt/chosen/rejected, exactly as SFT rendered the same turns."""
-    prompt = tokenizer.apply_chat_template(record["prompt"], tokenize=False, add_generation_prompt=True)
+def render_pair(record: dict, tokenizer, **template_kwargs) -> dict:
+    """Conversational record -> text prompt/chosen/rejected, exactly as SFT rendered the same turns.
+    `template_kwargs` (e.g. `tools`, `chat_template`) go to every `apply_chat_template` call."""
+    prompt = tokenizer.apply_chat_template(record["prompt"], tokenize=False, add_generation_prompt=True,
+                                           **template_kwargs)
     row = {"prompt": prompt}
     for side in ("chosen", "rejected"):
-        full = tokenizer.apply_chat_template(record["prompt"] + record[side], tokenize=False)
+        full = tokenizer.apply_chat_template(record["prompt"] + record[side], tokenize=False, **template_kwargs)
         if not full.startswith(prompt):
             raise ValueError(f"chat template does not extend the prompt for {side} ({record.get('meta')})")
         row[side] = full[len(prompt):]
