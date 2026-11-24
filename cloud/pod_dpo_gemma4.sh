@@ -16,7 +16,8 @@
 #   train/__init__.py train/dpo_bf16.py train/dpo_gemma4.py train/templates/gemma4_e4b_chat_template.jinja
 #   data/dpo/out/native_pairs/{pairs_train.jsonl,pairs_val.jsonl,tools.json,manifest.json}
 # Pull back $OUT: the PEFT adapter + run manifest (archive them), logs, and the Q4_K_M GGUF(s).
-# Self-stop watchdog: the pod stops itself after MAX_HOURS even if this script hangs.
+# Self-stop watchdog: stops the pod after MAX_HOURS, but only if the pod's runpodctl has an API key. On 2026-11-25
+# it had none ("API key not found"), so the operator has to delete the pod; do not rely on this line.
 set -eo pipefail
 MAX_HOURS="${MAX_HOURS:-3}"; CONTROL="${CONTROL:-1}"
 REPO=/workspace/jellyfish; OUT=/workspace/jellyfish-g4-dpo-out; MERGED=/workspace/g4-merged
@@ -27,7 +28,9 @@ nohup sh -c "sleep $((MAX_HOURS * 3600)); runpodctl stop pod \$RUNPOD_POD_ID" > 
 echo "watchdog: stop after ${MAX_HOURS}h"
 
 echo "===== [0/6] pinned env (transformers = the version the rendering was tested with locally) ====="
-pip install -q "torch==2.6.0" --index-url https://download.pytorch.org/whl/cu124 2>&1 | tail -1
+# torchvision/torchaudio must match torch: the template's torchvision 0.19.1 breaks `import transformers` on 2.6.
+pip install -q "torch==2.6.0" "torchvision==0.21.0" "torchaudio==2.6.0" --index-url https://download.pytorch.org/whl/cu124 \
+  2>&1 | tail -1
 pip install -q "transformers==5.12.1" "trl==1.18.2" "peft==0.22.0" "accelerate==1.16.0" "datasets==5.0.0" \
   sentencepiece protobuf cmake 2>&1 | tail -1
 python -c "import torch, transformers, trl, peft; print('torch', torch.__version__, 'cuda', torch.version.cuda, \

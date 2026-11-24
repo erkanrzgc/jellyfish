@@ -40,7 +40,7 @@ LORA_R = 32
 LORA_ALPHA = 32
 BETA = 0.1
 LEARNING_RATE = 2e-5
-EPOCHS = 2.0
+EPOCHS = 1.0  # A40: 214 s/step (8 pairs of ~7k-token prompts), so 2 epochs (78 steps) broke the $3 cap
 MAX_LENGTH = 8704  # prompts are 6943-7016 tokens (130 tool declarations); longest completion about 1.5k
 SEED = 3407
 
@@ -186,7 +186,7 @@ def _train(args, tokenizer, train_rows: list[dict], val_rows: list[dict]) -> Non
                     per_device_train_batch_size=1, per_device_eval_batch_size=1, gradient_accumulation_steps=8,
                     max_length=MAX_LENGTH, truncation_mode="keep_start", warmup_steps=0.1,  # float = ratio (tf 5)
                     lr_scheduler_type="linear", logging_steps=1 if smoke else 5, bf16=True, seed=SEED,
-                    report_to="none", save_strategy="no", eval_strategy="no" if smoke or not val_rows else "epoch",
+                    report_to="none", save_strategy="no", eval_strategy="no",  # one evaluate() after training
                     gradient_checkpointing=True)
     trainer = PreTokenizedDPOTrainer(model=model, ref_model=None, args=cfg, processing_class=tokenizer,
                                      train_dataset=Dataset.from_list(train_rows),
