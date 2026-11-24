@@ -1,0 +1,11 @@
+# Jellyfish gemma4 + DPO adapter: the exact stock gemma4:e4b (imatrix Q4_K_M, projector, draft) plus the LoRA
+# from cloud/pod_dpo_gemma4.sh, converted to GGUF with llama.cpp v1.0.0. Put jellyfish-g4-dpo-lora.gguf next to
+# this file, then: ollama create jellyfish-g4-dpo -f models/Modelfile.g4-dpo
+# Renderer, parser and sampling are restated so the arm matches gemma4:e4b even if inheritance changes.
+FROM gemma4:e4b
+ADAPTER ./jellyfish-g4-dpo-lora.gguf
+RENDERER gemma4
+PARSER gemma4
+PARAMETER temperature 1
+PARAMETER top_k 64
+PARAMETER top_p 0.95
