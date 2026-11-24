@@ -49,3 +49,34 @@ def test_v10_arms_apply_catalog_repair_only_to_catalog_named_calls():
     assert arms["jellyfish-v10"] == {"a": bad_key, "b": invented}
     assert arms["jellyfish-v10+repair"] == {"a": fixed, "b": invented}
     assert arms["jellyfish-v10+repair-any-name"] == {"a": fixed, "b": fixed}
+
+
+def test_train_split_is_disjoint_from_the_held_out_val_families():
+    from eval.native_tool_bakeoff import split_ids
+    cases = [{"id": f"c{i}", "family_id": f"fam-{i // 3}"} for i in range(300)]
+    train, val = split_ids(cases, "train"), split_ids(cases, "val")
+    assert train and val and not set(train) & set(val)
+    assert set(train) | set(val) == {c["id"] for c in cases}
+    assert val == bakeoff_ids(cases)
+
+
+def test_policy_replies_go_outside_the_bakeoff_dir():
+    """The summary globs BAKEOFF_DIR, and a bake-off file may predate the current prompt: DPO replies stay apart."""
+    from eval.native_tool_bakeoff import BAKEOFF_DIR, NATIVE_TRAIN_DIR, output_path
+    assert output_path("gemma4:e4b", "val") == BAKEOFF_DIR / "gemma4_e4b.jsonl"
+    assert output_path("gemma4:e4b", "train") == NATIVE_TRAIN_DIR / "gemma4_e4b_train.jsonl"
+    assert output_path("gemma4:e4b", "val", policy=True) == NATIVE_TRAIN_DIR / "gemma4_e4b_val.jsonl"
+
+
+def test_run_model_writes_to_the_given_path_and_resumes(tmp_path, monkeypatch):
+    import eval.native_tool_bakeoff as bakeoff
+    calls = []
+    def fake_chat(host, model, prompt, *, num_ctx):
+        calls.append(prompt)
+        return {"message": {"content": "Cevap."}, "done_reason": "stop"}
+    monkeypatch.setattr(bakeoff, "chat", fake_chat)
+    cases = {"a": {"prompt": "p1"}, "b": {"prompt": "p2"}}
+    out = tmp_path / "m.jsonl"
+    assert bakeoff.run_model("m", cases, ["a", "b"], "h", 1024, out=out) == {"done": 2}
+    assert bakeoff.run_model("m", cases, ["a", "b"], "h", 1024, out=out) == {}
+    assert calls == ["p1", "p2"]
