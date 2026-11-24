@@ -6,6 +6,7 @@ v1.0 arms are read from stored replies (rejected.jsonl, repair_replay.jsonl) on 
 
     uv run python -m eval.native_tool_bakeoff --model qwen3:8b       # resumable
     uv run python -m eval.native_tool_bakeoff --summary
+    uv run python -m eval.native_tool_bakeoff --model gemma4:e4b --split train   # on-policy rejected for DPO
 """
 from __future__ import annotations
 
@@ -24,9 +25,22 @@ from data.dpo.common import OUT_DIR, append_jsonl, classify_failures, read_jsonl
 
 log = logging.getLogger(__name__)
 BAKEOFF_DIR = OUT_DIR / "bakeoff"
+NATIVE_TRAIN_DIR = OUT_DIR / "native_train"
+
+
+def split_ids(cases: list[dict], split: str) -> list[str]:
+    return sorted(case["id"] for case in cases if split_of(case["family_id"]) == split)
+
+
 def bakeoff_ids(cases: list[dict]) -> list[str]:
     """The DPO val families (held out from preference training), so this table is also the pre-DPO baseline."""
-    return sorted(case["id"] for case in cases if split_of(case["family_id"]) == "val")
+    return split_ids(cases, "val")
+
+
+def output_path(model: str, split: str = "val") -> Path:
+    """Train replies live outside BAKEOFF_DIR: `summary` globs it and keys arms by model name."""
+    stem = model.replace(":", "_").replace("/", "_")
+    return (BAKEOFF_DIR if split == "val" else NATIVE_TRAIN_DIR) / f"{stem}.jsonl"
 
 
 def chat(host: str, model: str, prompt: str, *, num_ctx: int, timeout: int = 600) -> dict:
@@ -39,8 +53,8 @@ def chat(host: str, model: str, prompt: str, *, num_ctx: int, timeout: int = 600
         return json.loads(response.read().decode("utf-8"))
 
 
-def run_model(model: str, cases: dict, ids: list[str], host: str, num_ctx: int) -> dict:
-    out = BAKEOFF_DIR / f"{model.replace(':', '_').replace('/', '_')}.jsonl"
+def run_model(model: str, cases: dict, ids: list[str], host: str, num_ctx: int, out: Path | None = None) -> dict:
+    out = out or output_path(model)
     done = {row["id"] for row in read_jsonl(out)}
     stats = collections.Counter()
     for case_id in ids:
@@ -138,9 +152,19 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--num-ctx", type=int, default=16384)
     parser.add_argument("--v10", action="store_true", help="run jellyfish-v10 (+repair) on this Ollama build")
     parser.add_argument("--summary", action="store_true")
+    parser.add_argument("--split", choices=["val", "train"], default="val",
+                        help="train = the DPO train families, for on-policy rejected replies (not a bake-off)")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
     cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
+    if args.split == "train":
+        ids = split_ids(list(cases.values()), "train")
+        for model in args.model:
+            out = output_path(model, "train")
+            print(json.dumps(run_model(model, cases, ids, args.host, args.num_ctx, out=out), ensure_ascii=False))
+            replies = {row["id"]: row["reply"] for row in read_jsonl(out)}
+            print(json.dumps({model: _score(cases, replies, ids)}, ensure_ascii=False, indent=2))
+        return 0
     ids = bakeoff_ids(list(cases.values()))
     if not args.summary:
         if args.v10:
