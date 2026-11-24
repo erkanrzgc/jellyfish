@@ -184,7 +184,7 @@ def _train(args, tokenizer, train_rows: list[dict], val_rows: list[dict]) -> Non
     cfg = DPOConfig(output_dir=str(args.out / "checkpoints"), beta=args.beta, learning_rate=args.lr,
                     num_train_epochs=args.epochs, max_steps=args.smoke_steps if smoke else -1,
                     per_device_train_batch_size=1, per_device_eval_batch_size=1, gradient_accumulation_steps=8,
-                    max_length=MAX_LENGTH, truncation_mode="keep_start", warmup_ratio=0.1,
+                    max_length=MAX_LENGTH, truncation_mode="keep_start", warmup_steps=0.1,  # float = ratio (tf 5)
                     lr_scheduler_type="linear", logging_steps=1 if smoke else 5, bf16=True, seed=SEED,
                     report_to="none", save_strategy="no", eval_strategy="no" if smoke or not val_rows else "epoch",
                     gradient_checkpointing=True)
