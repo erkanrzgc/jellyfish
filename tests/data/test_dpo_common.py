@@ -151,3 +151,14 @@ def test_smb_enumeration_tools_are_substitutes():
     case = {"expected_tools": ["enum4linux-ng"], "expected_params": {"hedef": "192.168.50.10"}, "allow_tools": True}
     assert classify_failures(case, _call("smbmap", {"secenekler": "-H 192.168.50.10"})) == []
     assert "smbclient" not in acceptable_first_tools(["enum4linux-ng"])
+
+
+def test_file_and_socket_listing_commands_map_to_their_catalog_tools():
+    magika = {"expected_tools": ["magika"], "expected_params": {"yol": "/tmp/unknown_042"}, "allow_tools": True}
+    assert classify_failures(magika, _call("run_cmd", {"komut": "file /tmp/unknown_042"})) == []
+    assert classify_failures(magika, _call("run_cmd", {"komut": "file /tmp/other"})) == ["param_mismatch"]
+    netstat = {"expected_tools": ["run_cmd"], "expected_params": {"komut": "netstat -tunlp"}, "allow_tools": True}
+    assert classify_failures(netstat, _call("ss", {"secenekler": "-tulnp"})) == []
+    lsof = {"expected_tools": ["run_cmd"], "expected_params": {"komut": "lsof -i :22"}, "allow_tools": True}
+    assert classify_failures(lsof, _call("ss", {"secenekler": "-tlnp sport = :22"})) == []
+    assert classify_failures(lsof, _call("ss", {"secenekler": "-tlnp"})) == ["param_mismatch"]

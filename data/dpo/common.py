@@ -79,7 +79,7 @@ SUBSTITUTE_GROUPS: tuple[frozenset[str], ...] = tuple(frozenset(group) for group
 # Local inspection commands that are also catalog tools: running one through run_cmd does the same job, both ways.
 # Network and offensive tools are deliberately absent: catalog calls pass the lab scope policy and the per-tool
 # argument allowlist, which run_cmd bypasses, so reaching them through run_cmd must stay a failure.
-SHELL_EQUIVALENTS = {"grep": "grep", "ss": "ss", "cat": "read_file"}
+SHELL_EQUIVALENTS = {"grep": "grep", "ss": "ss", "netstat": "ss", "lsof": "ss", "cat": "read_file", "file": "magika"}
 
 
 def _command_tool(command: object) -> str | None:
@@ -88,7 +88,7 @@ def _command_tool(command: object) -> str | None:
 
 
 def shell_equivalent(case: dict, name: str, params: dict) -> bool:
-    """The first call does the expected local job through the other door (run_cmd <-> grep/ss/read_file)."""
+    """The first call does the expected local job through the other door (run_cmd "file x" <-> magika, ...)."""
     if name == "run_cmd":
         return _command_tool(params.get("komut")) in case["expected_tools"]
     return ("run_cmd" in case["expected_tools"] and name in SHELL_EQUIVALENTS.values()
