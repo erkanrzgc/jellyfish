@@ -22,7 +22,7 @@ from pathlib import Path
 from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT, native_tools, to_arac_reply
 from agent.constrained import repair_prefix
 from data.dpo.build import split_of
-from data.dpo.common import OUT_DIR, append_jsonl, classify_failures, read_jsonl
+from data.dpo.common import OUT_DIR, append_jsonl, case_tag, classify_failures, read_jsonl
 
 log = logging.getLogger(__name__)
 BAKEOFF_DIR = OUT_DIR / "bakeoff"
@@ -38,12 +38,12 @@ def bakeoff_ids(cases: list[dict]) -> list[str]:
     return split_ids(cases, "val")
 
 
-def output_path(model: str, split: str = "val", *, policy: bool = False) -> Path:
+def output_path(model: str, split: str = "val", *, policy: bool = False, tag: str = "") -> Path:
     """DPO policy replies live outside BAKEOFF_DIR: `summary` globs it and keys arms by model name, and a
     bake-off file is a frozen report artifact that may predate the current system prompt."""
     stem = model.replace(":", "_").replace("/", "_")
-    if policy or split != "val":
-        return NATIVE_TRAIN_DIR / f"{stem}_{split}.jsonl"
+    if policy or split != "val" or tag:
+        return NATIVE_TRAIN_DIR / f"{stem}{'_' + tag if tag else ''}_{split}.jsonl"
     return BAKEOFF_DIR / f"{stem}.jsonl"
 
 
@@ -160,13 +160,16 @@ def main(argv: list[str] | None = None) -> int:
                         help="train = the DPO train families, for on-policy rejected replies (not a bake-off)")
     parser.add_argument("--policy", action="store_true",
                         help="write DPO policy replies under the current prompt (implied by --split train)")
+    parser.add_argument("--cases", type=Path, default=OUT_DIR / "cases.jsonl",
+                        help="case file; another file (e.g. cases_tool.jsonl) implies --policy and tagged outputs")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
-    if args.policy or args.split == "train":
+    cases = {case["id"]: case for case in read_jsonl(args.cases)}
+    tag = case_tag(args.cases)
+    if args.policy or args.split == "train" or tag:
         ids = split_ids(list(cases.values()), args.split)
         for model in args.model:
-            out = output_path(model, args.split, policy=True)
+            out = output_path(model, args.split, policy=True, tag=tag)
             print(json.dumps(run_model(model, cases, ids, args.host, args.num_ctx, out=out), ensure_ascii=False))
             replies = {row["id"]: row["reply"] for row in read_jsonl(out)}
             print(json.dumps({model: _score(cases, replies, ids)}, ensure_ascii=False, indent=2))

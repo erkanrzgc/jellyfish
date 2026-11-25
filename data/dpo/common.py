@@ -73,7 +73,26 @@ SUBSTITUTE_GROUPS: tuple[frozenset[str], ...] = tuple(frozenset(group) for group
     ("dalfox", "xsstrike"),                                            # XSS scanning
     ("bettercap", "ettercap"),                                         # MITM
     ("apktool", "jadx"),                                               # APK decompiling
+    ("enum4linux-ng", "smbmap"),                                       # SMB share/permission enumeration
 ))
+
+# Local inspection commands that are also catalog tools: running one through run_cmd does the same job, both ways.
+# Network and offensive tools are deliberately absent: catalog calls pass the lab scope policy and the per-tool
+# argument allowlist, which run_cmd bypasses, so reaching them through run_cmd must stay a failure.
+SHELL_EQUIVALENTS = {"grep": "grep", "ss": "ss", "cat": "read_file"}
+
+
+def _command_tool(command: object) -> str | None:
+    words = str(command or "").split()
+    return SHELL_EQUIVALENTS.get(words[0]) if words else None
+
+
+def shell_equivalent(case: dict, name: str, params: dict) -> bool:
+    """The first call does the expected local job through the other door (run_cmd <-> grep/ss/read_file)."""
+    if name == "run_cmd":
+        return _command_tool(params.get("komut")) in case["expected_tools"]
+    return ("run_cmd" in case["expected_tools"] and name in SHELL_EQUIVALENTS.values()
+            and _command_tool(case["expected_params"].get("komut")) == name)
 
 
 def acceptable_first_tools(expected: Iterable[str]) -> frozenset[str]:
@@ -110,6 +129,15 @@ def _params_match_loosely(case: dict, text: str) -> bool:
     return True
 
 
+def _shell_params_match(case: dict, name: str, params: dict, text: str) -> bool:
+    """run_cmd carries the tool's targets in its command; the tool must carry the command's paths and targets."""
+    if name == "run_cmd":
+        return _params_match_loosely(case, text)
+    expected_args = " ".join(str(case["expected_params"].get("komut", "")).split()[1:])
+    option_text = " ".join(str(value).lower() for value in params.values())
+    return all(target in option_text for target in _option_targets(expected_args))
+
+
 def classify_failures(case: dict, text: str) -> list[str]:
     """Structural failure labels for one reply; an empty list means every check passed."""
     _, parse_errors, checks = structural_metrics(case, text)
@@ -124,6 +152,10 @@ def classify_failures(case: dict, text: str) -> list[str]:
         calls = parse_tool_reply(text).calls
         if checks["call_count"] == 0:
             labels.append("missing_call")
+        elif (calls and calls[0].name not in acceptable_first_tools(case["expected_tools"])
+              and shell_equivalent(case, calls[0].name, calls[0].params)):
+            if not _shell_params_match(case, calls[0].name, calls[0].params, text):
+                labels.append("param_mismatch")
         elif not calls or calls[0].name not in acceptable_first_tools(case["expected_tools"]):
             labels.append("wrong_first_tool")
         elif not _params_match_loosely(case, text):
@@ -136,6 +168,11 @@ def classify_failures(case: dict, text: str) -> list[str]:
 def catalog_excerpt(names: Iterable[str] | None = None) -> str:
     specs = list(CATALOG.values()) if names is None else [CATALOG[n] for n in names if n in CATALOG]
     return "\n".join(f"- {spec.name}({', '.join(spec.params)}) [{spec.domain}]" for spec in specs)
+
+
+def case_tag(cases_path: Path) -> str:
+    """'' for the original cases.jsonl, 'tool' for cases_tool.jsonl: reply files of other case sets stay apart."""
+    return Path(cases_path).stem.removeprefix("cases").lstrip("_")
 
 
 def read_jsonl(path: Path) -> list[dict]:

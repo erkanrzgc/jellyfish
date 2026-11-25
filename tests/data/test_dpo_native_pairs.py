@@ -128,3 +128,31 @@ def test_build_drops_command_quibbles(tmp_path):
     manifest = build({"c1": case}, {"c1": _cmd("free")}, {"c1": {"id": "c1", "chosen": chosen_text}},
                      tmp_path / "out")
     assert manifest["pairs"] == 0 and manifest["dropped_command_quibbles"] == 1
+
+
+def test_build_caps_missing_call_pairs_deterministically(tmp_path):
+    """Most v1 pairs were missing_call and the model mostly learned "call a tool"; the cap rebalances."""
+    family = next(f"fam-{i}" for i in range(100) if split_of(f"fam-{i}") == "train")
+    cases = {f"c{i}": _case(f"c{i}", family) for i in range(8)}
+    replies = {f"c{i}": _gemma_call("dig", {"alan": "app.local"}) for i in range(3)}  # param_mismatch
+    replies.update({f"c{i}": {"role": "assistant", "content": "A kaydı şudur."} for i in range(3, 8)})  # missing
+    chosen = {cid: {"id": cid, "chosen": DIG_CHOSEN, "teacher_model": "glm"} for cid in cases}
+    first = build(cases, replies, chosen, tmp_path / "a", max_missing_share=0.3)
+    again = build(cases, replies, chosen, tmp_path / "b", max_missing_share=0.3)
+    rows = [json.loads(l) for l in (tmp_path / "a" / "pairs_train.jsonl").read_text(encoding="utf-8").splitlines()]
+    missing = [r for r in rows if "missing_call" in r["meta"]["failures"]]
+    assert len(rows) == 4 and len(missing) == 1 and first["dropped_missing_call_cap"] == 4
+    assert first["by_failure"] == {"catalog": 3, "missing_call": 1, "param_mismatch": 3}
+    assert (tmp_path / "a" / "pairs_train.jsonl").read_text() == (tmp_path / "b" / "pairs_train.jsonl").read_text()
+    assert again["pairs"] == first["pairs"]
+    uncapped = build(cases, replies, chosen, tmp_path / "c")
+    assert uncapped["pairs"] == 8 and uncapped["dropped_missing_call_cap"] == 0
+
+
+def test_tagged_reply_and_chosen_files():
+    from data.dpo.native_pairs import EXTRA_CHOSEN, NATIVE_TRAIN_DIR, OUT_DIR, chosen_paths, reply_paths
+    assert reply_paths("gemma4:e4b", "") == [NATIVE_TRAIN_DIR / "gemma4_e4b_val.jsonl",
+                                             NATIVE_TRAIN_DIR / "gemma4_e4b_train.jsonl"]
+    assert reply_paths("gemma4:e4b", "tool")[1] == NATIVE_TRAIN_DIR / "gemma4_e4b_tool_train.jsonl"
+    assert chosen_paths(["", "tool"]) == [OUT_DIR / "chosen.jsonl", EXTRA_CHOSEN,
+                                          NATIVE_TRAIN_DIR / "chosen_tool.jsonl"]

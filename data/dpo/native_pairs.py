@@ -24,7 +24,7 @@ from pathlib import Path
 from agent.backends.native_chat import NATIVE_SYSTEM_PROMPT, native_tools, to_arac_reply
 from agent.toolcall import parse_tool_reply
 from data.dpo.build import repair_dusunce, split_of
-from data.dpo.common import OUT_DIR, classify_failures, prose_outside_blocks, read_jsonl
+from data.dpo.common import OUT_DIR, case_tag, classify_failures, prose_outside_blocks, read_jsonl
 
 MODEL = "gemma4:e4b"
 NATIVE_TRAIN_DIR = OUT_DIR / "native_train"
@@ -108,12 +108,35 @@ def load_chosen(*paths: Path) -> dict[str, dict]:
     return merged
 
 
-def load_replies(model: str = MODEL) -> dict[str, dict]:
+def reply_paths(model: str = MODEL, tag: str = "") -> list[Path]:
+    stem = _stem(model) + (f"_{tag}" if tag else "")
+    return [NATIVE_TRAIN_DIR / f"{stem}_val.jsonl", NATIVE_TRAIN_DIR / f"{stem}_train.jsonl"]
+
+
+def chosen_paths(tags: list[str]) -> list[Path]:
+    """Teacher answers: the v1.0 pass, the native gap fill, then one file per extra case set."""
+    return [OUT_DIR / "chosen.jsonl", EXTRA_CHOSEN] + [NATIVE_TRAIN_DIR / f"chosen_{tag}.jsonl" for tag in tags if tag]
+
+
+def load_replies(model: str = MODEL, tag: str = "") -> dict[str, dict]:
     """Policy runs under the current prompt only; the bake-off file is a frozen artifact of an older prompt."""
     replies = {}
-    for path in (NATIVE_TRAIN_DIR / f"{_stem(model)}_val.jsonl", NATIVE_TRAIN_DIR / f"{_stem(model)}_train.jsonl"):
+    for path in reply_paths(model, tag):
         replies.update({row["id"]: row["message"] for row in read_jsonl(path)})
     return replies
+
+
+def cap_missing_calls(pairs: list[dict], share: float) -> tuple[list[dict], int]:
+    """Keep missing_call pairs at most `share` of the result; which ones stay is fixed by an id hash."""
+    missing = [pair for pair in pairs if "missing_call" in pair["meta"]["failures"]]
+    if share >= 1 or not missing:
+        return pairs, 0
+    others = len(pairs) - len(missing)
+    keep = min(len(missing), int(share * others / (1 - share)))
+    kept = {pair["meta"]["id"] for pair in
+            sorted(missing, key=lambda pair: hashlib.sha256(pair["meta"]["id"].encode()).hexdigest())[:keep]}
+    return ([pair for pair in pairs if "missing_call" not in pair["meta"]["failures"] or pair["meta"]["id"] in kept],
+            len(missing) - keep)
 
 
 def _write_jsonl(path: Path, rows: list[dict]) -> None:
@@ -121,9 +144,8 @@ def _write_jsonl(path: Path, rows: list[dict]) -> None:
 
 
 def build(cases: dict, replies: dict[str, dict], chosen: dict[str, dict], out_dir: Path, *,
-          model: str = MODEL) -> dict:
+          model: str = MODEL, max_missing_share: float = 1.0) -> dict:
     pairs: dict[str, list[dict]] = {"train": [], "val": []}
-    by_failure, by_category = Counter(), Counter()
     missing = unusable = quibbles = 0
     failed = failed_rows(cases, replies)
     for row in failed:
@@ -146,8 +168,12 @@ def build(cases: dict, replies: dict[str, dict], chosen: dict[str, dict], out_di
         pairs[split_of(case["family_id"])].append({
             "prompt": [{"role": "system", "content": NATIVE_SYSTEM_PROMPT}, {"role": "user", "content": case["prompt"]}],
             "chosen": [good], "rejected": [rejected], "meta": meta})
-        by_failure.update(row["failures"])
-        by_category[case["category"]] += 1
+    capped = 0
+    for split in pairs:
+        pairs[split], dropped = cap_missing_calls(pairs[split], max_missing_share)
+        capped += dropped
+    by_failure = Counter(label for rows in pairs.values() for pair in rows for label in pair["meta"]["failures"])
+    by_category = Counter(pair["meta"]["category"] for rows in pairs.values() for pair in rows)
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
     _write_jsonl(out_dir / "pairs_train.jsonl", pairs["train"])
@@ -161,6 +187,7 @@ def build(cases: dict, replies: dict[str, dict], chosen: dict[str, dict], out_di
         "scored": scored, "model_passed": scored - len(failed),
         "pairs": len(pairs["train"]) + len(pairs["val"]), "train": len(pairs["train"]), "val": len(pairs["val"]),
         "missing_chosen": missing, "unusable_chosen": unusable, "dropped_command_quibbles": quibbles,
+        "max_missing_share": max_missing_share, "dropped_missing_call_cap": capped,
         "tools": len(tools), "tools_sha256": hashlib.sha256(tools_text.encode("utf-8")).hexdigest(),
         "system_prompt_sha256": hashlib.sha256(NATIVE_SYSTEM_PROMPT.encode("utf-8")).hexdigest(),
         "by_failure": dict(sorted(by_failure.items())), "by_category": dict(sorted(by_category.items())),
@@ -173,20 +200,30 @@ def main(argv: list[str] | None = None) -> int:
     parser = argparse.ArgumentParser(description=__doc__, formatter_class=argparse.RawDescriptionHelpFormatter)
     parser.add_argument("stage", choices=["gaps", "build"])
     parser.add_argument("--model", default=MODEL)
+    parser.add_argument("--cases", type=Path, action="append", default=None,
+                        help="case file(s); default cases.jsonl. cases_tool.jsonl reads *_tool_* replies")
+    parser.add_argument("--out", type=Path, default=PAIRS_DIR)
+    parser.add_argument("--max-missing-share", type=float, default=1.0,
+                        help="cap missing_call pairs at this share of each split (1.0 = no cap)")
     args = parser.parse_args(argv)
-    cases = {case["id"]: case for case in read_jsonl(OUT_DIR / "cases.jsonl")}
-    replies = load_replies(args.model)
-    chosen = load_chosen(OUT_DIR / "chosen.jsonl", EXTRA_CHOSEN)
+    paths = args.cases or [OUT_DIR / "cases.jsonl"]
+    tags = [case_tag(path) for path in paths]
+    cases, replies = {}, {}
+    for path, tag in zip(paths, tags):
+        cases.update({case["id"]: case for case in read_jsonl(path)})
+        replies.update(load_replies(args.model, tag))
+    chosen = load_chosen(*chosen_paths(tags))
     if args.stage == "gaps":
         failed = failed_rows(cases, replies)
         gaps = gap_rows(cases, failed, chosen)
-        out = NATIVE_TRAIN_DIR / f"{_stem(args.model)}_gaps.jsonl"
+        suffix = "".join(f"_{tag}" for tag in tags if tag)
+        out = NATIVE_TRAIN_DIR / f"{_stem(args.model)}{suffix}_gaps.jsonl"
         out.parent.mkdir(parents=True, exist_ok=True)
         _write_jsonl(out, gaps)
         print(json.dumps({"replies": len(replies), "failed": len(failed), "have_chosen": len(failed) - len(gaps),
                           "gaps": len(gaps), "gaps_file": str(out)}, ensure_ascii=False))
         return 0
-    manifest = build(cases, replies, chosen, PAIRS_DIR, model=args.model)
+    manifest = build(cases, replies, chosen, args.out, model=args.model, max_missing_share=args.max_missing_share)
     print(json.dumps(manifest, ensure_ascii=False, indent=2))
     return 0 if manifest["pairs"] else 1
 

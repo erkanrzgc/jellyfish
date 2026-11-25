@@ -80,3 +80,14 @@ def test_run_model_writes_to_the_given_path_and_resumes(tmp_path, monkeypatch):
     assert bakeoff.run_model("m", cases, ["a", "b"], "h", 1024, out=out) == {"done": 2}
     assert bakeoff.run_model("m", cases, ["a", "b"], "h", 1024, out=out) == {}
     assert calls == ["p1", "p2"]
+
+
+def test_output_path_keeps_other_case_files_apart():
+    from pathlib import Path
+
+    from eval.native_tool_bakeoff import NATIVE_TRAIN_DIR, case_tag, output_path
+    assert case_tag(Path("data/dpo/out/cases.jsonl")) == ""
+    assert case_tag(Path("data/dpo/out/cases_tool.jsonl")) == "tool"
+    assert output_path("gemma4:e4b", "train", tag="tool") == NATIVE_TRAIN_DIR / "gemma4_e4b_tool_train.jsonl"
+    assert output_path("gemma4:e4b", "val", policy=True, tag="tool") == NATIVE_TRAIN_DIR / "gemma4_e4b_tool_val.jsonl"
+    assert output_path("gemma4:e4b", "val", policy=True, tag="") == NATIVE_TRAIN_DIR / "gemma4_e4b_val.jsonl"
