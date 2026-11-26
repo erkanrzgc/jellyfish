@@ -155,3 +155,33 @@ def test_generate_resumes_without_duplicating(tmp_path):
     generate(_Teacher([[VALID]]), out, plan=[("tooling", "f")], per_call=1, workers=1)
     generate(_Teacher([[VALID]]), out, plan=[("tooling", "f")], per_call=1, workers=1)
     assert len(out.read_text(encoding="utf-8").splitlines()) == 1
+
+
+def test_generate_uses_id_stem_and_treats_known_prompts_as_duplicates(tmp_path):
+    out = tmp_path / "cases_tool.jsonl"
+    other = _case(family_id="other", prompt="Lab'daki 10.10.9.9 makinesinde hangi servisler açık?",
+                  expected_params={"hedef": "10.10.9.9"})
+    stats = generate(_Teacher([[VALID, other]]), out, plan=[("tooling", "f")], per_call=2, workers=1,
+                     id_stem="DPX", known_prompts=[VALID["prompt"]], eval_prompts=[])
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert [row["id"] for row in rows] == ["DPX-TOOL-0001"]
+    assert rows[0]["prompt"] == other["prompt"] and stats["duplicate"] == 1
+
+
+def test_holdout_prompts_are_only_val_families(tmp_path):
+    from data.dpo.build import split_of
+    from data.dpo.prompts import holdout_prompts
+    families = [f"fam-{index}" for index in range(60)]
+    val = next(name for name in families if split_of(name) == "val")
+    train = next(name for name in families if split_of(name) == "train")
+    path = tmp_path / "cases.jsonl"
+    path.write_text("".join(json.dumps({"family_id": fam, "prompt": f"istem {fam}"}) + "\n" for fam in (val, train)),
+                    encoding="utf-8")
+    assert holdout_prompts(path) == [f"istem {val}"]
+
+
+def test_tool_choice_plan_targets_tool_categories():
+    from data.dpo.prompts import PLANS, TOOL_CHOICE_FOCUS, default_plan
+    plan = default_plan(800, 8, PLANS["tool-choice"])
+    assert {category for category, _ in plan} == set(TOOL_CHOICE_FOCUS) <= set(CATEGORIES)
+    assert 95 <= len(plan) <= 105

@@ -102,7 +102,9 @@ def _solve(teacher, case: dict, retries: int, model: str) -> dict | None:
 
 
 def run(teacher, cases_path: Path, rejected_path: Path, out_path: Path, *, workers: int = 8,
-        retries: int = 2, model: str = DEFAULT_MODEL) -> dict:
+        retries: int = 2, model: str = DEFAULT_MODEL, models: tuple[str, ...] | None = None) -> dict:
+    """`models` spreads requests round-robin; EVREN allows one concurrent request per model."""
+    models = models or (model,)
     cases = {case["id"]: case for case in read_jsonl(cases_path)}
     done = {row["id"] for row in read_jsonl(out_path)}
     # Recompute instead of trusting stored labels, so a classifier fix reaches a rejected file written earlier.
@@ -111,7 +113,8 @@ def run(teacher, cases_path: Path, rejected_path: Path, out_path: Path, *, worke
     todo = [cases[cid] for cid in failed if cid not in done]
     stats = {"accepted": 0, "dropped": 0, "skipped": len(failed) - len(todo), "teacher_errors": 0}
     with ThreadPoolExecutor(max_workers=workers) as pool:
-        futures = [pool.submit(_solve, teacher, case, retries, model) for case in todo]
+        futures = [pool.submit(_solve, teacher, case, retries, models[index % len(models)])
+                   for index, case in enumerate(todo)]
         for future in as_completed(futures):
             row = future.result()
             if row is None:
@@ -128,9 +131,11 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--rejected", type=Path, default=OUT_DIR / "rejected.jsonl")
     parser.add_argument("--out", type=Path, default=OUT_DIR / "chosen.jsonl")
     parser.add_argument("--workers", type=int, default=8)
+    parser.add_argument("--models", default=DEFAULT_MODEL, help="comma-separated teacher models, round-robin")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    stats = run(EvrenClient(load_key()), args.cases, args.rejected, args.out, workers=args.workers)
+    models = tuple(name.strip() for name in args.models.split(",") if name.strip())
+    stats = run(EvrenClient(load_key()), args.cases, args.rejected, args.out, workers=args.workers, models=models)
     print(json.dumps(stats, ensure_ascii=False))
     return 0
 

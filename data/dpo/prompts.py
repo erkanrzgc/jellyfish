@@ -78,7 +78,40 @@ FOCUS: dict[str, tuple[float, tuple[str, ...]]] = {
     )),
 }
 
-SYSTEM_PROMPT = """Sen, Türkçe siber güvenlik modeli Octópus'un eğitim verisi için kullanıcı istemleri yazan bir veri mühendisisin.
+# Tool-choice wave (2026-11-25): the clusters where gemma4:e4b picked a wrong first tool or bent an argument
+# (native_pairs v1: binwalk for memory/disk images, nuclei for XSS, sqlmap moving a GET parameter to --data,
+# gobuster URL in the wrong key, smbclient share format, tcpdump without its filter or output file).
+TOOL_CHOICE_FOCUS: dict[str, tuple[float, tuple[str, ...]]] = {
+    "forensics": (0.35, (
+        "Bellek dökümü (.raw, .mem, .vmem) analizi: süreçler, ağ bağlantıları veya enjekte kod; dosya yolu ile.",
+        "Disk imajı (.dd, .E01, .img) üzerinde dosya sistemi, silinmiş dosya veya zaman çizelgesi incelemesi; "
+        "dosya yolu ile.",
+        "Firmware veya gömülü cihaz imajındaki dosya sistemlerini ve gömülü dosyaları çıkarma; dosya yolu ile.",
+        "Şüpheli bir çalıştırılabilir dosyanın yeteneklerini (ağ, kalıcılık, şifreleme) belirleme ya da tersine "
+        "mühendislik; dosya yolu ile.",
+        "Uzantısı yanıltıcı veya bilinmeyen bir dosyanın gerçek türünü belirleme; dosya yolu ile.",
+        "Kayıtlı bir pcap dosyasında belirli bir protokol veya host trafiğini filtreleme; dosya yolu ile.",
+    )),
+    "pentest": (0.40, (
+        "Yetkili lab web uygulamasında yansıyan veya DOM tabanlı XSS testi; parametreli tam URL ile.",
+        "Yetkili lab web uygulamasında SQL enjeksiyonu testi; GET parametresi URL'nin içinde ve URL aynen "
+        "verilmeli.",
+        "Yetkili lab web uygulamasında gizli HTTP parametrelerini keşfetme; URL ile.",
+        "Yetkili lab web uygulamasında belirli uzantılarla dizin ve dosya keşfi; URL ile.",
+        "Yetkili lab ağında SMB paylaşımlarını ve izinlerini numaralandırma; IP ile.",
+        "Yetkili lab ağında bilinen bir SMB paylaşımına bağlanıp dosyaları listeleme; //sunucu/paylasim biçiminde.",
+    )),
+    "tooling": (0.25, (
+        "Belirli bir arayüzde belirli host ve port trafiğini yakalayıp verilen dosya yoluna kaydetme.",
+        "Yerel bir log veya yapılandırma dosyasında belirli bir deseni arama; dosya yolu ve desen istemde açık.",
+        "Yerel sunucuda dinleyen portları ve bunlara bağlı süreçleri listeleme.",
+        "Birbirine benzeyen web işleri (genel zafiyet taraması, XSS, SQL enjeksiyonu, dizin keşfi) arasında doğru "
+        "aracı seçmek; URL ile.",
+    )),
+}
+PLANS = {"default": FOCUS, "tool-choice": TOOL_CHOICE_FOCUS}
+
+SYSTEM_PROMPT = """Sen, Türkçe siber güvenlik modeli Jellyfish'in eğitim verisi için kullanıcı istemleri yazan bir veri mühendisisin.
 Çıktın YALNIZCA bir JSON dizisi olacak; dizinin her elemanı şu alanları taşır:
 - "family_id": kısa, benzersiz kebab-case senaryo kimliği.
 - "prompt": Türkçe, doğal kullanıcı dili, 1-3 cümle, somut. Araç gerekiyorsa hedef somut olsun:
@@ -223,9 +256,16 @@ class ContaminationFilter:
         return any(token_jaccard(candidate, other) >= self.threshold for other in self._tokens)
 
 
-def default_plan(total: int, per_call: int) -> list[tuple[str, str]]:
+def holdout_prompts(cases_path: Path) -> list[str]:
+    """Prompts of the val families in an existing case file: new cases must not near-copy them either."""
+    from data.dpo.build import split_of
+    return [row["prompt"] for row in read_jsonl(cases_path) if split_of(row["family_id"]) == "val"]
+
+
+def default_plan(total: int, per_call: int,
+                 focus: dict[str, tuple[float, tuple[str, ...]]] = FOCUS) -> list[tuple[str, str]]:
     plan = []
-    for category, (weight, focuses) in FOCUS.items():
+    for category, (weight, focuses) in focus.items():
         calls = math.ceil(total * weight / per_call)
         plan += [(category, focuses[index % len(focuses)]) for index in range(calls)]
     return plan
@@ -243,11 +283,14 @@ def _ask(teacher, category: str, focus: str, index: int, per_call: int, model: s
 
 def generate(teacher, out_path: Path, *, plan: list[tuple[str, str]], per_call: int = 8,
              workers: int | None = None, eval_prompts: list[str] | None = None,
-             models: list[str] | tuple[str, ...] = (DEFAULT_MODEL,)) -> dict:
+             models: list[str] | tuple[str, ...] = (DEFAULT_MODEL,), id_stem: str = "DPO",
+             known_prompts: list[str] | None = None) -> dict:
+    """`known_prompts` (e.g. another case file) count as duplicates; `id_stem` keeps ids apart from that file."""
     existing = read_jsonl(out_path)
     contamination = ContaminationFilter(load_eval_prompts() if eval_prompts is None else eval_prompts)
-    seen_keys = {normalized_key(row["prompt"]) for row in existing}
-    seen_tokens = [tokens(row["prompt"]) for row in existing]
+    seen_prompts = [row["prompt"] for row in existing] + list(known_prompts or [])
+    seen_keys = {normalized_key(prompt) for prompt in seen_prompts}
+    seen_tokens = [tokens(prompt) for prompt in seen_prompts]
     counters = {prefix: 0 for prefix in ID_PREFIX.values()}
     for row in existing:
         prefix, number = row["id"].split("-")[1:3]
@@ -282,7 +325,7 @@ def generate(teacher, out_path: Path, *, plan: list[tuple[str, str]], per_call: 
                     continue
                 prefix = ID_PREFIX[case["category"]]
                 counters[prefix] += 1
-                row = {"id": f"DPO-{prefix}-{counters[prefix]:04d}", "split": "train",
+                row = {"id": f"{id_stem}-{prefix}-{counters[prefix]:04d}", "split": "train",
                        **{field: case[field] for field in REQUIRED_FIELDS},
                        "prompt_model": case.get("prompt_model")}
                 append_jsonl(out_path, row)
@@ -300,10 +343,17 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--models", default=f"{DEFAULT_MODEL},qwen3.8-flash-next",
                         help="comma-separated teacher models; requests are spread round-robin")
     parser.add_argument("--out", type=Path, default=OUT_DIR / "cases.jsonl")
+    parser.add_argument("--plan", choices=sorted(PLANS), default="default")
+    parser.add_argument("--id-stem", default="DPO", help="id prefix; use a new one when --out is a new file")
+    parser.add_argument("--known-cases", type=Path, action="append", default=[],
+                        help="existing case file: its prompts are duplicates and its val families are held out")
     args = parser.parse_args(argv)
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
-    stats = generate(EvrenClient(load_key()), args.out, plan=default_plan(args.total, args.per_call),
-                     per_call=args.per_call, models=[m.strip() for m in args.models.split(",") if m.strip()])
+    known = [row["prompt"] for path in args.known_cases for row in read_jsonl(path)]
+    held_out = [prompt for path in args.known_cases for prompt in holdout_prompts(path)]
+    stats = generate(EvrenClient(load_key()), args.out, plan=default_plan(args.total, args.per_call, PLANS[args.plan]),
+                     per_call=args.per_call, models=[m.strip() for m in args.models.split(",") if m.strip()],
+                     id_stem=args.id_stem, known_prompts=known, eval_prompts=load_eval_prompts() + held_out)
     print(json.dumps(stats, ensure_ascii=False))
     return 0 if stats["accepted"] else 1
 
