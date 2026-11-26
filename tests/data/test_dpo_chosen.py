@@ -127,3 +127,21 @@ def test_stale_labels_are_recomputed_so_equivalent_tools_skip_the_teacher(tmp_pa
     stats = run(teacher, cases, rejected, out, workers=1)
     assert teacher.calls == 1 and stats["accepted"] == 1
     assert [json.loads(line)["id"] for line in out.read_text(encoding="utf-8").splitlines()] == ["DPO-TOOL-0001"]
+
+
+def test_requests_are_spread_round_robin_over_teacher_models(tmp_path):
+    know_fail = {"id": "DPO-FUND-0001", "raw_reply": GOOD_TOOL, "failures": ["unnecessary_call"]}
+    cases, rejected, out = _setup(tmp_path, [
+        {"id": "DPO-TOOL-0001", "raw_reply": "anlattım", "failures": ["missing_call"]}, know_fail])
+    seen = []
+
+    class _Recording(_Teacher):
+        def chat(self, messages, **kwargs):
+            seen.append(kwargs.get("model"))
+            return SimpleNamespace(content=GOOD_TOOL if "nmap" in json.dumps(messages, ensure_ascii=False)
+                                   and "portlarını" in json.dumps(messages, ensure_ascii=False) else GOOD_KNOW,
+                                   finish_reason="stop")
+
+    run(_Recording([]), cases, rejected, out, workers=1, models=("m1", "m2"))
+    rows = [json.loads(line) for line in out.read_text(encoding="utf-8").splitlines()]
+    assert sorted(seen) == ["m1", "m2"] and sorted(row["teacher_model"] for row in rows) == ["m1", "m2"]
